@@ -8,7 +8,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://spcarparking.onrender.com'],
+    credentials: true
+}));
 app.use(bodyParser.json());
 
 const MONGODB_URI = process.env.MONGODB_URI;

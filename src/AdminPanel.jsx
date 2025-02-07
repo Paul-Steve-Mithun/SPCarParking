@@ -16,7 +16,7 @@ export function AdminPanel() {
     const fetchVehicles = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/vehicles');
+            const response = await fetch('https://spcarparkingbackend.vercel.app/vehicles');
             const data = await response.json();
             setVehicles(data);
         } catch (error) {
@@ -34,7 +34,7 @@ export function AdminPanel() {
 
     const removeVehicle = async (id) => {
         try {
-            await fetch(`http://localhost:5000/removeVehicle/${id}`, { method: 'DELETE' });
+            await fetch(`https://spcarparkingbackend.vercel.app/removeVehicle/${id}`, { method: 'DELETE' });
             setVehicles(vehicles.filter(v => v._id !== id));
             toast.success('Vehicle Removed Successfully');
         } catch (error) {

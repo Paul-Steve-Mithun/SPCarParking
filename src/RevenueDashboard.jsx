@@ -15,7 +15,7 @@ export function RevenueDashboard() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
     useEffect(() => {
-        fetch('http://localhost:5000/vehicles')
+        fetch('https://spcarparkingbackend.vercel.app/vehicles')
             .then(res => res.json())
             .then(data => {
                 setVehicles(data);
