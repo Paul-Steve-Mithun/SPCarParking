@@ -12,12 +12,12 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
-
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    dbName: process.env.Db_name,
+  })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 const VehicleSchema = new mongoose.Schema({
     vehicleNumber: { type: String, required: true },

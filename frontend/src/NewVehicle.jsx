@@ -32,7 +32,7 @@ export function NewVehicle() {
     // Fetch occupied lots from the database
     const fetchOccupiedLots = async () => {
         try {
-            const response = await fetch('https://spcarparking.onrender.com/vehicles');
+            const response = await fetch('http://localhost:5000/vehicles');
             const vehicles = await response.json();
             const occupiedLots = vehicles
                 .filter(v => v.status === 'active')
@@ -68,7 +68,7 @@ export function NewVehicle() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('https://spcarparking.onrender.com/addVehicle', {
+            const response = await fetch('http://localhost:5000/addVehicle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vehicle)
