@@ -11,7 +11,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-
 const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI, {
@@ -20,7 +19,6 @@ mongoose.connect(MONGODB_URI, {
 })
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('MongoDB Connection Error:', err));
-
 
 const VehicleSchema = new mongoose.Schema({
     vehicleNumber: { type: String, required: true },
@@ -39,14 +37,23 @@ const VehicleSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
+// Updated pre-save middleware to handle end dates correctly
 VehicleSchema.pre('save', function(next) {
     if (this.isNew || this.isModified('startDate') || this.isModified('numberOfDays')) {
-        if (this.rentalType === 'daily' && this.numberOfDays) {
-            this.endDate = new Date(this.startDate);
-            this.endDate.setDate(this.endDate.getDate() + this.numberOfDays);
-        } else if (this.rentalType === 'monthly') {
-            this.endDate = new Date(this.startDate);
-            this.endDate.setMonth(this.endDate.getMonth() + 1);
+        const startDate = new Date(this.startDate);
+        
+        if (this.rentalType === 'monthly') {
+            // Get the last day of the current month
+            const lastDay = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+            // Set time to end of day (23:59:59.999)
+            lastDay.setHours(23, 59, 59, 999);
+            this.endDate = lastDay;
+        } else if (this.rentalType === 'daily' && this.numberOfDays) {
+            // For daily rentals, set end date to midnight of the last day
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + this.numberOfDays - 1); // Subtract 1 because the start day counts as day 1
+            endDate.setHours(23, 59, 59, 999);
+            this.endDate = endDate;
         }
     }
     next();
@@ -69,7 +76,7 @@ const updateVehicleStatus = async () => {
 };
 
 // Run status update every hour
-setInterval(updateVehicleStatus,1000 * 60 * 60);
+setInterval(updateVehicleStatus, 1000 * 60 * 60);
 
 // Add Vehicle
 app.post('/addVehicle', async (req, res) => {
@@ -106,21 +113,25 @@ app.delete('/removeVehicle/:id', async (req, res) => {
     }
 });
 
-// Reactivate Vehicle
+// Updated reactivateVehicle endpoint to handle end dates correctly
 app.put('/reactivateVehicle/:id', async (req, res) => {
     try {
         const { status } = req.body;
         const currentDate = new Date();
         
-        // Calculate the number of days being added (for the actual number of days in the next month)
-        const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
-        const daysDifference = Math.ceil((nextMonth - new Date()) / (1000 * 60 * 60 * 24));
+        // Get the last day of the next month
+        const lastDayNextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
+        lastDayNextMonth.setHours(23, 59, 59, 999);
+        
+        // Calculate the number of days being added
+        const daysDifference = Math.ceil((lastDayNextMonth - currentDate) / (1000 * 60 * 60 * 24));
+        
         const vehicle = await Vehicle.findByIdAndUpdate(
             req.params.id, 
             { 
                 status: status || 'active', 
-                endDate: nextMonth,
-                $inc: { additionalDays: daysDifference }  // Increment by actual number of days in the month
+                endDate: lastDayNextMonth,
+                $inc: { additionalDays: daysDifference }
             }, 
             { new: true }
         );
@@ -134,6 +145,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 // Update Vehicle
 app.put('/updateVehicle/:id', async (req, res) => {
     try {
@@ -156,7 +168,7 @@ app.put('/updateVehicle/:id', async (req, res) => {
     }
 });
 
-// Extend Vehicle Rental
+// Updated extendRental endpoint to handle end dates correctly
 app.put('/extendRental/:id', async (req, res) => {
     try {
         const { additionalDays } = req.body;
@@ -167,14 +179,18 @@ app.put('/extendRental/:id', async (req, res) => {
         }
 
         if (vehicle.rentalType === 'daily') {
-            const newEndDate = new Date(vehicle.endDate);
-            newEndDate.setDate(newEndDate.getDate() + Number(additionalDays));
+            const currentEndDate = new Date(vehicle.endDate);
+            const newEndDate = new Date(currentEndDate);
+            newEndDate.setDate(currentEndDate.getDate() + Number(additionalDays));
+            newEndDate.setHours(23, 59, 59, 999);
             vehicle.endDate = newEndDate;
             vehicle.numberOfDays += Number(additionalDays);
             vehicle.status = 'active';
         } else {
-            const newEndDate = new Date(vehicle.endDate);
-            newEndDate.setMonth(newEndDate.getMonth() + 1);
+            // For monthly rentals, extend to the last day of the next month
+            const currentEndDate = new Date(vehicle.endDate);
+            const newEndDate = new Date(currentEndDate.getFullYear(), currentEndDate.getMonth() + 1, 0);
+            newEndDate.setHours(23, 59, 59, 999);
             vehicle.endDate = newEndDate;
             vehicle.status = 'active';
         }
@@ -202,7 +218,5 @@ app.get('/vehicleStats', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-
 
 app.listen(5000, () => console.log('Server running on port 5000'));
