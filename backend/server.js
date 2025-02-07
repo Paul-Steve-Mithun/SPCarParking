@@ -75,7 +75,7 @@ const updateVehicleStatus = async () => {
 };
 
 // Run status update every hour
-setInterval(updateVehicleStatus);
+setInterval(updateVehicleStatus, 1000 * 60 * 60);
 
 app.get('/', (req, res) => {
     res.send('SP Car Parking');
