@@ -8,12 +8,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors({
-    origin: 'http://localhost:5000/',
-    credentials: true,  
-    methods: '*',  
-    allowedHeaders: '*'  
-}));
+app.use(cors());
 
 app.use(bodyParser.json());
 
@@ -81,6 +76,11 @@ const updateVehicleStatus = async () => {
 
 // Run status update every hour
 setInterval(updateVehicleStatus, 1000 * 60 * 60);
+
+app.get('/', (req, res) => {
+    res.send('SP Car Parking');
+});
+
 
 // Add Vehicle
 app.post('/addVehicle', async (req, res) => {
