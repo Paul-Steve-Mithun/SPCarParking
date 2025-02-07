@@ -266,15 +266,16 @@ export function AdminPanel() {
     };
 
     const getRemainingTime = (endDate) => {
-        const end = new Date(endDate);
-        const now = new Date();
+        // Convert endDate to local time zone
+        const end = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const diff = end - now;
-
+    
         if (diff < 0) return <p className="text-xs text-red-500 mt-1"> Rental Period Ended: {new Date(endDate).toLocaleDateString('en-GB')} </p>;
-
+    
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
+    
         if (days > 0) return `${days}d ${hours}h remaining`;
         return `${hours}h remaining`;
     };
