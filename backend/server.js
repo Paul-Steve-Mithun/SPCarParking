@@ -9,19 +9,20 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin: '*',
-    credentials: true
+    origin: 'http://localhost:5000/',
+    credentials: true,  
+    methods: '*',  
+    allowedHeaders: '*'  
 }));
+
 app.use(bodyParser.json());
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB Connection Error:', err));
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
+
 
 const VehicleSchema = new mongoose.Schema({
     vehicleNumber: { type: String, required: true },

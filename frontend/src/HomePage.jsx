@@ -16,7 +16,7 @@ export function HomePage() {
     const [filteredVehicles, setFilteredVehicles] = useState([]);
 
     useEffect(() => {
-        fetch('https://spcarparkingbackend.vercel.app/vehicles')
+        fetch('http://localhost:5000/vehicles')
             .then(res => res.json())
             .then(data => setVehicles(data));
     }, []);
