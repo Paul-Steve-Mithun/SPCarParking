@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:5173/', 'https://spcarparking.vercel.app'],
+    origin: ['http://localhost:5174/', 'https://spcarparking.vercel.app'],
     credentials: true
 }));
 app.use(bodyParser.json());
