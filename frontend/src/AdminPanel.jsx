@@ -34,7 +34,7 @@ export function AdminPanel() {
 
     const removeVehicle = async (id) => {
         try {
-            await fetch(`https://spcarparking.onrender.com/${id}`, { method: 'DELETE' });
+            await fetch(`https://spcarparking.onrender.com/removeVehicle/${id}`, { method: 'DELETE' });
             setVehicles(vehicles.filter(v => v._id !== id));
             toast.success('Vehicle Removed Successfully');
         } catch (error) {
