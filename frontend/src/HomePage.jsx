@@ -16,7 +16,7 @@ export function HomePage() {
     const [filteredVehicles, setFilteredVehicles] = useState([]);
 
     useEffect(() => {
-        fetch('https://spcarparking.onrender.com/vehicles')
+        fetch('https://spcarparkingbknd.onrender.com/vehicles')
             .then(res => res.json())
             .then(data => setVehicles(data));
     }, []);

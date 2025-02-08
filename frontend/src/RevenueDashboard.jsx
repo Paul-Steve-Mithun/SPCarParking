@@ -43,8 +43,8 @@ export function RevenueDashboard() {
     const fetchRevenueData = async () => {
         try {
             const [dataResponse, statsResponse] = await Promise.all([
-                fetch(`https://spcarparking.onrender.com/revenue?month=${selectedMonth}&year=${selectedYear}`),
-                fetch(`https://spcarparking.onrender.com/revenueStats?month=${selectedMonth}&year=${selectedYear}`)
+                fetch(`https://spcarparkingbknd.onrender.com/revenue?month=${selectedMonth}&year=${selectedYear}`),
+                fetch(`https://spcarparkingbknd.onrender.com/revenueStats?month=${selectedMonth}&year=${selectedYear}`)
             ]);
 
             const data = await dataResponse.json();
@@ -87,7 +87,7 @@ export function RevenueDashboard() {
 
     const handleDeleteTransaction = async (transactionId) => {
         try {
-            const response = await fetch(`https://spcarparking.onrender.com/revenue/${transactionId}`, {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/revenue/${transactionId}`, {
                 method: 'DELETE',
             });
 
