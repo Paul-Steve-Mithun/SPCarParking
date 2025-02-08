@@ -36,6 +36,22 @@ const VehicleSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
+const RevenueSchema = new mongoose.Schema({
+    vehicleNumber: { type: String, required: true },
+    vehicleDescription: { type: String },
+    lotNumber: { type: String },
+    rentalType: { type: String, enum: ['monthly', 'daily'], required: true },
+    rentPrice: { type: Number, required: true },
+    numberOfDays: { type: Number },
+    month: { type: Number, required: true },
+    year: { type: Number, required: true },
+    revenueAmount: { type: Number, required: true },
+    transactionDate: { type: Date, default: Date.now },
+    transactionType: { type: String, enum: ['New', 'Extension'], required: true }
+});
+
+const Revenue = mongoose.model('Revenue', RevenueSchema);
+
 // Updated pre-save middleware to handle end dates correctly
 VehicleSchema.pre('save', function(next) {
     if (this.isNew || this.isModified('startDate') || this.isModified('numberOfDays')) {
@@ -58,6 +74,8 @@ VehicleSchema.pre('save', function(next) {
     next();
 });
 
+
+
 const Vehicle = mongoose.model('Vehicle', VehicleSchema);
 
 // Function to update vehicle status
@@ -75,14 +93,14 @@ const updateVehicleStatus = async () => {
 };
 
 // Run status update every hour
-setInterval(updateVehicleStatus, 1000 * 60 * 60);
+setInterval(updateVehicleStatus, 1000 * 60 * 60 );
 
 app.get('/', (req, res) => {
     res.send('SP Car Parking');
 });
 
 
-// Add Vehicle
+// Update your addVehicle endpoint
 app.post('/addVehicle', async (req, res) => {
     try {
         const newVehicle = new Vehicle({
@@ -91,11 +109,33 @@ app.post('/addVehicle', async (req, res) => {
             startDate: new Date()
         });
         await newVehicle.save();
+
+        // Calculate revenue amount
+        const revenueAmount = req.body.rentalType === 'daily' 
+            ? req.body.rentPrice * req.body.numberOfDays
+            : req.body.rentPrice;
+
+        // Add revenue record
+        const newRevenue = new Revenue({
+            vehicleNumber: req.body.vehicleNumber,
+            vehicleDescription: req.body.vehicleDescription,
+            lotNumber: req.body.lotNumber,
+            rentalType: req.body.rentalType,
+            rentPrice: req.body.rentPrice,
+            numberOfDays: req.body.numberOfDays,
+            month: new Date().getMonth(),
+            year: new Date().getFullYear(),
+            revenueAmount: revenueAmount,
+            transactionType: 'New'
+        });
+        await newRevenue.save();
+
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // Get All Vehicles
 app.get('/vehicles', async (req, res) => {
@@ -172,7 +212,7 @@ app.put('/updateVehicle/:id', async (req, res) => {
     }
 });
 
-// Updated extendRental endpoint to handle end dates correctly
+// Update your extendRental endpoint
 app.put('/extendRental/:id', async (req, res) => {
     try {
         const { additionalDays } = req.body;
@@ -182,21 +222,51 @@ app.put('/extendRental/:id', async (req, res) => {
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
+        let newEndDate;
         if (vehicle.rentalType === 'daily') {
             const currentEndDate = new Date(vehicle.endDate);
-            const newEndDate = new Date(currentEndDate);
+            newEndDate = new Date(currentEndDate);
             newEndDate.setDate(currentEndDate.getDate() + Number(additionalDays));
             newEndDate.setHours(23, 59, 59, 999);
             vehicle.endDate = newEndDate;
             vehicle.numberOfDays += Number(additionalDays);
             vehicle.status = 'active';
+
+            // Add revenue record for extension
+            const extensionRevenue = new Revenue({
+                vehicleNumber: vehicle.vehicleNumber,
+                vehicleDescription: vehicle.vehicleDescription,
+                lotNumber: vehicle.lotNumber,
+                rentalType: vehicle.rentalType,
+                rentPrice: vehicle.rentPrice,
+                numberOfDays: Number(additionalDays),
+                month: new Date().getMonth(),
+                year: new Date().getFullYear(),
+                revenueAmount: vehicle.rentPrice * Number(additionalDays),
+                transactionType: 'Extension'
+            });
+            await extensionRevenue.save();
         } else {
-            // For monthly rentals, extend to the last day of the next month
+            // For monthly rentals
             const currentEndDate = new Date(vehicle.endDate);
-            const newEndDate = new Date(currentEndDate.getFullYear(), currentEndDate.getMonth() + 1, 0);
+            newEndDate = new Date(currentEndDate.getFullYear(), currentEndDate.getMonth() + 1, 0);
             newEndDate.setHours(23, 59, 59, 999);
             vehicle.endDate = newEndDate;
             vehicle.status = 'active';
+
+            // Add revenue record for monthly extension
+            const extensionRevenue = new Revenue({
+                vehicleNumber: vehicle.vehicleNumber,
+                vehicleDescription: vehicle.vehicleDescription,
+                lotNumber: vehicle.lotNumber,
+                rentalType: vehicle.rentalType,
+                rentPrice: vehicle.rentPrice,
+                month: new Date().getMonth(),
+                year: new Date().getFullYear(),
+                revenueAmount: vehicle.rentPrice,
+                transactionType: 'Extension'
+            });
+            await extensionRevenue.save();
         }
 
         await vehicle.save();
@@ -220,6 +290,70 @@ app.get('/vehicleStats', async (req, res) => {
         res.json(stats);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Add new endpoint to get revenue data
+app.get('/revenue', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const query = {};
+        
+        if (month !== undefined) query.month = parseInt(month);
+        if (year !== undefined) query.year = parseInt(year);
+
+        const revenue = await Revenue.find(query);
+        res.json(revenue);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add endpoint to get revenue statistics
+app.get('/revenueStats', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const query = {};
+        
+        if (month !== undefined) query.month = parseInt(month);
+        if (year !== undefined) query.year = parseInt(year);
+
+        const stats = await Revenue.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: '$rentalType',
+                    totalRevenue: { $sum: '$revenueAmount' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete Revenue Transaction
+app.delete('/revenue/:id', async (req, res) => {
+    try {
+        const deletedRevenue = await Revenue.findByIdAndDelete(req.params.id);
+        
+        if (!deletedRevenue) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Transaction deleted successfully',
+            deletedTransaction: deletedRevenue 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            message: 'Failed to delete transaction' 
+        });
     }
 });
 

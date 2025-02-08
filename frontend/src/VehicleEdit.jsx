@@ -29,7 +29,7 @@ const handleSave = async () => {
         // Remove startDate and endDate from the update data
         const { startDate, endDate, ...updateData } = updatedVehicle;
         
-        await fetch(`https://spcarparking.onrender.com/updateVehicle/${vehicle._id}`, {
+        await fetch(`http://localhost:5000/updateVehicle/${vehicle._id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updateData),
@@ -50,7 +50,7 @@ const handleExtendRental = async () => {
     }
 
     try {
-        const response = await fetch(`https://spcarparking.onrender.com/extendRental/${vehicle._id}`, {
+        const response = await fetch(`http://localhost:5000/extendRental/${vehicle._id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 

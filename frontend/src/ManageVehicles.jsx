@@ -12,7 +12,7 @@ export function ManageVehicles() {
     const fetchExpiredVehicles = async () => {
         setLoading(true);
         try {
-            const response = await fetch('https://spcarparking.onrender.com/vehicles');
+            const response = await fetch('http://localhost:5000/vehicles');
             const data = await response.json();
             const expiredVehicles = data.filter(vehicle => vehicle.status === 'inactive');
             setVehicles(expiredVehicles);
