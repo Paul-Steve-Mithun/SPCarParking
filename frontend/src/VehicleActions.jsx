@@ -14,7 +14,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
             // Create a new date by adding 1 month to the current date
             const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
     
-            const response = await fetch(`http://localhost:5000/reactivateVehicle/${vehicle._id}`, {
+            const response = await fetch(`https://spcarparking.onrender.com/reactivateVehicle/${vehicle._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const handleDeleteVehicle = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/removeVehicle/${vehicle._id}`, {
+            const response = await fetch(`https://spcarparking.onrender.com/removeVehicle/${vehicle._id}`, {
                 method: 'DELETE'
             });
 
@@ -68,7 +68,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
 
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/extendRental/${vehicle._id}`, {
+            const response = await fetch(`https://spcarparking.onrender.com/extendRental/${vehicle._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ additionalDays: Number(additionalDays) }),
