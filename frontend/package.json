@@ -11,6 +11,8 @@
     "start": "npm run dev"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "@shadcn/ui": "^0.0.4",
     "@tailwindcss/vite": "^4.0.3",
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
