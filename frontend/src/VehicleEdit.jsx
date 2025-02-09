@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon } from 'lucide-react';
+import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
@@ -7,6 +7,17 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const [additionalDays, setAdditionalDays] = useState('');
     const [showExtendForm, setShowExtendForm] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [files, setFiles] = useState({
+        vehicleImage: null,
+        document1Image: null,
+        document2Image: null
+    });
+    const [previews, setPreviews] = useState({
+        vehicleImage: vehicle?.vehicleImage?.url || null,
+        document1Image: vehicle?.document1Image?.url || null,
+        document2Image: vehicle?.document2Image?.url || null
+    });
+    const [extensionTransactionMode, setExtensionTransactionMode] = useState('Cash');
 
     const handleTextInput = (e, field) => {
         let value = e.target.value;
@@ -23,148 +34,252 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         setUpdatedVehicle({ ...updatedVehicle, [field]: e.target.value });
     };
 
-    // VehicleEdit Component modifications
-const handleSave = async () => {
-    try {
-        // Remove startDate and endDate from the update data
-        const { startDate, endDate, ...updateData } = updatedVehicle;
-        
-        await fetch(`https://spcarparkingbknd.onrender.com/updateVehicle/${vehicle._id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updateData),
-        });
-        toast.success("Vehicle updated successfully");
-        setIsEditMode(false);
-        onUpdate();
-        onClose();
-    } catch (error) {
-        toast.error("Failed to update vehicle");
-    }
-};
+    const handleFileChange = (e, field) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFiles(prev => ({ ...prev, [field]: file }));
+            const previewUrl = URL.createObjectURL(file);
+            setPreviews(prev => ({ ...prev, [field]: previewUrl }));
+        }
+    };
 
-const handleExtendRental = async () => {
-    if (!additionalDays || additionalDays <= 0) {
-        toast.error("Please enter a valid number of days");
-        return;
-    }
-
-    try {
-        const response = await fetch(`https://spcarparkingbknd.onrender.com/extendRental/${vehicle._id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                additionalDays: Number(additionalDays),
-                currentEndDate: updatedVehicle.endDate // Send current end date
-            }),
-        });
-
-        if (!response.ok) throw new Error('Failed to extend rental');
-
-        const data = await response.json();
-        setUpdatedVehicle(data.vehicle);
-        toast.success(`Rental extended by ${additionalDays} days`);
-        setShowExtendForm(false);
-        setAdditionalDays('');
-        onUpdate();
-    } catch (error) {
-        toast.error("Failed to extend rental");
-    }
-};
-
-return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-hidden">
-        <div className="relative w-full max-w-4xl max-h-[95vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
-            {/* Header - Fixed Position with Safe Spacing */}
-            <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex justify-between items-center safe-top">
-                <h2 className="text-xl font-bold text-white truncate pr-4">Edit Vehicle Details</h2>
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setIsEditMode(!isEditMode)}
-                        className="text-white hover:bg-white/20 p-2 rounded-full transition-all flex items-center gap-2"
-                    >
-                        <PencilIcon className="w-5 h-5" />
-                        <span className="hidden sm:inline">
-                            {isEditMode ? 'Cancel Edit' : 'Edit Details'}
-                        </span>
-                    </button>
-                    <button 
-                        onClick={onClose}
-                        className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
-                    >
-                        <XIcon className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Scrollable Content with Bottom Padding */}
-            <div className="flex-grow overflow-y-auto px-4 pb-24 pt-4 space-y-6">
-                {/* Extend Rental Section */}
-                {updatedVehicle.rentalType === 'daily' && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
-                            <h3 className="text-lg font-semibold text-blue-800">Rental Extension</h3>
-                            <button
-                                onClick={() => setShowExtendForm(!showExtendForm)}
-                                className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-                            >
-                                <PlusCircleIcon className="w-5 h-5" />
-                                {showExtendForm ? 'Cancel Extension' : 'Extend Rental'}
-                            </button>
-                        </div>
-                        
-                        {showExtendForm && (
-                            <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1">
-                                    <input
-                                        type="number"
-                                        value={additionalDays}
-                                        onChange={(e) => setAdditionalDays(e.target.value)}
-                                        className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Enter days to extend"
-                                        min="1"
-                                    />
-                                </div>
+    const ImageUploadField = ({ label, field }) => (
+        <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">{label}</label>
+            <div className="flex items-center space-x-4">
+                <div className="relative w-24 h-24 flex-shrink-0">
+                    {previews[field] ? (
+                        <div className="relative w-full h-full">
+                            <img 
+                                src={previews[field]} 
+                                alt={label}
+                                className="w-full h-full object-cover rounded-lg"
+                            />
+                            {isEditMode && (
                                 <button
-                                    onClick={handleExtendRental}
-                                    className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                    onClick={() => handleRemoveImage(field)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
                                 >
-                                    Extend
+                                    <XIcon className="w-4 h-4" />
                                 </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                    ) : (
+                        <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <UploadIcon className="w-8 h-8 text-gray-400" />
+                        </div>
+                    )}
+                </div>
+                {isEditMode && (
+                    <div className="flex-grow">
+                        <label className="block w-full">
+                            <span className="sr-only">Choose file</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileChange(e, field)}
+                                className="block w-full text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-full file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-blue-50 file:text-blue-700
+                                    hover:file:bg-blue-100"
+                            />
+                        </label>
                     </div>
                 )}
+            </div>
+        </div>
+    );
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Vehicle Information Column */}
-                    <div className="space-y-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h3>
-                            {/* Input fields with responsive adjustments */}
-                            <div className="space-y-4">
-                                {/* Input fields remain the same, just ensure responsive design */}
-                                <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Vehicle Number</label>
-                                    <input 
-                                        type="text"
-                                        value={updatedVehicle.vehicleNumber}
-                                        onChange={(e) => handleTextInput(e, 'vehicleNumber')}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                                        placeholder="Enter vehicle number"
-                                        required
-                                        disabled={!isEditMode}
-                                    />
+    const [removedImages, setRemovedImages] = useState([]);
+
+    const handleRemoveImage = (field) => {
+        setFiles(prev => ({ ...prev, [field]: null }));
+        setPreviews(prev => ({ ...prev, [field]: null }));
+        setRemovedImages(prev => [...prev, field]);
+    };
+
+    const handleSave = async () => {
+        try {
+            const formData = new FormData();
+            const vehicleDataWithRemovals = {
+                ...updatedVehicle,
+                removeImages: removedImages
+            };
+            
+            formData.append('vehicleData', JSON.stringify(vehicleDataWithRemovals));
+            
+            if (files.vehicleImage) formData.append('vehicleImage', files.vehicleImage);
+            if (files.document1Image) formData.append('document1Image', files.document1Image);
+            if (files.document2Image) formData.append('document2Image', files.document2Image);
+
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/updateVehicle/${vehicle._id}`, {
+                method: "PUT",
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Failed to update vehicle');
+
+            const data = await response.json();
+            setUpdatedVehicle(data.vehicle);
+            setRemovedImages([]);
+            toast.success("Vehicle updated successfully");
+            setIsEditMode(false);
+            onUpdate();
+            onClose();
+        } catch (error) {
+            toast.error("Failed to update vehicle");
+        }
+    };
+
+    const handleExtendRental = async () => {
+        if (!additionalDays || additionalDays <= 0) {
+            toast.error("Please enter a valid number of days");
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/extendRental/${vehicle._id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    additionalDays: Number(additionalDays),
+                    currentEndDate: updatedVehicle.endDate,
+                    transactionMode: extensionTransactionMode
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to extend rental');
+
+            const data = await response.json();
+            setUpdatedVehicle(data.vehicle);
+            toast.success(`Rental extended by ${additionalDays} days`);
+            setShowExtendForm(false);
+            setAdditionalDays('');
+            setExtensionTransactionMode('Cash');
+            onUpdate();
+        } catch (error) {
+            toast.error("Failed to extend rental");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-hidden">
+            <div className="relative w-full max-w-7xl max-h-[95vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-3xl font-bold text-white">Edit Vehicle Details</h1>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setIsEditMode(!isEditMode)}
+                                className="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                            >
+                                <PencilIcon className="w-5 h-5" />
+                                <span>{isEditMode ? 'Cancel Edit' : 'Edit Details'}</span>
+                            </button>
+                            <button 
+                                onClick={onClose}
+                                className="text-white hover:bg-white/20 p-2 rounded-lg transition-all"
+                            >
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Form Content */}
+                <div className="flex-grow overflow-y-auto p-6">
+                    {/* Extend Rental Section */}
+                    {updatedVehicle.rentalType === 'daily' && (
+                        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                                <h3 className="text-lg font-semibold text-blue-800">Rental Extension</h3>
+                                <button
+                                    onClick={() => setShowExtendForm(!showExtendForm)}
+                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                >
+                                    <PlusCircleIcon className="w-5 h-5" />
+                                    {showExtendForm ? 'Cancel Extension' : 'Extend Rental'}
+                                </button>
+                            </div>
+                            
+                            {showExtendForm && (
+                                <div className="mt-4 space-y-4">
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <input
+                                            type="number"
+                                            value={additionalDays}
+                                            onChange={(e) => setAdditionalDays(e.target.value)}
+                                            className="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter days to extend"
+                                            min="1"
+                                        />
+                                        <button
+                                            onClick={handleExtendRental}
+                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Extend
+                                        </button>
+                                    </div>
+
+                                    {/* Transaction Mode Selection */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setExtensionTransactionMode('Cash')}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                extensionTransactionMode === 'Cash'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            <Wallet className="h-5 w-5 mr-2" />
+                                            Cash
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setExtensionTransactionMode('UPI')}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                extensionTransactionMode === 'UPI'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            <CreditCard className="h-5 w-5 mr-2" />
+                                            UPI
+                                        </button>
+                                    </div>
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Main Form Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Vehicle Information Column */}
+                        <div className="space-y-4">
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h2>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-gray-700 font-medium mb-2">Vehicle Number</label>
+                                        <input 
+                                            type="text"
+                                            value={updatedVehicle.vehicleNumber}
+                                            onChange={(e) => handleTextInput(e, 'vehicleNumber')}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            disabled={!isEditMode}
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Vehicle Description</label>
                                         <input 
                                             type="text"
                                             value={updatedVehicle.vehicleDescription}
                                             onChange={(e) => handleTextInput(e, 'vehicleDescription')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                                            placeholder="Enter vehicle description"
-                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         />
                                     </div>
@@ -174,8 +289,7 @@ return (
                                             type="text"
                                             value={updatedVehicle.lotNumber}
                                             onChange={(e) => handleTextInput(e, 'lotNumber')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                                            placeholder="Enter lot number"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         />
                                     </div>
@@ -186,7 +300,7 @@ return (
                         {/* Owner Details Column */}
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h3>
+                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h2>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Owner Name</label>
@@ -194,9 +308,7 @@ return (
                                             type="text"
                                             value={updatedVehicle.ownerName}
                                             onChange={(e) => handleTextInput(e, 'ownerName')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                                            placeholder="Enter owner name"
-                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         />
                                     </div>
@@ -206,11 +318,111 @@ return (
                                             type="text"
                                             value={updatedVehicle.contactNumber}
                                             onChange={(e) => handleTextInput(e, 'contactNumber')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                                            placeholder="Enter contact number"
-                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         />
+                                    </div>
+
+                                    {/* Document Upload Section */}
+                                    <div className="mt-6 space-y-4">
+                                        <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Document Upload</h3>
+                                        
+                                        {/* Vehicle Image Upload */}
+                                        <div className="space-y-2">
+                                            <label className="block text-gray-700 font-medium">Vehicle Photo</label>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileChange(e, 'vehicleImage')}
+                                                        className="hidden"
+                                                        id="vehicleImage"
+                                                        disabled={!isEditMode}
+                                                    />
+                                                    <label
+                                                        htmlFor="vehicleImage"
+                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
+                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <UploadIcon className="w-5 h-5 mr-2" />
+                                                        Choose File
+                                                    </label>
+                                                </div>
+                                                {previews.vehicleImage && (
+                                                    <img
+                                                        src={previews.vehicleImage}
+                                                        alt="Vehicle preview"
+                                                        className="w-16 h-16 object-cover rounded"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-gray-700 font-medium">Aadhaar Card</label>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileChange(e, 'document1Image')}
+                                                        className="hidden"
+                                                        id="document1Image"
+                                                        disabled={!isEditMode}
+                                                    />
+                                                    <label
+                                                        htmlFor="document1Image"
+                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
+                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <UploadIcon className="w-5 h-5 mr-2" />
+                                                        Choose File
+                                                    </label>
+                                                </div>
+                                                {previews.document1Image && (
+                                                    <img
+                                                        src={previews.document1Image}
+                                                        alt="Aadhaar preview"
+                                                        className="w-16 h-16 object-cover rounded"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-gray-700 font-medium">RC/Driving License</label>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileChange(e, 'document2Image')}
+                                                        className="hidden"
+                                                        id="document2Image"
+                                                        disabled={!isEditMode}
+                                                    />
+                                                    <label
+                                                        htmlFor="document2Image"
+                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
+                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <UploadIcon className="w-5 h-5 mr-2" />
+                                                        Choose File
+                                                    </label>
+                                                </div>
+                                                {previews.document2Image && (
+                                                    <img
+                                                        src={previews.document2Image}
+                                                        alt="Document preview"
+                                                        className="w-16 h-16 object-cover rounded"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -219,20 +431,21 @@ return (
                         {/* Rental Details Column */}
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h3>
+                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h2>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Parking Type</label>
                                         <select 
                                             value={updatedVehicle.parkingType}
                                             onChange={(e) => setUpdatedVehicle({...updatedVehicle, parkingType: e.target.value})}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         >
                                             <option value="private">Private Lot</option>
                                             <option value="open">Open Space</option>
                                         </select>
                                     </div>
+
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Rental Type</label>
                                         <select 
@@ -243,7 +456,7 @@ return (
                                                 advanceAmount: e.target.value === 'monthly' ? '5000' : '',
                                                 numberOfDays: e.target.value === 'daily' ? '' : ''
                                             })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         >
                                             <option value="monthly">Monthly</option>
@@ -258,9 +471,8 @@ return (
                                                 type="number"
                                                 value={updatedVehicle.numberOfDays}
                                                 onChange={(e) => handleNumberInput(e, 'numberOfDays')}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                                 placeholder="Enter number of days"
-                                                required
                                                 min="1"
                                                 disabled={!isEditMode}
                                             />
@@ -270,7 +482,9 @@ return (
                                     <div>
                                         <div className="flex justify-between items-center">
                                             <label className="block text-gray-700 font-medium mb-2">Rental Price (₹)</label>
-                                            {updatedVehicle.rentalType === 'daily' && updatedVehicle.numberOfDays && updatedVehicle.rentPrice && (
+                                            {updatedVehicle.rentalType === 'daily' && 
+                                             updatedVehicle.numberOfDays && 
+                                             updatedVehicle.rentPrice && (
                                                 <span className="text-blue-700 font-medium">
                                                     Total: ₹{Number(updatedVehicle.numberOfDays) * Number(updatedVehicle.rentPrice)}
                                                 </span>
@@ -280,29 +494,27 @@ return (
                                             type="number"
                                             value={updatedVehicle.rentPrice}
                                             onChange={(e) => handleNumberInput(e, 'rentPrice')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             placeholder="Enter rental price"
-                                            required
                                             min="0"
                                             disabled={!isEditMode}
                                         />
                                     </div>
 
                                     {updatedVehicle.rentalType === 'monthly' && (
-    <div>
-        <label className="block text-gray-700 font-medium mb-2">Advance Amount (₹)</label>
-        <input 
-            type="number"
-            value={updatedVehicle.advanceAmount}
-            onChange={(e) => handleNumberInput(e, 'advanceAmount')}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-            placeholder="Enter advance amount"
-            required
-            min="0"
-            disabled={!isEditMode}
-        />
-    </div>
-)}
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">Advance Amount (₹)</label>
+                                            <input 
+                                                type="number"
+                                                value={updatedVehicle.advanceAmount}
+                                                onChange={(e) => handleNumberInput(e, 'advanceAmount')}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                                placeholder="Enter advance amount"
+                                                min="0"
+                                                disabled={!isEditMode}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -310,11 +522,11 @@ return (
                 </div>
 
                 {/* Action Buttons */}
-                <div className="sticky bottom-0 p-4 bg-gray-50 border-t z-10 safe-bottom">
+                <div className="sticky bottom-0 p-6 bg-white border-t">
                     <div className="flex gap-4">
                         <button 
                             onClick={handleSave}
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
                             disabled={!isEditMode}
                         >
                             <SaveIcon className="w-5 h-5 mr-2" />
@@ -322,11 +534,11 @@ return (
                         </button>
                         <button 
                             onClick={() => onDelete(vehicle._id)}
-                            className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
                             disabled={!isEditMode}
                         >
                             <Trash2Icon className="w-5 h-5 mr-2" />
-                            Delete
+                            Delete Vehicle
                         </button>
                     </div>
                 </div>
@@ -335,4 +547,4 @@ return (
     );
 };
 
-export default VehicleEdit;
+export default VehicleEdit; 

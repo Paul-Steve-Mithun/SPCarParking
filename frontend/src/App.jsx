@@ -6,6 +6,7 @@ import NewVehicle from './NewVehicle';
 import AdminPanel from './AdminPanel';
 import RevenueDashboard from './RevenueDashboard';
 import ManageVehicles from './ManageVehicles';
+import AdvanceDashboard from './AdvanceDashboard';
 
 function App() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,7 +54,8 @@ function App() {
                                     <NavItem to="/">Home</NavItem>
                                     <NavItem to="/new-vehicle">New Vehicle</NavItem>
                                     <NavItem to="/managevehicles">Manage</NavItem>
-                                    <NavItem to="/revenuedashboard">Revenue</NavItem>
+                                    <NavItem to="/revenuedashboard">Rent</NavItem>
+                                    <NavItem to="/advance">Advance</NavItem>
                                     <NavItem to="/admin">Admin</NavItem>
                                 </div>
 
@@ -79,7 +81,8 @@ function App() {
                                         <NavItem to="/">Home</NavItem>
                                         <NavItem to="/new-vehicle">New Vehicle</NavItem>
                                         <NavItem to="/managevehicles">Manage</NavItem>
-                                        <NavItem to="/revenuedashboard">Revenue</NavItem>
+                                        <NavItem to="/revenuedashboard">Rent</NavItem>
+                                        <NavItem to="/advance">Advance</NavItem>
                                         <NavItem to="/admin">Admin</NavItem>
                                     </div>
                                 </div>
@@ -95,6 +98,7 @@ function App() {
                         <Route path='/admin' element={<AdminPanel />} />
                         <Route path='/revenuedashboard' element={<RevenueDashboard />} />
                         <Route path='/managevehicles' element={<ManageVehicles />} />
+                        <Route path='/advance' element={<AdvanceDashboard />} />
                     </Routes>
                 </main>
             </div>

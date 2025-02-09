@@ -95,7 +95,7 @@ export function AdminPanel() {
                 ['Lot Number:', vehicle.lotNumber],
                 ['Status:', vehicle.status],
                 ['Rental Type:', vehicle.rentalType],
-                ['Advance Amount:', `INR ${vehicle.advanceAmount}`],
+                ['Advance:', `INR ${vehicle.advanceAmount}`],
                 ['Rent:', `INR ${vehicle.rentPrice}`],
                 ['Duration:', vehicle.rentalType === 'daily' ? 
                     `${vehicle.numberOfDays} days` : 'Every Month'],
@@ -177,11 +177,9 @@ export function AdminPanel() {
             createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 15);
     
             const terms = [
-                ['1.', 'Rental fees are non-refundable'],
-                ['2.', 'Vehicle must be maintained in good condition'],
-                ['3.', 'Parking spot must be kept clean'],
-                ['4.', 'No unauthorized vehicle transfers'],
-                ['5.', 'Timely renewal of rental agreement']
+                ['1.', 'Rent must be paid before 5th of each month'],
+                ['2.', 'Parking spot must be kept clean'],
+                ['3.', 'No unauthorized vehicle transfers']
             ];
     
             doc.autoTable({
@@ -240,7 +238,8 @@ export function AdminPanel() {
 
     const filteredVehicles = vehicles.filter(vehicle =>
         vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+        vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.vehicleDescription.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const isExpired = (endDate) => {

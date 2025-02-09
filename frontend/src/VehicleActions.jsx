@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon } from 'lucide-react';
+import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, IndianRupee } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const [loading, setLoading] = useState(false);
     const [showExtendForm, setShowExtendForm] = useState(false);
     const [additionalDays, setAdditionalDays] = useState('');
+    const [transactionMode, setTransactionMode] = useState('Cash');
+    const [customRentPrice, setCustomRentPrice] = useState('');
 
     const handlePaidRent = async () => {
         setLoading(true);
         try {
             const currentDate = new Date();
-            // Create a new date by adding 1 month to the current date
             const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
     
             const response = await fetch(`https://spcarparkingbknd.onrender.com/reactivateVehicle/${vehicle._id}`, {
@@ -21,7 +22,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                 },
                 body: JSON.stringify({
                     status: 'active',
-                    endDate: nextMonth
+                    endDate: nextMonth,
+                    transactionMode: transactionMode,
+                    rentPrice: customRentPrice ? Number(customRentPrice) : vehicle.rentPrice
                 })
             });
     
@@ -71,7 +74,10 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
             const response = await fetch(`https://spcarparkingbknd.onrender.com/extendRental/${vehicle._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ additionalDays: Number(additionalDays) }),
+                body: JSON.stringify({ 
+                    additionalDays: Number(additionalDays),
+                    transactionMode: transactionMode 
+                }),
             });
 
             if (!response.ok) throw new Error('Failed to extend rental');
@@ -107,7 +113,34 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                 <div className="p-6">
                     <p className="text-gray-600 mb-6">Select an action for this vehicle:</p>
                     <div className="flex flex-col gap-3">
-                        {vehicle.rentalType === 'daily' && (
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setTransactionMode('Cash')}
+                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                    transactionMode === 'Cash'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 text-gray-700'
+                                }`}
+                            >
+                                <Wallet className="h-5 w-5 mr-2" />
+                                Cash
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setTransactionMode('UPI')}
+                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                    transactionMode === 'UPI'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 text-gray-700'
+                                }`}
+                            >
+                                <CreditCard className="h-5 w-5 mr-2" />
+                                UPI
+                            </button>
+                        </div>
+
+                        {vehicle.rentalType === 'daily' ? (
                             <div className="mb-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-gray-700">Extend Rental Period</span>
@@ -121,35 +154,62 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                 </div>
                                 
                                 {showExtendForm && (
-                                    <div className="flex gap-2 mb-4">
-                                        <input
-                                            type="number"
-                                            value={additionalDays}
-                                            onChange={(e) => setAdditionalDays(e.target.value)}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Number of days"
-                                            min="1"
-                                        />
-                                        <button
-                                            onClick={handleExtendRental}
-                                            disabled={loading}
-                                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-                                        >
-                                            Extend
-                                        </button>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="number"
+                                                value={additionalDays}
+                                                onChange={(e) => setAdditionalDays(e.target.value)}
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Number of days"
+                                                min="1"
+                                            />
+                                            <button
+                                                onClick={handleExtendRental}
+                                                disabled={loading}
+                                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                                            >
+                                                Extend
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Rent Amount (Optional)
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <IndianRupee className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            value={customRentPrice}
+                                            onChange={(e) => setCustomRentPrice(e.target.value)}
+                                            placeholder={`Current: ₹${vehicle.rentPrice}`}
+                                            className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            min="0"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Leave empty to use current rent price
+                                    </p>
+                                </div>
+
+                                <button 
+                                    onClick={handlePaidRent}
+                                    disabled={loading}
+                                    className="w-full flex items-center justify-center bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600 transition-colors disabled:opacity-50 font-medium"
+                                >
+                                    <CheckIcon className="w-5 h-5 mr-2" /> 
+                                    <span>Extend 30 Days</span>
+                                </button>
+                            </div>
                         )}
-                        
-                        <button 
-                            onClick={handlePaidRent}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors disabled:opacity-50 font-medium"
-                        >
-                            <CheckIcon className="w-5 h-5 mr-2" /> 
-                            <span>Paid (Extend 30 Days)</span>
-                        </button>
+
                         <button 
                             onClick={handleDeleteVehicle}
                             disabled={loading}
