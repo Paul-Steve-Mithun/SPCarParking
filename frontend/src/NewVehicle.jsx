@@ -34,9 +34,9 @@ export function NewVehicle() {
 
     // Generate all possible lots
     const generateAllLots = () => {
-        const aLots = Array.from({ length: 11 }, (_, i) => `${i + 1}A`);
-        const bLots = Array.from({ length: 20 }, (_, i) => `${i + 1}B`);
-        const cLots = Array.from({ length: 21 }, (_, i) => `${i + 1}C`);
+        const aLots = Array.from({ length: 11 }, (_, i) => `A${i + 1}`);
+        const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
+        const cLots = Array.from({ length: 21 }, (_, i) => `C${i + 1}`);
         return [...aLots, ...bLots, ...cLots];
     };
 

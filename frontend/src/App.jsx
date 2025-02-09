@@ -7,6 +7,7 @@ import AdminPanel from './AdminPanel';
 import RevenueDashboard from './RevenueDashboard';
 import ManageVehicles from './ManageVehicles';
 import AdvanceDashboard from './AdvanceDashboard';
+import VehicleInfo from './VehicleInfo';
 
 function App() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,6 +57,7 @@ function App() {
                                     <NavItem to="/managevehicles">Manage</NavItem>
                                     <NavItem to="/revenuedashboard">Rent</NavItem>
                                     <NavItem to="/advance">Advance</NavItem>
+                                    <NavItem to="/vehicle-info">Vehicle Info</NavItem>
                                     <NavItem to="/admin">Admin</NavItem>
                                 </div>
 
@@ -83,6 +85,7 @@ function App() {
                                         <NavItem to="/managevehicles">Manage</NavItem>
                                         <NavItem to="/revenuedashboard">Rent</NavItem>
                                         <NavItem to="/advance">Advance</NavItem>
+                                        <NavItem to="/vehicle-info">Vehicle Info</NavItem>
                                         <NavItem to="/admin">Admin</NavItem>
                                     </div>
                                 </div>
@@ -99,6 +102,7 @@ function App() {
                         <Route path='/revenuedashboard' element={<RevenueDashboard />} />
                         <Route path='/managevehicles' element={<ManageVehicles />} />
                         <Route path='/advance' element={<AdvanceDashboard />} />
+                        <Route path='/vehicle-info' element={<VehicleInfo />} />
                     </Routes>
                 </main>
             </div>

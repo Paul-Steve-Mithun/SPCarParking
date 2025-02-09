@@ -441,8 +441,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={!isEditMode}
                                         >
-                                            <option value="private">Private Lot</option>
-                                            <option value="open">Open Space</option>
+                                            <option value="private">Private Parking</option>
+                                            <option value="open">Open Parking</option>
                                         </select>
                                     </div>
 

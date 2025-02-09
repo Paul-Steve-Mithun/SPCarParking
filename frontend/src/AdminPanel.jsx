@@ -328,7 +328,7 @@ export function AdminPanel() {
                                 <div className="flex items-center gap-3">
                                     <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>
                                     <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                                        {vehicle.lotNumber || 'No Lot'}
+                                        {vehicle.lotNumber || 'Open Parking'}
                                     </span>
                                     <StatusBadge status={vehicle.status} endDate={vehicle.endDate} />
                                 </div>
