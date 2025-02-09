@@ -30,13 +30,13 @@ export function HomePage() {
         },
         {
             icon: <CarIcon className="w-8 h-8 text-green-600" />, 
-            label: 'Private Lot', 
+            label: 'Private Parking', 
             value: vehicles.filter(v => v.parkingType === 'private').length,
             filter: () => vehicles.filter(v => v.parkingType === 'private')
         },
         {
             icon: <MapPinIcon className="w-8 h-8 text-purple-600" />, 
-            label: 'Open Space', 
+            label: 'Open Parking', 
             value: vehicles.filter(v => v.parkingType === 'open').length,
             filter: () => vehicles.filter(v => v.parkingType === 'open')
         }

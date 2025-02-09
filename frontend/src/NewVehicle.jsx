@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PlusCircleIcon, SaveIcon } from 'lucide-react';
+import { PlusCircleIcon, SaveIcon, Upload, Wallet, CreditCard } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 
 export function NewVehicle() {
@@ -13,7 +13,20 @@ export function NewVehicle() {
         rentalType: 'monthly', 
         rentPrice: '',
         numberOfDays: '', 
-        advanceAmount: '5000'
+        advanceAmount: '5000',
+        transactionMode: 'Cash' // Add default transaction mode
+    });
+
+    const [files, setFiles] = useState({
+        vehicleImage: null,
+        document1Image: null,
+        document2Image: null
+    });
+
+    const [previews, setPreviews] = useState({
+        vehicleImage: null,
+        document1Image: null,
+        document2Image: null
     });
 
     const [availableLots, setAvailableLots] = useState([]);
@@ -21,10 +34,10 @@ export function NewVehicle() {
 
     // Generate all possible lots
     const generateAllLots = () => {
-        const regularLots = Array.from({ length: 60 }, (_, i) => `${i + 1}`);
-        const aLots = Array.from({ length: 30 }, (_, i) => `${i + 1}A`);
-        const bLots = Array.from({ length: 30 }, (_, i) => `${i + 1}B`);
-        return [...regularLots, ...aLots, ...bLots];
+        const aLots = Array.from({ length: 11 }, (_, i) => `${i + 1}A`);
+        const bLots = Array.from({ length: 20 }, (_, i) => `${i + 1}B`);
+        const cLots = Array.from({ length: 21 }, (_, i) => `${i + 1}C`);
+        return [...aLots, ...bLots, ...cLots];
     };
 
     const allLots = generateAllLots();
@@ -54,28 +67,79 @@ export function NewVehicle() {
     // Filter lots based on selected type
     const getFilteredLots = () => {
         switch (selectedLotType) {
-            case 'regular':
-                return availableLots.filter(lot => !lot.includes('A') && !lot.includes('B'));
             case 'a':
-                return availableLots.filter(lot => lot.includes('A'));
+                return availableLots.filter(lot => !lot.includes('B') && !lot.includes('C'));
             case 'b':
                 return availableLots.filter(lot => lot.includes('B'));
+            case 'c':
+                return availableLots.filter(lot => lot.includes('C'));
             default:
                 return availableLots;
         }
     };
 
+    // Handle file selection
+    const handleFileChange = (e, fieldName) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Update files state
+            setFiles(prev => ({
+                ...prev,
+                [fieldName]: file
+            }));
+
+            // Create preview URL
+            const previewUrl = URL.createObjectURL(file);
+            setPreviews(prev => ({
+                ...prev,
+                [fieldName]: previewUrl
+            }));
+        }
+    };
+
+    // Clean up preview URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            Object.values(previews).forEach(url => {
+                if (url) URL.revokeObjectURL(url);
+            });
+        };
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const formData = new FormData();
+            
+            // Append vehicle data as JSON string
+            formData.append('vehicleData', JSON.stringify(vehicle));
+
+            
+            
+            // Append files if they exist
+            if (files.vehicleImage) {
+                formData.append('vehicleImage', files.vehicleImage);
+            }
+            if (files.document1Image) {
+                formData.append('document1Image', files.document1Image);
+            }
+            if (files.document2Image) {
+                formData.append('document2Image', files.document2Image);
+            }
+
             const response = await fetch('https://spcarparkingbknd.onrender.com/addVehicle', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vehicle)
+                body: formData
             });
+
+            formData.append('vehicleData', JSON.stringify({
+                ...vehicle,
+                transactionMode: vehicle.transactionMode
+            }));
 
             if (response.ok) {
                 toast.success('Vehicle Added Successfully!');
+                // Reset form
                 setVehicle({
                     vehicleNumber: '', 
                     vehicleDescription: '', 
@@ -88,7 +152,16 @@ export function NewVehicle() {
                     numberOfDays: '',
                     advanceAmount: '5000'
                 });
-                // Refresh available lots after adding a vehicle
+                setFiles({
+                    vehicleImage: null,
+                    document1Image: null,
+                    document2Image: null
+                });
+                setPreviews({
+                    vehicleImage: null,
+                    document1Image: null,
+                    document2Image: null
+                });
                 fetchOccupiedLots();
             } else {
                 toast.error('Failed to add vehicle');
@@ -170,17 +243,6 @@ export function NewVehicle() {
                     <div className="flex space-x-4">
                         <button
                             type="button"
-                            onClick={() => setSelectedLotType('regular')}
-                            className={`px-3 py-1 rounded-md ${
-                                selectedLotType === 'regular' 
-                                    ? 'bg-blue-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700'
-                            }`}
-                        >
-                            Regular (1-60)
-                        </button>
-                        <button
-                            type="button"
                             onClick={() => setSelectedLotType('a')}
                             className={`px-3 py-1 rounded-md ${
                                 selectedLotType === 'a' 
@@ -188,7 +250,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            A Wing (1A-30A)
+                            A Wing (1A-11A)
                         </button>
                         <button
                             type="button"
@@ -199,7 +261,18 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            B Wing (1B-30B)
+                            B Wing (1B-20B)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedLotType('c')}
+                            className={`px-3 py-1 rounded-md ${
+                                selectedLotType === 'c' 
+                                    ? 'bg-blue-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700'
+                            }`}
+                        >
+                            C Wing (1C-21C)
                         </button>
                     </div>
                 </div>
@@ -254,6 +327,103 @@ export function NewVehicle() {
                                         required
                                     />
                                 </div>
+
+                                {/* Document Upload Section */}
+                            <div className="mt-6 space-y-4">
+                                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Document Upload</h3>
+                                
+                                {/* Vehicle Image Upload */}
+                                <div className="space-y-2">
+                                    <label className="block text-gray-700 font-medium">Vehicle Photo</label>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange(e, 'vehicleImage')}
+                                                className="hidden"
+                                                id="vehicleImage"
+                                            />
+                                            <label
+                                                htmlFor="vehicleImage"
+                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <Upload className="w-5 h-5 mr-2" />
+                                                Choose File
+                                            </label>
+                                        </div>
+                                        {previews.vehicleImage && (
+                                            <img
+                                                src={previews.vehicleImage}
+                                                alt="Vehicle preview"
+                                                className="w-16 h-16 object-cover rounded"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Document 1 Upload */}
+                                <div className="space-y-2">
+                                    <label className="block text-gray-700 font-medium">Aadhar Card</label>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange(e, 'document1Image')}
+                                                className="hidden"
+                                                id="document1Image"
+                                            />
+                                            <label
+                                                htmlFor="document1Image"
+                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <Upload className="w-5 h-5 mr-2" />
+                                                Choose File
+                                            </label>
+                                        </div>
+                                        {previews.document1Image && (
+                                            <img
+                                                src={previews.document1Image}
+                                                alt="Document 1 preview"
+                                                className="w-16 h-16 object-cover rounded"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Document 2 Upload */}
+                                <div className="space-y-2">
+                                    <label className="block text-gray-700 font-medium">Rc/Driving License</label>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange(e, 'document2Image')}
+                                                className="hidden"
+                                                id="document2Image"
+                                            />
+                                            <label
+                                                htmlFor="document2Image"
+                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <Upload className="w-5 h-5 mr-2" />
+                                                Choose File
+                                            </label>
+                                        </div>
+                                        {previews.document2Image && (
+                                            <img
+                                                src={previews.document2Image}
+                                                alt="Document 2 preview"
+                                                className="w-16 h-16 object-cover rounded"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        
+                    
                             </div>
                         </div>
                     </div>
@@ -271,8 +441,8 @@ export function NewVehicle() {
                                         onChange={(e) => setVehicle({...vehicle, parkingType: e.target.value})} 
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="private">Private Lot</option>
-                                        <option value="open">Open Space</option>
+                                        <option value="private">Private Parking</option>
+                                        <option value="open">Open Parking</option>
                                     </select>
                                 </div>
                                 <div>
@@ -318,7 +488,7 @@ export function NewVehicle() {
                                     </div>
                                     <input 
                                         type="number" 
-                                        placeholder={vehicle.rentalType === 'monthly' ? 'Enter monthly rent - 2000/-' : 'Enter daily rent - 100/-'}
+                                        placeholder={vehicle.rentalType === 'monthly' ? 'Enter monthly rent - ₹2000/-' : 'Enter daily rent - ₹100/-'}
                                         value={vehicle.rentPrice}
                                         onChange={(e) => setVehicle({...vehicle, rentPrice: e.target.value})} 
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -332,15 +502,44 @@ export function NewVehicle() {
                                         <label className="block text-gray-700 font-medium mb-2">Advance Amount (₹)</label>
                                         <input 
                                             type="number" 
-                                            placeholder="Enter advance amount"
+                                            placeholder="Enter advance amount - ₹5000/-"
                                             value={vehicle.advanceAmount}
                                             onChange={(e) => setVehicle({...vehicle, advanceAmount: e.target.value})} 
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            required
                                             min="0"
                                         />
                                     </div>
                                 )}
+
+                                <div className="mt-4">
+                                    <label className="block text-gray-700 font-medium mb-2">Payment Mode</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, transactionMode: 'Cash'})}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                vehicle.transactionMode === 'Cash'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            <Wallet className="h-5 w-5 mr-2" />
+                                            Cash
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, transactionMode: 'UPI'})}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                vehicle.transactionMode === 'UPI'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            <CreditCard className="h-5 w-5 mr-2" />
+                                            UPI
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
