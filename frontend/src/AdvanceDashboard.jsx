@@ -54,7 +54,6 @@ export function AdvanceDashboard() {
                        vehicleDate.getMonth() === selectedMonth &&
                        vehicleDate.getFullYear() === selectedYear;
             });
-            console.log(monthlyVehicles);
             setVehicles(monthlyVehicles);
             setFilteredVehicles(monthlyVehicles);
 
