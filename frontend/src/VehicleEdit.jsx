@@ -2,8 +2,20 @@ import { useState } from 'react';
 import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
+const modalAnimation = {
+    enter: "transition-all duration-300 ease-out",
+    enterFrom: "opacity-0 scale-95",
+    enterTo: "opacity-100 scale-100",
+    leave: "transition-all duration-200 ease-in",
+    leaveFrom: "opacity-100 scale-100",
+    leaveTo: "opacity-0 scale-95"
+};
+
 const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
-    const [updatedVehicle, setUpdatedVehicle] = useState({ ...vehicle });
+    const [updatedVehicle, setUpdatedVehicle] = useState({ 
+        ...vehicle,
+        vehicleType: vehicle.vehicleType || 'own'
+    });
     const [additionalDays, setAdditionalDays] = useState('');
     const [showExtendForm, setShowExtendForm] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -18,6 +30,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         document2Image: vehicle?.document2Image?.url || null
     });
     const [extensionTransactionMode, setExtensionTransactionMode] = useState('Cash');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const handleTextInput = (e, field) => {
         let value = e.target.value;
@@ -164,6 +177,46 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         }
     };
 
+    const handleDelete = async () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            // First update the advance record with refund details
+            if (vehicle.rentalType === 'monthly') {
+                const advanceResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances/refund/${vehicle.vehicleNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        advanceRefund: vehicle.advanceAmount
+                    })
+                });
+
+                if (!advanceResponse.ok) {
+                    throw new Error('Failed to update advance refund');
+                }
+            }
+
+            // Then delete the vehicle using the existing removeVehicle endpoint
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/removeVehicle/${vehicle._id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete vehicle');
+            }
+
+            onDelete(vehicle._id);
+            onClose();
+        } catch (error) {
+            toast.error('Failed to delete vehicle');
+            console.error('Error:', error);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-hidden">
             <div className="relative w-full max-w-7xl max-h-[95vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
@@ -284,6 +337,35 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         />
                                     </div>
                                     <div>
+                                        <label className="block text-gray-700 font-medium mb-2">Vehicle Board Type</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'own'})}
+                                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                    updatedVehicle.vehicleType === 'own'
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
+                                                disabled={!isEditMode}
+                                            >
+                                                Own Board
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'tboard'})}
+                                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                    updatedVehicle.vehicleType === 'tboard'
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
+                                                disabled={!isEditMode}
+                                            >
+                                                T Board
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
                                         <label className="block text-gray-700 font-medium mb-2">Lot Number</label>
                                         <input 
                                             type="text"
@@ -361,7 +443,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="block text-gray-700 font-medium">Aadhaar Card</label>
+                                            <label className="block text-gray-700 font-medium">Aadhar Card</label>
                                             <div className="flex items-center space-x-4">
                                                 <div className="flex-1">
                                                     <input
@@ -393,7 +475,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="block text-gray-700 font-medium">RC/Driving License</label>
+                                            <label className="block text-gray-700 font-medium">Rc/Driving License</label>
                                             <div className="flex items-center space-x-4">
                                                 <div className="flex-1">
                                                     <input
@@ -533,16 +615,65 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                             Save Changes
                         </button>
                         <button 
-                            onClick={() => onDelete(vehicle._id)}
+                            onClick={handleDelete}
                             className="flex-1 flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
                             disabled={!isEditMode}
                         >
                             <Trash2Icon className="w-5 h-5 mr-2" />
-                            Delete Vehicle
+                            End Contract
                         </button>
                     </div>
                 </div>
             </div>
+
+            {showDeleteConfirm && (
+                <div 
+                    className="fixed inset-0 z-[60] overflow-y-auto"
+                    aria-labelledby="modal-title" 
+                    role="dialog" 
+                    aria-modal="true"
+                >
+                    <div className="flex items-center justify-center min-h-screen p-4">
+                        {/* Backdrop with blur */}
+                        <div 
+                            className={`fixed inset-0 backdrop-blur-sm bg-black/30 ${modalAnimation.enter} ${
+                                showDeleteConfirm ? 'bg-opacity-50' : 'bg-opacity-0'
+                            }`} 
+                            aria-hidden="true"
+                        ></div>
+
+                        {/* Modal */}
+                        <div 
+                            className={`relative bg-white rounded-lg max-w-sm w-full mx-4 ${modalAnimation.enter} ${
+                                showDeleteConfirm ? modalAnimation.enterTo : modalAnimation.leaveTo
+                            }`}
+                        >
+                            <div className="p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                                    End Contract
+                                </h3>
+                                <p className="text-gray-600 mb-6">
+                                    Are you sure you want to end the contract for this vehicle? This action cannot be undone.
+                                </p>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                                    >
+                                        End Contract
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

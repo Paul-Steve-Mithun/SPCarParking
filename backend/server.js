@@ -58,6 +58,7 @@ mongoose
 const VehicleSchema = new mongoose.Schema({
     vehicleNumber: { type: String, required: true },
     vehicleDescription: { type: String },
+    vehicleType: { type: String, enum: ['own', 'tboard'], required: true },
     lotNumber: { type: String},
     ownerName: { type: String, required: true },
     contactNumber: { type: String, required: true },
@@ -70,6 +71,7 @@ const VehicleSchema = new mongoose.Schema({
     endDate: { type: Date },
     additionalDays: {type: Number},
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    transactionMode: { type: String, enum: ['Cash', 'UPI'], default: 'Cash' },
     vehicleImage: { 
         url: String,
         public_id: String
@@ -99,7 +101,22 @@ const RevenueSchema = new mongoose.Schema({
     transactionMode: { type: String, enum: ['Cash', 'UPI'], required: true }
 });
 
+const AdvanceSchema = new mongoose.Schema({
+    vehicleNumber: { type: String, required: true },
+    vehicleDescription: { type: String },
+    lotNumber: { type: String },
+    transactionMode: { type: String, enum: ['Cash', 'UPI'], required: true },
+    startDate: { type: Date, default: Date.now },
+    advanceAmount: { type: Number, required: true },
+    month: { type: Number, required: true },
+    year: { type: Number, required: true },
+    parkingType: { type: String, enum: ['private', 'open'], required: true },
+    advanceRefund: { type: Number, default: null },
+    refundDate: { type: Date, default: null }
+});
+
 const Revenue = mongoose.model('Revenue', RevenueSchema);
+const Advance = mongoose.model('Advance', AdvanceSchema);
 
 // Updated pre-save middleware to handle end dates correctly
 VehicleSchema.pre('save', function(next) {
@@ -183,6 +200,22 @@ app.post('/addVehicle', upload.fields([
             startDate: new Date()
         });
         await newVehicle.save();
+
+        // Create advance record for monthly rentals
+        if (vehicleData.rentalType === 'monthly') {
+            const newAdvance = new Advance({
+                vehicleNumber: vehicleData.vehicleNumber,
+                vehicleDescription: vehicleData.vehicleDescription,
+                lotNumber: vehicleData.lotNumber,
+                transactionMode: vehicleData.transactionMode,
+                startDate: new Date(),
+                advanceAmount: vehicleData.advanceAmount,
+                month: new Date().getMonth(),
+                year: new Date().getFullYear(),
+                parkingType: vehicleData.parkingType
+            });
+            await newAdvance.save();
+        }
 
         // Only create revenue record for daily rentals
         // Monthly rentals will only create revenue on extension
@@ -497,6 +530,162 @@ app.delete('/revenue/:id', async (req, res) => {
             error: error.message,
             message: 'Failed to delete transaction' 
         });
+    }
+});
+
+// Update the total advances endpoint to consider date filters
+app.get('/advances/total', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const endDate = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
+
+        const result = await Advance.aggregate([
+            {
+                $match: {
+                    $or: [
+                        {
+                            startDate: { $lte: endDate }
+                        },
+                        {
+                            refundDate: { $lte: endDate }
+                        }
+                    ]
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalAdvance: { $sum: '$advanceAmount' },
+                    totalRefund: { 
+                        $sum: { 
+                            $cond: [
+                                { $ne: ['$advanceRefund', null] },
+                                '$advanceRefund',
+                                0
+                            ]
+                        } 
+                    },
+                    incomingCount: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $eq: [{ $month: '$startDate' }, parseInt(month) + 1] },
+                                        { $eq: [{ $year: '$startDate' }, parseInt(year)] },
+                                        { $eq: ['$advanceRefund', null] },  // Only count records without refund
+                                        { $gt: ['$advanceAmount', 0] }      // Only count records with advance amount
+                                    ]
+                                },
+                                1,
+                                0
+                            ]
+                        }
+                    },
+                    outgoingCount: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $and: [
+                                        { $eq: [{ $month: '$refundDate' }, parseInt(month) + 1] },
+                                        { $eq: [{ $year: '$refundDate' }, parseInt(year)] },
+                                        { $ne: ['$advanceRefund', null] }   // Only count records with refund
+                                    ]
+                                },
+                                1,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+        
+        const totals = result.length > 0 ? {
+            totalAmount: result[0].totalAdvance - result[0].totalRefund,
+            totalAdvance: result[0].totalAdvance,
+            totalRefund: result[0].totalRefund,
+            incomingCount: result[0].incomingCount,
+            outgoingCount: result[0].outgoingCount
+        } : {
+            totalAmount: 0,
+            totalAdvance: 0,
+            totalRefund: 0,
+            incomingCount: 0,
+            outgoingCount: 0
+        };
+        
+        res.json(totals);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update the advances endpoint to include refund information
+app.get('/advances', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const startOfMonth = new Date(year, month, 1);
+        const endOfMonth = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
+
+        const advances = await Advance.find({
+            $or: [
+                {
+                    startDate: {
+                        $gte: startOfMonth,
+                        $lte: endOfMonth
+                    }
+                },
+                {
+                    refundDate: {
+                        $gte: startOfMonth,
+                        $lte: endOfMonth
+                    }
+                }
+            ]
+        });
+
+        res.json(advances);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update the endpoint to create new refund record
+app.put('/advances/refund/:vehicleNumber', async (req, res) => {
+    try {
+        const { vehicleNumber } = req.params;
+        const { advanceRefund } = req.body;
+
+        // First find the original advance record
+        const originalAdvance = await Advance.findOne({ 
+            vehicleNumber,
+            advanceRefund: null // Get the non-refunded record
+        });
+
+        if (!originalAdvance) {
+            return res.status(404).json({ error: 'Advance record not found or already refunded' });
+        }
+
+        // Create a new advance record for the refund
+        const refundAdvance = new Advance({
+            vehicleNumber: originalAdvance.vehicleNumber,
+            vehicleDescription: originalAdvance.vehicleDescription,
+            lotNumber: originalAdvance.lotNumber,
+            transactionMode: 'UPI',
+            parkingType: originalAdvance.parkingType,
+            startDate: originalAdvance.startDate,
+            advanceAmount: 0, // Set to 0 since this is a refund record
+            month: new Date().getMonth(),
+            year: new Date().getFullYear(),
+            advanceRefund: advanceRefund,
+            refundDate: new Date()
+        });
+
+        await refundAdvance.save();
+
+        res.json({ success: true, advance: refundAdvance });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

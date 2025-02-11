@@ -6,6 +6,7 @@ export function NewVehicle() {
     const [vehicle, setVehicle] = useState({
         vehicleNumber: '', 
         vehicleDescription: '', 
+        vehicleType: 'own',
         lotNumber: '',
         ownerName: '', 
         contactNumber: '',
@@ -112,9 +113,10 @@ export function NewVehicle() {
             const formData = new FormData();
             
             // Append vehicle data as JSON string
-            formData.append('vehicleData', JSON.stringify(vehicle));
-
-            
+            formData.append('vehicleData', JSON.stringify({
+                ...vehicle,
+                transactionMode: vehicle.transactionMode
+            }));
             
             // Append files if they exist
             if (files.vehicleImage) {
@@ -132,17 +134,13 @@ export function NewVehicle() {
                 body: formData
             });
 
-            formData.append('vehicleData', JSON.stringify({
-                ...vehicle,
-                transactionMode: vehicle.transactionMode
-            }));
-
             if (response.ok) {
                 toast.success('Vehicle Added Successfully!');
                 // Reset form
                 setVehicle({
                     vehicleNumber: '', 
                     vehicleDescription: '', 
+                    vehicleType: 'own',
                     lotNumber: '',
                     ownerName: '', 
                     contactNumber: '',
@@ -150,7 +148,8 @@ export function NewVehicle() {
                     rentalType: 'monthly', 
                     rentPrice: '',
                     numberOfDays: '',
-                    advanceAmount: '5000'
+                    advanceAmount: '5000',
+                    transactionMode: 'Cash'
                 });
                 setFiles({
                     vehicleImage: null,
@@ -225,6 +224,34 @@ export function NewVehicle() {
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         required
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-700 font-medium mb-2">Vehicle Board Type</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, vehicleType: 'own'})}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                vehicle.vehicleType === 'own'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            Own Board
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, vehicleType: 'tboard'})}
+                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                vehicle.vehicleType === 'tboard'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            T Board
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div>
