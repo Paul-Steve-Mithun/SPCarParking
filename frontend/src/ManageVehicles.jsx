@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
-import { RefreshCwIcon, SearchIcon } from 'lucide-react';
+import { RefreshCwIcon, SearchIcon, PrinterIcon, Printer } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import VehicleActions from './VehicleActions';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import QRCode from 'qrcode';
+
+const capitalizeFirst = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
 
 export function ManageVehicles() {
     const [vehicles, setVehicles] = useState([]);
@@ -40,12 +47,529 @@ export function ManageVehicles() {
          vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const handlePrintInvoice = async (vehicle) => {
+        try {
+            // Calculate total amount based on rental type
+            const totalAmount = vehicle.rentalType === 'daily' ? 
+                vehicle.rentPrice * vehicle.numberOfDays : 
+                vehicle.rentPrice;
+
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const columnWidth = 85;
+            const startX1 = 15;
+            const startX2 = 110;
+            
+            // Modern Header with Gradient
+            const gradient = doc.setFillColor(0, 128, 0);
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(28);
+            doc.text('SP CAR PARKING', pageWidth/2, 25, { align: 'center' });
+            
+            // Subtitle
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text('Parking Receipt', pageWidth/2, 35, { align: 'center' });
+            
+            // Reset color and set modern font
+            doc.setTextColor(44, 62, 80);
+            doc.setFont("helvetica", "bold");
+            
+            // Section Styling Function
+            const createSection = (title, x, y) => {
+                doc.setFontSize(16);
+                doc.setTextColor(0, 128, 0);
+                doc.text(title, x, y);
+                doc.setDrawColor(0, 128, 0);
+                doc.setLineWidth(0.5);
+                doc.line(x, y + 2, x + columnWidth, y + 2);
+                doc.setTextColor(44, 62, 80);
+            };
+
+            // Left Column
+            createSection('Vehicle Details', startX1, 55);
+
+            const vehicleDetails = [
+                ['Vehicle No:', vehicle.vehicleNumber],
+                ['Description:', vehicle.vehicleDescription],
+                ['Lot Number:', vehicle.lotNumber || 'Open'],
+                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
+                ['Advance:', `INR ${vehicle.advanceAmount}`],
+                ['Rent:', `INR ${vehicle.rentPrice}`],
+                ['Duration:', vehicle.rentalType === 'daily' ? 
+                    `${vehicle.numberOfDays} days` : 'Every Month'],
+                ['Total:', `INR ${totalAmount}`]
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX1 },
+                head: [],
+                body: vehicleDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            createSection('Agreement Details', startX1, doc.autoTable.previous.finalY + 15);
+
+            const agreementDetails = [
+                ['Start Date:', (() => {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - 1);
+                    date.setDate(1);
+                    return date.toLocaleDateString('en-GB');
+                })()],
+                ['End Date:', (() => {
+                    const date = new Date();
+                    date.setDate(0); // Last day of previous month
+                    return date.toLocaleDateString('en-GB');
+                })()],
+                ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 20,
+                margin: { left: startX1 },
+                head: [],
+                body: agreementDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Add Vehicle Image Section
+            if (vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+
+                    // Center image in left column
+                    const imageWidth = 70;
+                    const imageX = startX1 + ((columnWidth - imageWidth) / 2);
+
+                    doc.addImage(
+                        imgBase64, 
+                        'JPEG', 
+                        imageX,
+                        doc.autoTable.previous.finalY + 5,
+                        imageWidth,
+                        50
+                    );
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
+            }
+
+            // Add a green line after the image
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX1, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5), startX1 + columnWidth, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5));
+
+            // Right Column
+            createSection('Owner Details', startX2, 55);
+
+            const ownerDetails = [
+                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
+                ['Contact:', vehicle.contactNumber || 'N/A'],
+                ['Address:', vehicle.ownerAddress || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX2 },
+                head: [],
+                body: ownerDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Terms and Conditions
+            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
+
+            const terms = [
+                ['1.', 'Rent must be paid before 5th of each month'],
+                ['2.', 'Parking spot must be kept clean'],
+                ['3.', 'No unauthorized vehicle transfers']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 15,
+                margin: { left: startX2 },
+                head: [],
+                body: terms,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 2,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 10 },
+                    1: { cellWidth: 75 }
+                }
+            });
+
+            // QR Code Section
+            doc.setFontSize(16);
+            doc.setTextColor(0, 128, 0);
+            doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
+            doc.setFontSize(10);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
+            doc.setTextColor(44, 62, 80);
+
+            // Generate QR Code
+            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrDataUrl = await QRCode.toDataURL(qrData, {
+                width: 30,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
+
+            // Center QR code
+            const qrWidth = 60;
+            const qrX = startX2 + ((columnWidth - qrWidth) / 2);
+
+            doc.addImage(
+                qrDataUrl, 
+                'PNG', 
+                qrX,
+                doc.autoTable.previous.finalY + 25,
+                qrWidth,
+                60
+            );
+
+            // Modern Footer
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            const footer = "This is a computer-generated document. No signature is required.";
+            doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
+
+            doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
+            toast.success('Receipt generated successfully');
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            toast.error('Failed to generate receipt');
+        }
+    };
+
+    const handlePrintDailyInvoice = async (vehicle) => {
+        try {
+            // Calculate dates
+            const startDate = new Date(vehicle.endDate);
+            startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
+            
+            const endDate = new Date(); // Current date
+            endDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
+
+            // Calculate number of days including partial days
+            // Adding 1 because if vehicle enters before 12:00 AM, it's counted as a full day
+            const diffTime = endDate.getTime() - startDate.getTime();
+            const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Calculate total amount
+            const totalAmount = vehicle.rentPrice * numberOfDays;
+
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const columnWidth = 85;
+            const startX1 = 15;
+            const startX2 = 110;
+            
+            // Modern Header with Gradient
+            const gradient = doc.setFillColor(0, 128, 0);
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(28);
+            doc.text('SP CAR PARKING', pageWidth/2, 25, { align: 'center' });
+            
+            // Subtitle
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text('Parking Receipt', pageWidth/2, 35, { align: 'center' });
+            
+            // Reset color and set modern font
+            doc.setTextColor(44, 62, 80);
+            doc.setFont("helvetica", "bold");
+            
+            // Section Styling Function
+            const createSection = (title, x, y) => {
+                doc.setFontSize(16);
+                doc.setTextColor(0, 128, 0);
+                doc.text(title, x, y);
+                doc.setDrawColor(0, 128, 0);
+                doc.setLineWidth(0.5);
+                doc.line(x, y + 2, x + columnWidth, y + 2);
+                doc.setTextColor(44, 62, 80);
+            };
+
+            // Left Column
+            createSection('Vehicle Details', startX1, 55);
+
+            const vehicleDetails = [
+                ['Vehicle No:', vehicle.vehicleNumber],
+                ['Description:', vehicle.vehicleDescription],
+                ['Lot Number:', vehicle.lotNumber || 'Open'],
+                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
+                ['Rent/Day:', `INR ${vehicle.rentPrice}`],
+                ['Duration:', `${numberOfDays} days`],
+                ['Total:', `INR ${totalAmount}`]
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX1 },
+                head: [],
+                body: vehicleDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            createSection('Agreement Details', startX1, doc.autoTable.previous.finalY + 15);
+
+            const agreementDetails = [
+                ['Start Date:', startDate.toLocaleDateString('en-GB')],
+                ['End Date:', endDate.toLocaleDateString('en-GB')],
+                ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 20,
+                margin: { left: startX1 },
+                head: [],
+                body: agreementDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Add Vehicle Image Section
+            if (vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+
+                    // Center image in left column
+                    const imageWidth = 70;
+                    const imageX = startX1 + ((columnWidth - imageWidth) / 2);
+
+                    doc.addImage(
+                        imgBase64, 
+                        'JPEG', 
+                        imageX,
+                        doc.autoTable.previous.finalY + 5,
+                        imageWidth,
+                        50
+                    );
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
+            }
+
+            // Add a green line after the image
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX1, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5), startX1 + columnWidth, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5));
+
+            // Right Column
+            createSection('Owner Details', startX2, 55);
+
+            const ownerDetails = [
+                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
+                ['Contact:', vehicle.contactNumber || 'N/A'],
+                ['Address:', vehicle.ownerAddress || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX2 },
+                head: [],
+                body: ownerDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Terms and Conditions
+            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
+
+            const terms = [
+                ['1.', 'Rent must be paid before 5th of each month'],
+                ['2.', 'Parking spot must be kept clean'],
+                ['3.', 'No unauthorized vehicle transfers']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 15,
+                margin: { left: startX2 },
+                head: [],
+                body: terms,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 2,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 10 },
+                    1: { cellWidth: 75 }
+                }
+            });
+
+            // QR Code Section
+            doc.setFontSize(16);
+            doc.setTextColor(0, 128, 0);
+            doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
+            doc.setFontSize(10);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
+            doc.setTextColor(44, 62, 80);
+
+            // QR Code Section with updated amount
+            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            const qrDataUrl = await QRCode.toDataURL(qrData, {
+                width: 30,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
+
+            // Center QR code
+            const qrWidth = 60;
+            const qrX = startX2 + ((columnWidth - qrWidth) / 2);
+
+            doc.addImage(
+                qrDataUrl, 
+                'PNG', 
+                qrX,
+                doc.autoTable.previous.finalY + 25,
+                qrWidth,
+                60
+            );
+
+            // Modern Footer
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            const footer = "This is a computer-generated document. No signature is required.";
+            doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
+
+            doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`);
+            toast.success('Receipt generated successfully');
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            toast.error('Failed to generate receipt');
+        }
+    };
+
     const renderVehicleCard = (vehicle) => (
         <div 
             key={vehicle._id} 
-            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="p-4 hover:bg-gray-50 cursor-pointer relative"
             onClick={() => setSelectedVehicle(vehicle)}
         >
+            {/* Printer Button - Absolute positioned */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click when clicking printer
+                    vehicle.rentalType === 'monthly' 
+                        ? handlePrintInvoice(vehicle) 
+                        : handlePrintDailyInvoice(vehicle);
+                }}
+                className="absolute right-4 top-4 p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                title="Print Receipt"
+            >
+                <Printer className="w-5 h-5" />
+            </button>
+
+            {/* Card Content */}
             <div className="flex-grow space-y-2 sm:space-y-1">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>

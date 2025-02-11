@@ -6,6 +6,10 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode'
 
+const capitalizeFirst = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 export function AdminPanel() {
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -28,7 +32,7 @@ export function AdminPanel() {
 
     useEffect(() => {
         fetchVehicles();
-        const intervalId = setInterval(fetchVehicles, 60000);
+        const intervalId = setInterval(fetchVehicles, 600000);
         return () => clearInterval(intervalId);
     }, []);
 
@@ -41,8 +45,6 @@ export function AdminPanel() {
             toast.error('Failed to remove vehicle');
         }
     };
-
-
 
     const handlePrintInvoice = async (vehicle) => {
         try {
@@ -69,7 +71,7 @@ export function AdminPanel() {
             // Subtitle
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text('PARKING RECEIPT', pageWidth/2, 35, { align: 'center' });
+            doc.text('Welcomes You', pageWidth/2, 35, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
@@ -92,9 +94,9 @@ export function AdminPanel() {
             const vehicleDetails = [
                 ['Vehicle No:', vehicle.vehicleNumber],
                 ['Description:', vehicle.vehicleDescription],
-                ['Lot Number:', vehicle.lotNumber],
-                ['Status:', vehicle.status],
-                ['Rental Type:', vehicle.rentalType],
+                ['Lot Number:', vehicle.lotNumber || 'Open'],
+                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
                 ['Advance:', `INR ${vehicle.advanceAmount}`],
                 ['Rent:', `INR ${vehicle.rentPrice}`],
                 ['Duration:', vehicle.rentalType === 'daily' ? 
@@ -145,15 +147,52 @@ export function AdminPanel() {
                     1: { cellWidth: 50 }
                 }
             });
+
+            // Add Vehicle Image Section with smaller dimensions
+            if (vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+
+                    // Center image in left column
+                    const imageWidth = 70;
+                    const imageX = startX1 + ((columnWidth - imageWidth) / 2); // Center horizontally
+
+                    doc.addImage(
+                        imgBase64, 
+                        'JPEG', 
+                        imageX,  // centered X position
+                        doc.autoTable.previous.finalY + 5,
+                        imageWidth,
+                        50
+                    );
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
+            }
+
+            // Add a green line after the image
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX1, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5), startX1 + columnWidth, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5));
     
-            // Right Column
-            createSection('Owner Details', startX2, 55);
+            // Right Column - adjust Y position
+            const rightColumnY = vehicle.vehicleImage?.url ? 
+                doc.autoTable.previous.finalY + 60 : 55; // reduced from 80
+            
+            createSection('Owner Details', startX2, 55); // Keep at top
     
             const ownerDetails = [
-                ['Name:', vehicle.ownerName || 'N/A'],
+                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
                 ['Contact:', vehicle.contactNumber || 'N/A'],
                 ['Address:', vehicle.ownerAddress || 'N/A']
             ];
+
     
             doc.autoTable({
                 startY: 60,
@@ -173,8 +212,8 @@ export function AdminPanel() {
                 }
             });
     
-            // Terms and Conditions
-            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 15);
+            // Terms and Conditions - Reduced padding
+            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10); // reduced from 15
     
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month'],
@@ -183,14 +222,14 @@ export function AdminPanel() {
             ];
     
             doc.autoTable({
-                startY: doc.autoTable.previous.finalY + 20,
+                startY: doc.autoTable.previous.finalY + 15, // reduced from 20
                 margin: { left: startX2 },
                 head: [],
                 body: terms,
                 theme: 'plain',
                 styles: { 
                     fontSize: 10,
-                    cellPadding: 3,
+                    cellPadding: 2, // reduced from 3
                     font: 'helvetica',
                     textColor: [44, 62, 80]
                 },
@@ -200,22 +239,42 @@ export function AdminPanel() {
                 }
             });
     
-            // QR Code Section
-            createSection('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 15);
+            // QR Code Section - Reduced size and padding
+            doc.setFontSize(16);
+            doc.setTextColor(0, 128, 0);
+            doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
+            // Add smaller text
+            doc.setFontSize(10);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
+            // Add the green line
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
+            doc.setTextColor(44, 62, 80);
             
-            // Generate QR Code with correct total amount
+            // Generate smaller QR Code
             const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 40,
-                margin: 3,
+                width: 30,
+                margin: 2,
                 color: {
                     dark: '#000000',
                     light: '#ffffff'
                 }
             });
             
-            // Add QR code to PDF
-            doc.addImage(qrDataUrl, 'PNG', startX2, doc.autoTable.previous.finalY + 20, 80, 80);
+            // Center QR code in right column
+            const qrWidth = 60;
+            const qrX = startX2 + ((columnWidth - qrWidth) / 2); // Center horizontally
+
+            doc.addImage(
+                qrDataUrl, 
+                'PNG', 
+                qrX,  // centered X position
+                doc.autoTable.previous.finalY + 25,
+                qrWidth,
+                60
+            );
     
             // Modern Footer
             doc.setDrawColor(0, 128, 0);
@@ -322,18 +381,35 @@ export function AdminPanel() {
                     {filteredVehicles.map(vehicle => (
                         <div 
                             key={vehicle._id} 
-                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                         >
-                            <div className="flex-grow cursor-pointer" onClick={() => setSelectedVehicle(vehicle)}>
-                                <div className="flex items-center gap-3">
-                                    <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>
-                                    <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                                        {vehicle.lotNumber || 'Open Parking'}
-                                    </span>
-                                    <StatusBadge status={vehicle.status} endDate={vehicle.endDate} />
+                            <div className="flex-grow cursor-pointer w-full" onClick={() => setSelectedVehicle(vehicle)}>
+                                {/* Top row with vehicle number and badges */}
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <p className="font-semibold text-gray-800 min-w-[120px]">{vehicle.vehicleNumber}</p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs ${
+                                            vehicle.vehicleType === 'own' 
+                                                ? 'bg-purple-100 text-purple-600' 
+                                                : 'bg-orange-100 text-orange-600'
+                                        }`}>
+                                            {vehicle.vehicleType === 'own' ? 'Own' : 'T Board'}
+                                        </span>
+
+                                        <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
+                                            {vehicle.lotNumber || 'Open'}
+                                        </span>
+
+                                        <StatusBadge status={vehicle.status} endDate={vehicle.endDate} />
+                                    </div>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">{vehicle.vehicleDescription}</p>
-                                <div className="flex items-center gap-2 mt-1">
+
+                                {/* Vehicle description */}
+                                <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+
+                                {/* Rental info */}
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
                                     <p className="text-sm text-gray-500">{renderRentalInfo(vehicle)}</p>
                                     {vehicle.rentalType === 'daily' && (
                                         <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
@@ -341,19 +417,26 @@ export function AdminPanel() {
                                         </span>
                                     )}
                                 </div>
+
+                                {/* Remaining time */}
                                 <p className="text-xs text-gray-500 mt-1">
                                     {getRemainingTime(vehicle.endDate)}
                                 </p>
                             </div>
-                            <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => handlePrintInvoice(vehicle)}
-                                className="text-gray-600 hover:text-blue-600 transition-colors"
-                            >
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-4 mt-2 sm:mt-0 w-full sm:w-auto justify-end">
+                                <button
+                                    onClick={() => handlePrintInvoice(vehicle)}
+                                    className="text-gray-600 hover:text-blue-600 transition-colors p-2"
+                                >
                                     <PrinterIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => setSelectedVehicle(vehicle)}>
-                                    <UserCog2Icon className="w-5 h-5 text-gray-600 hover:text-blue-600" />
+                                <button 
+                                    onClick={() => setSelectedVehicle(vehicle)}
+                                    className="text-gray-600 hover:text-blue-600 transition-colors p-2"
+                                >
+                                    <UserCog2Icon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>

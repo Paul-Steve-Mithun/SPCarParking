@@ -42,27 +42,6 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
         }
     };
 
-    const handleDeleteVehicle = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`https://spcarparkingbknd.onrender.com/removeVehicle/${vehicle._id}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                toast.success('Vehicle removed successfully');
-                onRefresh();
-                onClose();
-            } else {
-                toast.error('Failed to remove vehicle');
-            }
-        } catch (error) {
-            toast.error('Error deleting vehicle');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleExtendRental = async () => {
         if (!additionalDays || additionalDays <= 0) {
             toast.error("Please enter a valid number of days");
@@ -98,16 +77,24 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
         <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="fixed inset-0 bg-black/50" onClick={onClose} />
             <div className="relative bg-white rounded-lg shadow-xl overflow-hidden w-96">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-bold text-white">Vehicle: {vehicle.vehicleNumber}</h2>
-                        <button 
-                            onClick={onClose}
-                            disabled={loading}
-                            className="text-white hover:text-gray-200 disabled:opacity-50"
-                        >
-                            <XIcon className="w-5 h-5" />
-                        </button>
+                <div className="bg-gradient-to-r from-red-500 to-red-600 p-6">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-bold text-white">{vehicle.vehicleNumber}</h2>
+                                <span className="px-4 py-1.5 bg-white/20 text-white font-bold rounded-full text-base">
+                                    {vehicle.lotNumber || 'Open'}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={onClose}
+                                disabled={loading}
+                                className="text-white hover:text-gray-200 disabled:opacity-50"
+                            >
+                                <XIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <span className="text-sm text-white/80">{vehicle.vehicleDescription}</span>
                     </div>
                 </div>
                 <div className="p-6">
@@ -146,9 +133,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                     <span className="text-sm font-medium text-gray-700">Extend Rental Period</span>
                                     <button
                                         onClick={() => setShowExtendForm(!showExtendForm)}
-                                        className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                                        className="text-green-600 hover:text-green-800 text-base flex items-center gap-2"
                                     >
-                                        <PlusCircleIcon className="w-4 h-4" />
+                                        <PlusCircleIcon className="w-5 h-5" />
                                         {showExtendForm ? 'Cancel' : 'Extend'}
                                     </button>
                                 </div>
@@ -160,14 +147,14 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                 type="number"
                                                 value={additionalDays}
                                                 onChange={(e) => setAdditionalDays(e.target.value)}
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                                                 placeholder="Number of days"
                                                 min="1"
                                             />
                                             <button
                                                 onClick={handleExtendRental}
                                                 disabled={loading}
-                                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                                                className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-base font-medium"
                                             >
                                                 Extend
                                             </button>
@@ -202,22 +189,13 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                 <button 
                                     onClick={handlePaidRent}
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600 transition-colors disabled:opacity-50 font-medium"
+                                    className="w-full flex items-center justify-center bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors disabled:opacity-50 text-base font-medium"
                                 >
-                                    <CheckIcon className="w-5 h-5 mr-2" /> 
+                                    <CheckIcon className="w-6 h-6 mr-2" />
                                     <span>Extend 30 Days</span>
                                 </button>
                             </div>
                         )}
-
-                        <button 
-                            onClick={handleDeleteVehicle}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center bg-red-500 text-white px-4 py-3 rounded hover:bg-red-600 transition-colors disabled:opacity-50 font-medium"
-                        >
-                            <TrashIcon className="w-5 h-5 mr-2" /> 
-                            <span>Delete Vehicle</span>
-                        </button>
                     </div>
                 </div>
             </div>

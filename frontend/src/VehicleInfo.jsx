@@ -111,11 +111,16 @@ export function VehicleInfo() {
                         {/* Basic Info Card */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
-                                <h2 className="text-2xl font-bold text-white">Vehicle Information</h2>
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-2xl font-bold text-white">Vehicle Information</h2>
+                                    <span className="px-4 py-2 bg-white/30 text-white text-lg font-bold rounded-full shadow-lg">
+                                        {selectedVehicle.lotNumber || 'Open'}
+                                    </span>
+                                </div>
                             </div>
                             
                             <div className="p-6 space-y-6">
-                                {/* Row 1: Vehicle Number - Vehicle Description - Lot Number */}
+                                {/* Row 1: Vehicle Number - Vehicle Description - Vehicle Type */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div className="flex items-center space-x-3">
                                         <Car className="text-blue-500 flex-shrink-0" />
@@ -132,10 +137,12 @@ export function VehicleInfo() {
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-3">
-                                        <MapPin className="text-blue-500 flex-shrink-0" />
+                                        <Car className="text-blue-500 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Lot Number</p>
-                                            <p className="font-medium truncate">{selectedVehicle.lotNumber}</p>
+                                            <p className="text-sm text-gray-500">Vehicle Type</p>
+                                            <p className="font-medium truncate">
+                                                {selectedVehicle.vehicleType === 'own' ? 'Own Board' : 'T Board'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -152,8 +159,14 @@ export function VehicleInfo() {
                                     <div className="flex items-center space-x-3">
                                         <Phone className="text-blue-500 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Contact</p>
-                                            <p className="font-medium truncate">{selectedVehicle.contactNumber}</p>
+                                            <p className="text-sm text-gray-500">Contact Number</p>
+                                            <a 
+                                                href={`tel:${selectedVehicle.contactNumber}`}
+                                                className="font-medium truncate text-blue-600 hover:text-blue-800 hover:underline"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {selectedVehicle.contactNumber}
+                                            </a>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-3">

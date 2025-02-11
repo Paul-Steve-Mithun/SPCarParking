@@ -23,8 +23,10 @@ export function AdvanceDashboard() {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
     const [stats, setStats] = useState({
         totalAdvance: 0,
-        vehicleCount: 0
+        vehicleCount: 0,
+        totalRefund: 0
     });
+    const [totalAdvance, setTotalAdvance] = useState(0);
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -33,6 +35,7 @@ export function AdvanceDashboard() {
 
     useEffect(() => {
         fetchVehicles();
+        fetchTotalAdvance();
     }, [selectedMonth, selectedYear]);
 
     useEffect(() => {
@@ -45,27 +48,37 @@ export function AdvanceDashboard() {
 
     const fetchVehicles = async () => {
         try {
-            const response = await fetch('https://spcarparkingbknd.onrender.com/vehicles');
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`);
             const data = await response.json();
-            // Filter monthly rental vehicles
-            const monthlyVehicles = data.filter(v => {
-                const vehicleDate = new Date(v.startDate);
-                return v.rentalType === 'monthly' && 
-                       vehicleDate.getMonth() === selectedMonth &&
-                       vehicleDate.getFullYear() === selectedYear;
-            });
 
-            setVehicles(monthlyVehicles);
-            setFilteredVehicles(monthlyVehicles);
+            setVehicles(data);
+            setFilteredVehicles(data);
 
             // Calculate stats
             const statsData = {
-                totalAdvance: monthlyVehicles.reduce((sum, v) => sum + (v.advanceAmount || 0), 0),
-                vehicleCount: monthlyVehicles.length
+                incomingVehicles: calculateIncomingVehicles(data),
+                outgoingVehicles: calculateOutgoingVehicles(data),
+                monthlyAdvance: calculateMonthlyAdvance(data),
+                totalAdvanceTillDate: calculateTotalAdvanceTillDate(data)
             };
             setStats(statsData);
         } catch (error) {
-            toast.error('Failed to fetch vehicles');
+            toast.error('Failed to fetch advances');
+        }
+    };
+
+    const fetchTotalAdvance = async () => {
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/advances/total?month=${selectedMonth}&year=${selectedYear}`);
+            const data = await response.json();
+            setTotalAdvance(data.totalAmount);
+            setStats(prev => ({
+                ...prev,
+                incomingCount: data.incomingCount,
+                outgoingCount: data.outgoingCount
+            }));
+        } catch (error) {
+            console.error('Failed to fetch total advance:', error);
         }
     };
 
@@ -98,47 +111,75 @@ export function AdvanceDashboard() {
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         
-        // Calculate total table width based on column widths
-        const totalTableWidth = 35 + 50 + 20 + 35 + 30 + 35; // Sum of all column widths
-        
-        // Calculate left margin to center the table
-        const leftMargin = (pageWidth - totalTableWidth) / 2;
-
-        // Modern header with gradient-like effect
+        // Header section
         doc.setFillColor(79, 70, 229);
         doc.rect(0, 0, pageWidth, 35, 'F');
         
-        // Company name
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
         doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
         
-        // Statement title
         doc.setFontSize(14);
         doc.text(`${monthNames[selectedMonth]} ${selectedYear} Advance Payment Statement`, pageWidth / 2, 28, { align: 'center' });
 
-        // Summary cards section
+        // Summary cards section - 4 cards in a row
         const summaryY = 45;
-        const cardWidth = (pageWidth - 40) / 2;
+        const cardWidth = (pageWidth - 70) / 4; // 4 cards with margins
+        const cardHeight = 35;
         
-        // Modern card styling
+        // Card 1 - Incoming Vehicles
         doc.setFillColor(246, 246, 252);
-        doc.roundedRect(14, summaryY, cardWidth, 30, 2, 2, 'F');
-        doc.roundedRect(cardWidth + 26, summaryY, cardWidth, 30, 2, 2, 'F');
-        
-        // Card content
+        doc.roundedRect(14, summaryY, cardWidth, cardHeight, 2, 2, 'F');
         doc.setTextColor(79, 70, 229);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('Total Advance Amount', 20, summaryY + 12);
-        doc.text('Total Vehicles', cardWidth + 32, summaryY + 12);
-        
+        doc.text('Incoming Vehicles', 20, summaryY + 12);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(`INR ${stats.totalAdvance.toFixed(2)}`, 20, summaryY + 25);
-        doc.text(`${stats.vehicleCount}`, cardWidth + 32, summaryY + 25);
+        doc.text(`${stats.incomingCount}`, 20, summaryY + 28);
+
+        // Card 2 - Outgoing Vehicles
+        doc.setFillColor(246, 246, 252);
+        doc.roundedRect(cardWidth + 24, summaryY, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Outgoing Vehicles', cardWidth + 30, summaryY + 12);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(`${stats.outgoingCount}`, cardWidth + 30, summaryY + 28);
+
+        // Card 3 - Monthly Advance (Net)
+        doc.setFillColor(246, 246, 252);
+        doc.roundedRect((cardWidth * 2) + 34, summaryY, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Monthly Advance (Net)', (cardWidth * 2) + 40, summaryY + 12);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        if (stats.monthlyAdvance < 0) {
+            doc.setTextColor(239, 68, 68); // text-red-500
+            doc.text(`-INR ${Math.abs(stats.monthlyAdvance).toFixed(2)}`, (cardWidth * 2) + 40, summaryY + 28);
+        } else {
+            doc.text(`INR ${stats.monthlyAdvance.toFixed(2)}`, (cardWidth * 2) + 40, summaryY + 28);
+        }
+
+        // Card 4 - Total Advance Till Date
+        doc.setFillColor(246, 246, 252);
+        doc.roundedRect((cardWidth * 3) + 44, summaryY, cardWidth, cardHeight, 2, 2, 'F');
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Total Advance (Till Date)', (cardWidth * 3) + 50, summaryY + 12);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(`INR ${totalAdvance.toFixed(2)}`, (cardWidth * 3) + 50, summaryY + 28);
 
         // Format date function
         const formatDateForPDF = (date) => {
@@ -156,19 +197,34 @@ export function AdvanceDashboard() {
             { header: 'Amount', dataKey: 'amount' }
         ];
 
-        const tableRows = vehicles.map(vehicle => ({
-            vehicleNumber: vehicle.vehicleNumber || '',
-            description: vehicle.vehicleDescription || '',
-            lot: vehicle.lotNumber || '',
-            mode: vehicle.transactionMode || 'Cash',
-            date: formatDateForPDF(vehicle.startDate),
-            amount: `INR ${(vehicle.advanceAmount || 0).toFixed(2)}`
-        }));
+        // First, calculate the total table width and margins
+        const totalTableWidth = 35 + 50 + 20 + 35 + 30 + 35; // Sum of column widths
+        const leftMargin = (pageWidth - totalTableWidth) / 2;
 
+        // Update the tableRows to better handle refund information
+        const tableRows = vehicles.map(vehicle => {
+            const isRefund = !!vehicle.advanceRefund;
+            const amount = isRefund 
+                ? vehicle.advanceRefund 
+                : (vehicle.advanceAmount || 0);
+
+            return {
+                vehicleNumber: vehicle.vehicleNumber || '',
+                description: vehicle.vehicleDescription || '',
+                lot: vehicle.lotNumber || '',
+                mode: vehicle.transactionMode || 'Cash',
+                date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
+                amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
+                isRefund: isRefund,
+                rawAmount: isRefund ? -amount : amount // Store raw amount for sorting
+            };
+        });
+
+        // Update the autoTable configuration
         doc.autoTable({
             columns: tableColumn,
             body: tableRows,
-            startY: summaryY + 40,
+            startY: summaryY + cardHeight + 20,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
@@ -195,9 +251,6 @@ export function AdvanceDashboard() {
                 date: { cellWidth: 30, halign: 'center' },
                 amount: { cellWidth: 35, halign: 'center' }
             },
-            alternateRowStyles: {
-                fillColor: [250, 250, 255]
-            },
             margin: { 
                 left: leftMargin,
                 right: leftMargin,
@@ -211,8 +264,21 @@ export function AdvanceDashboard() {
                 overflow: 'linebreak',
                 cellWidth: 'auto'
             },
+            willDrawCell: function(data) {
+                if (data.section === 'body') {
+                    const row = data.row.raw;
+                    const isNegativeAmount = row.rawAmount < 0;
+                    
+                    if (isNegativeAmount || row.isRefund) {
+                        data.cell.styles.fillColor = [255, 235, 235];
+                        data.cell.styles.textColor = [220, 50, 50];
+                    } else {
+                        data.cell.styles.fillColor = data.row.index % 2 === 0 ? [255, 255, 255] : [250, 250, 255];
+                        data.cell.styles.textColor = [0, 0, 0];
+                    }
+                }
+            },
             didDrawPage: function(data) {
-                // Add page number at the bottom center
                 doc.setFontSize(10);
                 doc.text(
                     `Page ${data.pageNumber}`, 
@@ -224,6 +290,65 @@ export function AdvanceDashboard() {
         });
 
         doc.save(`SP_Parking_Advance_${monthNames[selectedMonth]}_${selectedYear}.pdf`);
+    };
+
+    const calculateMonthlyAdvance = (vehicles) => {
+        // Calculate incoming advances (new vehicles)
+        const incomingAmount = vehicles
+            .filter(v => {
+                const startDate = new Date(v.startDate);
+                return startDate.getMonth() === selectedMonth && 
+                       startDate.getFullYear() === selectedYear &&
+                       v.advanceAmount > 0 && // Only count positive advance amounts
+                       !v.advanceRefund; // Exclude refund records
+            })
+            .reduce((total, vehicle) => total + (vehicle.advanceAmount || 0), 0);
+
+        // Calculate outgoing refunds
+        const outgoingAmount = vehicles
+            .filter(v => {
+                const refundDate = v.refundDate;
+                return refundDate && // Only include records with refund date
+                       new Date(refundDate).getMonth() === selectedMonth && 
+                       new Date(refundDate).getFullYear() === selectedYear &&
+                       v.advanceRefund; // Only include records with refund amount
+            })
+            .reduce((total, vehicle) => total + (vehicle.advanceRefund || 0), 0);
+
+        return incomingAmount - outgoingAmount;
+    };
+    
+    const calculateIncomingVehicles = (vehicles) => {
+        return vehicles.filter(v => {
+            const startDate = new Date(v.startDate);
+            return startDate.getMonth() === selectedMonth && 
+                   startDate.getFullYear() === selectedYear &&
+                   v.advanceAmount > 0 && // Only count new advances
+                   !v.advanceRefund; // Exclude refund records
+        }).length;
+    };
+
+    const calculateOutgoingVehicles = (vehicles) => {
+        return vehicles.filter(v => {
+            const refundDate = v.refundDate;
+            return refundDate && // Only count vehicles with refund date
+                   new Date(refundDate).getMonth() === selectedMonth && 
+                   new Date(refundDate).getFullYear() === selectedYear;
+        }).length;
+    };
+
+    const calculateTotalAdvanceTillDate = (vehicles) => {
+        // Sum all advances
+        const totalAdvances = vehicles
+            .filter(v => !v.advanceRefund) // Exclude refund records
+            .reduce((total, vehicle) => total + (vehicle.advanceAmount || 0), 0);
+
+        // Sum all refunds
+        const totalRefunds = vehicles
+            .filter(v => v.advanceRefund) // Only include refund records
+            .reduce((total, vehicle) => total + (vehicle.advanceRefund || 0), 0);
+
+        return totalAdvances - totalRefunds;
     };
 
     return (
@@ -276,15 +401,27 @@ export function AdvanceDashboard() {
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <Car className="w-8 h-8 text-purple-600" />
+                                        <ArrowUp className="w-8 h-8 text-green-600" />
                                     </div>
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Vehicles</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.vehicleCount}</p>
+                                        <p className="text-gray-600 text-sm font-medium">Incoming Vehicles</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.incomingCount}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                                <div className="flex items-center space-x-4">
+                                    <div className="p-3 rounded-xl bg-white shadow-sm">
+                                        <ArrowDown className="w-8 h-8 text-red-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-600 text-sm font-medium">Outgoing Vehicles</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.outgoingCount}</p>
                                     </div>
                                 </div>
                             </div>
@@ -295,8 +432,23 @@ export function AdvanceDashboard() {
                                         <DollarSign className="w-8 h-8 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Advance Amount</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.totalAdvance.toFixed(2)}</p>
+                                        <p className="text-gray-600 text-sm font-medium">Monthly Advance (Net)</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-500' : 'text-gray-900'}`}>
+                                            {stats.monthlyAdvance < 0 ? '-₹' : '₹'}
+                                            {Math.abs(stats.monthlyAdvance).toFixed(2)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                                <div className="flex items-center space-x-4">
+                                    <div className="p-3 rounded-xl bg-white shadow-sm">
+                                        <DollarSign className="w-8 h-8 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-600 text-sm font-medium">Total Advance (Till {monthNames[selectedMonth]} {selectedYear})</p>
+                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{totalAdvance.toFixed(2)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -335,6 +487,7 @@ export function AdvanceDashboard() {
                                                         'vehicleNumber',
                                                         'vehicleDescription',
                                                         'lotNumber',
+                                                        'parkingType',
                                                         'transactionMode',
                                                         'startDate',
                                                         'advanceAmount'
@@ -359,7 +512,12 @@ export function AdvanceDashboard() {
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
                                                 {filteredVehicles.map((vehicle) => (
-                                                    <tr key={vehicle._id} className="hover:bg-gray-50 transition-colors duration-150">
+                                                    <tr 
+                                                        key={vehicle._id} 
+                                                        className={`transition-colors duration-150 ${
+                                                            vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+                                                        }`}
+                                                    >
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                                                             {vehicle.vehicleNumber}
                                                         </td>
@@ -368,6 +526,9 @@ export function AdvanceDashboard() {
                                                         </td>
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
                                                             {vehicle.lotNumber}
+                                                        </td>
+                                                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                            {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
                                                         </td>
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                                                             <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
@@ -389,10 +550,16 @@ export function AdvanceDashboard() {
                                                             </span>
                                                         </td>
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                            {new Date(vehicle.startDate).toLocaleDateString('en-GB')}
+                                                            {vehicle.advanceRefund 
+                                                                ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
+                                                                : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
                                                         </td>
-                                                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-gray-900">
-                                                            ₹{vehicle.advanceAmount || 0}
+                                                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
+                                                            <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
+                                                                {vehicle.advanceRefund 
+                                                                    ? `-₹${vehicle.advanceRefund}`
+                                                                    : `₹${vehicle.advanceAmount}`}
+                                                            </span>
                                                         </td>
                                                     </tr>
                                                 ))}
