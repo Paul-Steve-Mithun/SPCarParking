@@ -17,12 +17,35 @@ export function AdminPanel() {
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [printLoading, setPrintLoading] = useState(false);
 
+    const sortByLotNumber = (vehicles) => {
+        return [...vehicles].sort((a, b) => {
+            const getLotParts = (lot) => {
+                if (!lot) return { letter: 'Z', number: Infinity }; // Push 'Open' parking to the end
+                const letter = lot.charAt(0);
+                const number = parseInt(lot.slice(1)) || 0;
+                return { letter, number };
+            };
+
+            const lotA = getLotParts(a.lotNumber);
+            const lotB = getLotParts(b.lotNumber);
+
+            // First compare letters
+            if (lotA.letter !== lotB.letter) {
+                return lotA.letter.localeCompare(lotB.letter);
+            }
+
+            // If letters are same, compare numbers
+            return lotA.number - lotB.number;
+        });
+    };
+
     const fetchVehicles = async () => {
         setLoading(true);
         try {
             const response = await fetch('https://spcarparkingbknd.onrender.com/vehicles');
             const data = await response.json();
-            setVehicles(data);
+            const sortedData = sortByLotNumber(data);
+            setVehicles(sortedData);
         } catch (error) {
             toast.error('Failed to fetch vehicles');
         } finally {
@@ -295,10 +318,12 @@ export function AdminPanel() {
         }
     };
 
-    const filteredVehicles = vehicles.filter(vehicle =>
-        vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.vehicleDescription.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredVehicles = sortByLotNumber(
+        vehicles.filter(vehicle =>
+            vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            vehicle.vehicleDescription.toLowerCase().includes(searchTerm.toLowerCase())
+        )
     );
 
     const isExpired = (endDate) => {
