@@ -18,17 +18,38 @@ import {
 import { motion } from 'framer-motion';
 import { useSpring, animated } from 'react-spring';
 
-export function HomePage() {
+export function HomePage({ isAuthenticated, onAuthentication }) {
     const [vehicles, setVehicles] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [filteredVehicles, setFilteredVehicles] = useState([]);
+    const [loginError, setLoginError] = useState('');
 
     useEffect(() => {
         fetch('https://spcarparkingbknd.onrender.com/vehicles')
             .then(res => res.json())
             .then(data => setVehicles(data));
     }, []);
+
+    const sortByLotNumber = (vehicles) => {
+        return [...vehicles].sort((a, b) => {
+            const getLotParts = (lot) => {
+                if (!lot) return { letter: 'Z', number: Infinity };
+                const letter = lot.charAt(0);
+                const number = parseInt(lot.slice(1)) || 0;
+                return { letter, number };
+            };
+
+            const lotA = getLotParts(a.lotNumber);
+            const lotB = getLotParts(b.lotNumber);
+
+            if (lotA.letter !== lotB.letter) {
+                return lotA.letter.localeCompare(lotB.letter);
+            }
+
+            return lotA.number - lotB.number;
+        });
+    };
 
     const stats = [
         {
@@ -116,7 +137,9 @@ export function HomePage() {
 
     const handleCardClick = (stat) => {
         setSelectedCategory(stat.label);
-        setFilteredVehicles(stat.filter());
+        const filteredVehicles = stat.filter();
+        const sortedVehicles = sortByLotNumber(filteredVehicles);
+        setFilteredVehicles(sortedVehicles);
         setShowModal(true);
     };
 
@@ -138,32 +161,86 @@ export function HomePage() {
                 </div>
                 <div className="p-6 overflow-auto max-h-[calc(80vh-80px)]">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredVehicles.map((vehicle) => (
-                            <div 
-                                key={vehicle._id}
-                                className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-all duration-300"
-                            >
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="px-3 py-1 bg-gray-100 rounded-full">
-                                            <span className="text-sm font-medium text-gray-700">
-                                                {vehicle.lotNumber || 'Open'}
+                        {filteredVehicles.map(vehicle => (
+                            <div key={vehicle._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                {/* Vehicle Header */}
+                                <div className="p-4 bg-gray-50 border-b border-gray-200">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1"> {/* Added min-w-0 to enable text truncation */}
+                                            <h3 className="font-semibold text-gray-900 truncate">
+                                                {vehicle.vehicleNumber}
+                                            </h3>
+                                            <p className="text-sm text-gray-500 truncate">
+                                                {vehicle.vehicleDescription || 'No description'}
+                                            </p>
+                                        </div>
+                                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                                            vehicle.status === 'active' 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : 'bg-red-100 text-red-800'
+                                        }`}>
+                                            {vehicle.status === 'active' ? 'Active' : 'Expired'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Vehicle Details */}
+                                <div className="p-4 space-y-2">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Lot Number:</span>
+                                        <span className="font-medium text-gray-900">{vehicle.lotNumber || 'Open'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Type:</span>
+                                        <span className="font-medium text-gray-900 capitalize">{vehicle.rentalType}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Rent:</span>
+                                        <span className="font-medium text-gray-900">
+                                            {vehicle.rentalType === 'daily' ? (
+                                                <>
+                                                    ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                                    <span className="text-gray-500">
+                                                        {' '}({vehicle.numberOfDays} days)
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                `₹${vehicle.rentPrice}`
+                                            )}
+                                        </span>
+                                    </div>
+                                    {vehicle.endDate && (
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">End Date:</span>
+                                            <span className="font-medium text-gray-900">
+                                                {formatDate(vehicle.endDate)}
                                             </span>
                                         </div>
-                                        <h3 className="font-semibold text-gray-800">{vehicle.vehicleNumber}</h3>
-                                    </div>
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                        vehicle.status === 'active' 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
-                                        {vehicle.status}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">{vehicle.vehicleDescription}</p>
-                                <div className="flex items-center justify-between text-sm text-gray-500">
-                                    <span>{vehicle.parkingType.charAt(0).toUpperCase() + vehicle.parkingType.slice(1)}</span>
-                                    <span>{vehicle.rentalType.charAt(0).toUpperCase() + vehicle.rentalType.slice(1)}</span>
+                                    )}
+                                    {vehicle.ownerName && (
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">Owner:</span>
+                                            <span className="font-medium text-gray-900 truncate max-w-[60%]">
+                                                MR. {vehicle.ownerName}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {vehicle.contactNumber && (
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-500">Contact:</span>
+                                            <a 
+                                                href={`tel:${vehicle.contactNumber}`}
+                                                className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
+                                                    />
+                                                </svg>
+                                                {vehicle.contactNumber}
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -179,6 +256,155 @@ export function HomePage() {
         delay: 200,
         config: { mass: 1, tension: 20, friction: 10 }
     });
+
+    const LoginSection = () => {
+        const [credentials, setCredentials] = useState({
+            username: '',
+            password: ''
+        });
+
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const validUsername = import.meta.env.VITE_ADMIN_USERNAME;
+            const validPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
+            if (credentials.username === validUsername && credentials.password === validPassword) {
+                localStorage.setItem('spcarparking_auth', 'true');
+                onAuthentication(true);
+                setLoginError('');
+            } else {
+                setLoginError('Invalid credentials');
+            }
+        };
+
+        return (
+            <div className="max-w-6xl mx-auto mt-12 px-4">
+                <div className="flex flex-col bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden">
+                    {/* Welcome Section - Visible on both mobile and desktop */}
+                    <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 p-8 md:p-12 relative">
+                        <div className="absolute inset-0">
+                            {/* Animated background elements */}
+                            {[...Array(8)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="absolute bg-white/10 rounded-full blur-2xl animate-pulse"
+                                    style={{
+                                        width: `${Math.random() * 300 + 100}px`,
+                                        height: `${Math.random() * 300 + 100}px`,
+                                        left: `${Math.random() * 100}%`,
+                                        top: `${Math.random() * 100}%`,
+                                        animationDuration: `${Math.random() * 5 + 3}s`,
+                                        animationDelay: `${Math.random() * 2}s`
+                                    }}
+                                />
+                            ))}
+                        </div>
+                        <div className="relative z-10">
+                            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 md:mb-6">
+                                Welcome Back
+                            </h2>
+                            <p className="text-lg md:text-xl text-blue-100 leading-relaxed mb-6">
+                                Manage your parking operations with our streamlined dashboard
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                {['Efficient Management', 'Real-time Updates', 'Smart Analytics'].map((feature, index) => (
+                                    <div key={index} className="flex items-center space-x-3 text-white/90">
+                                        <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <span className="text-sm md:text-base">{feature}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Login Form Section */}
+                    <div className="p-8 md:p-12 bg-white/50">
+                        <div className="max-w-sm mx-auto">
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Sign In</h3>
+                                <p className="text-gray-600">Access your dashboard</p>
+                            </div>
+
+                            {/* Error Message */}
+                            {loginError && (
+                                <div className="mb-6 p-4 bg-red-50/50 backdrop-blur-sm rounded-xl border border-red-100/50">
+                                    <div className="flex items-center space-x-2">
+                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                        <p className="text-sm font-medium text-red-600">{loginError}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleLogin} className="space-y-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={credentials.username}
+                                                onChange={(e) => setCredentials(prev => ({
+                                                    ...prev,
+                                                    username: e.target.value
+                                                }))}
+                                                className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                required
+                                            />
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type="password"
+                                                value={credentials.password}
+                                                onChange={(e) => setCredentials(prev => ({
+                                                    ...prev,
+                                                    password: e.target.value
+                                                }))}
+                                                className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                required
+                                            />
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg font-medium"
+                                >
+                                    Sign in to Dashboard
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -242,7 +468,7 @@ export function HomePage() {
                     <div className="absolute inset-0 bg-white/50" />
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="relative z-10 text-center">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -348,6 +574,8 @@ export function HomePage() {
                 </div>
             </div>
 
+            {!isAuthenticated && <LoginSection />}
+            
             {showModal && <VehicleModal />}
         </div>
     );
