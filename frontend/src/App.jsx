@@ -60,7 +60,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                         <div className="hidden md:flex items-center space-x-4">
                             <NavItem to="/">Home</NavItem>
                             <NavItem to="/new-vehicle">New Vehicle</NavItem>
-                            <NavItem to="/managevehicles">Manage</NavItem>
+                            <NavItem to="/managevehicles">Outstanding</NavItem>
                             <NavItem to="/revenuedashboard">Rent</NavItem>
                             <NavItem to="/advance">Advance</NavItem>
                             <NavItem to="/vehicle-info">Vehicle Info</NavItem>
@@ -90,7 +90,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                             <div className="flex flex-col">
                                 <NavItem to="/">Home</NavItem>
                                 <NavItem to="/new-vehicle">New Vehicle</NavItem>
-                                <NavItem to="/managevehicles">Manage</NavItem>
+                                <NavItem to="/managevehicles">Outstanding</NavItem>
                                 <NavItem to="/revenuedashboard">Rent</NavItem>
                                 <NavItem to="/advance">Advance</NavItem>
                                 <NavItem to="/vehicle-info">Vehicle Info</NavItem>
