@@ -308,6 +308,10 @@ export function RevenueDashboard() {
             <ArrowDown className="w-4 h-4 inline ml-1" />;
     };
 
+    const capitalizeFirst = (str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
     return (
         <div className="relative">
             <Toaster position="bottom-right" />
@@ -452,7 +456,7 @@ export function RevenueDashboard() {
                                             {record.lotNumber}
                                         </td>
                                         <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {record.rentalType}
+                                            {capitalizeFirst(record.rentalType)}
                                         </td>
                                         <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
                                             {record.transactionType}

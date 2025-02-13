@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, NavLink, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import HomePage from './HomePage';
 import NewVehicle from './NewVehicle';
@@ -21,10 +21,26 @@ const ProtectedRoute = ({ children }) => {
 // Create a separate Navigation component
 const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const navigate = useNavigate();
 
     const handleLogout = () => {
         localStorage.removeItem('spcarparking_auth');
         setIsAuthenticated(false);
+    };
+
+    const scrollToLogin = () => {
+        navigate('/');
+        
+        setTimeout(() => {
+            const loginSection = document.querySelector('#loginSection');
+            if (loginSection) {
+                loginSection.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+            setIsMenuOpen(false);
+        }, 100);
     };
 
     const NavItem = ({ to, children, requiresAuth }) => {
@@ -82,12 +98,12 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                     Logout
                                 </button>
                             ) : (
-                                <NavLink 
-                                    to="/"
+                                <button 
+                                    onClick={scrollToLogin}
                                     className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
                                 >
                                     Login
-                                </NavLink>
+                                </button>
                             )}
                         </div>
 
@@ -121,13 +137,12 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                         Logout
                                     </button>
                                 ) : (
-                                    <NavLink 
-                                        to="/"
+                                    <button 
+                                        onClick={scrollToLogin}
                                         className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
-                                        onClick={() => setIsMenuOpen(false)}
                                     >
                                         Login
-                                    </NavLink>
+                                    </button>
                                 )}
                             </div>
                         </div>

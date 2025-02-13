@@ -549,56 +549,81 @@ export function ManageVehicles() {
         }
     };
 
-    const renderVehicleCard = (vehicle) => (
-        <div 
-            key={vehicle._id} 
-            className="p-4 hover:bg-gray-50 cursor-pointer relative"
-            onClick={() => setSelectedVehicle(vehicle)}
-        >
-            {/* Printer Button - Absolute positioned */}
-            <button
-                onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click when clicking printer
-                    vehicle.rentalType === 'monthly' 
-                        ? handlePrintInvoice(vehicle) 
-                        : handlePrintDailyInvoice(vehicle);
-                }}
-                className="absolute right-4 top-4 p-2 text-gray-600 hover:text-blue-600 transition-colors"
-                title="Print Receipt"
-            >
-                <Printer className="w-5 h-5" />
-            </button>
+    const renderVehicleCard = (vehicle) => {
+        // Calculate due amount for daily rentals
+        let dueAmount = 0;
+        if (vehicle.rentalType === 'daily') {
+            const startDate = new Date(vehicle.endDate);
+            startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(0, 0, 0, 0);
+            
+            const endDate = new Date();
+            endDate.setHours(0, 0, 0, 0);
 
-            {/* Card Content */}
-            <div className="flex-grow space-y-2 sm:space-y-1">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>
-                    <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                        {vehicle.lotNumber || 'No Lot'}
-                    </span>
-                    <span className="px-2 py-1 bg-red-100 text-red-800 border-red-200 rounded-full text-xs font-medium border">
-                        Expired
-                    </span>
-                </div>
-                <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm text-gray-500">
-                        {vehicle.rentalType === 'daily' 
-                            ? `Daily - ₹${vehicle.rentPrice} for ${vehicle.numberOfDays} days`
-                            : `Monthly - ₹${vehicle.rentPrice}`}
-                    </p>
-                    {vehicle.rentalType === 'daily' && (
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
-                            Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
+            const diffTime = endDate.getTime() - startDate.getTime();
+            const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            dueAmount = vehicle.rentPrice * numberOfDays;
+        }
+
+        return (
+            <div 
+                key={vehicle._id} 
+                className="p-4 hover:bg-gray-50 cursor-pointer relative"
+                onClick={() => setSelectedVehicle(vehicle)}
+            >
+                {/* Printer Button - Absolute positioned */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        vehicle.rentalType === 'monthly' 
+                            ? handlePrintInvoice(vehicle) 
+                            : handlePrintDailyInvoice(vehicle);
+                    }}
+                    className="absolute right-4 top-4 p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                    title="Print Receipt"
+                >
+                    <Printer className="w-5 h-5" />
+                </button>
+
+                {/* Card Content */}
+                <div className="flex-grow space-y-2 sm:space-y-1">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>
+                        <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
+                            {vehicle.lotNumber || 'Open'}
                         </span>
-                    )}
+                        <span className="px-2 py-1 bg-red-100 text-red-800 border-red-200 rounded-full text-xs font-medium border">
+                            Expired
+                        </span>
+                    </div>
+                    <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm text-gray-500">
+                            {vehicle.rentalType === 'daily' 
+                                ? `Daily - ₹${vehicle.rentPrice} for ${vehicle.numberOfDays} days`
+                                : `Monthly - ₹${vehicle.rentPrice}`}
+                        </p>
+                        {vehicle.rentalType === 'daily' && (
+                            <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                    Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                </span>
+                                {dueAmount > 0 && (
+                                    <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs border border-red-200">
+                                        <span className="font-bold">Due: ₹{dueAmount}</span>
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-red-500">
+                        Rental Period Ended: {new Date(vehicle.endDate).toLocaleDateString('en-GB')}
+                    </p>
                 </div>
-                <p className="text-xs text-red-500">
-                    Rental Period Ended: {new Date(vehicle.endDate).toLocaleDateString('en-GB')}
-                </p>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
