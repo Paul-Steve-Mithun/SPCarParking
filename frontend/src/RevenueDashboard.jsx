@@ -41,7 +41,8 @@ export function RevenueDashboard() {
             const query = searchQuery.toLowerCase();
             return (
                 record.vehicleNumber.toLowerCase().includes(query) ||
-                record.vehicleDescription.toLowerCase().includes(query)
+                record.vehicleDescription.toLowerCase().includes(query) ||
+                vehicle.ownerName.toUpperCase().includes(searchQuery)
             );
         });
         setFilteredData(filtered);
@@ -393,7 +394,7 @@ export function RevenueDashboard() {
                                     <div className="w-full relative">
                                         <input
                                             type="text"
-                                            placeholder="Search by vehicle number or description..."
+                                            placeholder="Search vehicle..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"

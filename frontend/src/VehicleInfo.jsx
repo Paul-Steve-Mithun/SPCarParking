@@ -52,7 +52,8 @@ export function VehicleInfo() {
 
     const filteredVehicles = vehicles.filter(vehicle =>
         vehicle.vehicleNumber.includes(searchQuery) ||
-        vehicle.vehicleDescription.toUpperCase().includes(searchQuery)
+        vehicle.vehicleDescription.toUpperCase().includes(searchQuery) ||
+        vehicle.ownerName.toUpperCase().includes(searchQuery)
     );
 
     // Function to handle image click
@@ -78,7 +79,7 @@ export function VehicleInfo() {
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="Search by vehicle number..."
+                            placeholder="Search Vehicle..."
                             value={searchQuery}
                             onChange={handleSearch}
                             className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"

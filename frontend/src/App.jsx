@@ -27,22 +27,31 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
         setIsAuthenticated(false);
     };
 
-    const NavItem = ({ to, children }) => (
-        <NavLink 
-            to={to} 
-            onClick={() => setIsMenuOpen(false)}
-            className={({ isActive }) => `
-                block w-full px-4 py-2 text-sm font-medium transition-all duration-200
-                ${isActive 
-                    ? 'bg-white/20 text-white' 
-                    : 'text-white hover:bg-white/10'
-                }
-                md:inline-block md:w-auto md:rounded-lg
-            `}
-        >
-            {children}
-        </NavLink>
-    );
+    const NavItem = ({ to, children, requiresAuth }) => {
+        const isAuthenticated = localStorage.getItem('spcarparking_auth') === 'true';
+        
+        // If route requires auth and user is not authenticated, don't show the link
+        if (requiresAuth && !isAuthenticated) {
+            return null;
+        }
+
+        return (
+            <NavLink 
+                to={to} 
+                onClick={() => setIsMenuOpen(false)}
+                className={({ isActive }) => `
+                    block w-full px-4 py-2 text-sm font-medium transition-all duration-200
+                    ${isActive 
+                        ? 'bg-white/20 text-white' 
+                        : 'text-white hover:bg-white/10'
+                    }
+                    md:inline-block md:w-auto md:rounded-lg
+                `}
+            >
+                {children}
+            </NavLink>
+        );
+    };
 
     return (
         <nav className="bg-gradient-to-r from-blue-600 to-purple-700 shadow-lg sticky top-0 z-50">
@@ -59,18 +68,27 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center space-x-4">
                             <NavItem to="/">Home</NavItem>
-                            <NavItem to="/new-vehicle">New Vehicle</NavItem>
-                            <NavItem to="/managevehicles">Outstanding</NavItem>
+                            <NavItem to="/new-vehicle" requiresAuth>New Vehicle</NavItem>
+                            <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
                             <NavItem to="/revenuedashboard">Rent</NavItem>
                             <NavItem to="/advance">Advance</NavItem>
                             <NavItem to="/vehicle-info">Vehicle Info</NavItem>
-                            <NavItem to="/admin">Admin</NavItem>
-                            <button
-                                onClick={handleLogout}
-                                className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
-                            >
-                                Logout
-                            </button>
+                            <NavItem to="/admin" requiresAuth>Admin</NavItem>
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            ) : (
+                                <NavLink 
+                                    to="/"
+                                    className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    Login
+                                </NavLink>
+                            )}
                         </div>
 
                         {/* Mobile Menu Button */}
@@ -89,18 +107,28 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                         <div className="md:hidden absolute top-16 left-0 w-full bg-gradient-to-r from-blue-600 to-purple-700 border-t border-white/10">
                             <div className="flex flex-col">
                                 <NavItem to="/">Home</NavItem>
-                                <NavItem to="/new-vehicle">New Vehicle</NavItem>
-                                <NavItem to="/managevehicles">Outstanding</NavItem>
+                                <NavItem to="/new-vehicle" requiresAuth>New Vehicle</NavItem>
+                                <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
                                 <NavItem to="/revenuedashboard">Rent</NavItem>
                                 <NavItem to="/advance">Advance</NavItem>
                                 <NavItem to="/vehicle-info">Vehicle Info</NavItem>
-                                <NavItem to="/admin">Admin</NavItem>
-                                <button
-                                    onClick={handleLogout}
-                                    className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
-                                >
-                                    Logout
-                                </button>
+                                <NavItem to="/admin" requiresAuth>Admin</NavItem>
+                                {isAuthenticated ? (
+                                    <button
+                                        onClick={handleLogout}
+                                        className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
+                                    >
+                                        Logout
+                                    </button>
+                                ) : (
+                                    <NavLink 
+                                        to="/"
+                                        className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Login
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
                     )}
@@ -111,32 +139,24 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
 };
 
 function App() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('spcarparking_auth') === 'true'
     );
 
-    // Add this function to handle authentication
-    const handleAuthentication = (status) => {
-        setIsAuthenticated(status);
-    };
-
     return (
         <Router>
             <div className="w-full mx-auto min-h-screen bg-gray-50">
-                {isAuthenticated && (
-                    <Navigation 
-                        isAuthenticated={isAuthenticated} 
-                        setIsAuthenticated={setIsAuthenticated}
-                    />
-                )}
+                <Navigation 
+                    isAuthenticated={isAuthenticated} 
+                    setIsAuthenticated={setIsAuthenticated}
+                />
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <Routes>
                         <Route path="/" element={
                             <HomePage 
                                 isAuthenticated={isAuthenticated}
-                                onAuthentication={handleAuthentication}
+                                onAuthentication={setIsAuthenticated}
                             />
                         } />
                         <Route path="/new-vehicle" element={
@@ -149,21 +169,9 @@ function App() {
                                 <ManageVehicles />
                             </ProtectedRoute>
                         } />
-                        <Route path="/revenuedashboard" element={
-                            <ProtectedRoute>
-                                <RevenueDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/advance" element={
-                            <ProtectedRoute>
-                                <AdvanceDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/vehicle-info" element={
-                            <ProtectedRoute>
-                                <VehicleInfo />
-                            </ProtectedRoute>
-                        } />
+                        <Route path="/revenuedashboard" element={<RevenueDashboard />} />
+                        <Route path="/advance" element={<AdvanceDashboard />} />
+                        <Route path="/vehicle-info" element={<VehicleInfo />} />
                         <Route path="/admin" element={
                             <ProtectedRoute>
                                 <AdminPanel />
