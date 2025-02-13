@@ -49,7 +49,6 @@ export function NewVehicle() {
             const response = await fetch('https://spcarparkingbknd.onrender.com/vehicles');
             const vehicles = await response.json();
             const occupiedLots = vehicles
-                .filter(v => v.status === 'active')
                 .map(v => v.lotNumber);
             
             // Calculate available lots

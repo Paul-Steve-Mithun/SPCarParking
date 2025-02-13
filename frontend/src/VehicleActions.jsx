@@ -136,7 +136,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         className="text-green-600 hover:text-green-800 text-base flex items-center gap-2"
                                     >
                                         <PlusCircleIcon className="w-5 h-5" />
-                                        {showExtendForm ? 'Cancel' : 'Extend'}
+                                        {showExtendForm ? 'Cancel' : 'Extend Rental'}
                                     </button>
                                 </div>
                                 
@@ -156,7 +156,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                 disabled={loading}
                                                 className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-base font-medium"
                                             >
-                                                Extend
+                                                Pay & Extend
                                             </button>
                                         </div>
                                     </div>

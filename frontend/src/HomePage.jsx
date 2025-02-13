@@ -31,6 +31,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             .then(data => setVehicles(data));
     }, []);
 
+    useEffect(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }, []);
+
     const sortByLotNumber = (vehicles) => {
         return [...vehicles].sort((a, b) => {
             const getLotParts = (lot) => {
@@ -143,112 +150,142 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         setShowModal(true);
     };
 
-    const VehicleModal = () => (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div 
-                className="fixed inset-0 bg-black/30 backdrop-blur-sm"
-                onClick={() => setShowModal(false)}
-            />
-            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden relative">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white">{selectedCategory}</h2>
-                    <button 
-                        onClick={() => setShowModal(false)}
-                        className="text-white hover:text-gray-200 transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-                <div className="p-6 overflow-auto max-h-[calc(80vh-80px)]">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredVehicles.map(vehicle => (
-                            <div key={vehicle._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                {/* Vehicle Header */}
-                                <div className="p-4 bg-gray-50 border-b border-gray-200">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="min-w-0 flex-1"> {/* Added min-w-0 to enable text truncation */}
-                                            <h3 className="font-semibold text-gray-900 truncate">
-                                                {vehicle.vehicleNumber}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 truncate">
-                                                {vehicle.vehicleDescription || 'No description'}
-                                            </p>
-                                        </div>
-                                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
-                                            vehicle.status === 'active' 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
-                                            {vehicle.status === 'active' ? 'Active' : 'Expired'}
-                                        </span>
-                                    </div>
-                                </div>
+    const VehicleModal = () => {
+        // Add due amount calculation function
+        const calculateDueAmount = (vehicle) => {
+            if (vehicle.rentalType === 'daily' && vehicle.status === 'inactive') {
+                const startDate = new Date(vehicle.endDate);
+                startDate.setDate(startDate.getDate() + 1);
+                startDate.setHours(0, 0, 0, 0);
+                
+                const endDate = new Date();
+                endDate.setHours(0, 0, 0, 0);
 
-                                {/* Vehicle Details */}
-                                <div className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Lot Number:</span>
-                                        <span className="font-medium text-gray-900">{vehicle.lotNumber || 'Open'}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Type:</span>
-                                        <span className="font-medium text-gray-900 capitalize">{vehicle.rentalType}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Rent:</span>
-                                        <span className="font-medium text-gray-900">
-                                            {vehicle.rentalType === 'daily' ? (
-                                                <>
-                                                    ₹{vehicle.rentPrice * vehicle.numberOfDays}
-                                                    <span className="text-gray-500">
-                                                        {' '}({vehicle.numberOfDays} days)
+                const diffTime = endDate.getTime() - startDate.getTime();
+                const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                return vehicle.rentPrice * numberOfDays;
+            }
+            return 0;
+        };
+
+        return (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+                <div 
+                    className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+                    onClick={() => setShowModal(false)}
+                />
+                <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden relative">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-white">{selectedCategory}</h2>
+                        <button 
+                            onClick={() => setShowModal(false)}
+                            className="text-white hover:text-gray-200 transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <div className="p-6 overflow-auto max-h-[calc(80vh-80px)]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredVehicles.map(vehicle => {
+                                const dueAmount = calculateDueAmount(vehicle);
+                                
+                                return (
+                                    <div key={vehicle._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                        <div className="p-4 bg-gray-50 border-b border-gray-200">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0 flex-1">
+                                                        <h3 className="font-semibold text-gray-900 truncate">
+                                                            {vehicle.vehicleNumber}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-500 truncate">
+                                                            {vehicle.vehicleDescription || 'No description'}
+                                                        </p>
+                                                    </div>
+                                                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                                                        vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
+                                                            ? 'bg-red-100 text-red-800 border border-red-200'
+                                                            : vehicle.status === 'active'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : 'bg-red-100 text-red-800'
+                                                    }`}>
+                                                        {vehicle.rentalType === 'daily' && vehicle.status === 'inactive' 
+                                                            ? <span className="font-bold">Due: ₹{dueAmount}</span>
+                                                            : vehicle.status === 'active' 
+                                                                ? 'Active' 
+                                                                : 'Expired'
+                                                        }
                                                     </span>
-                                                </>
-                                            ) : (
-                                                `₹${vehicle.rentPrice}`
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Lot Number:</span>
+                                                <span className="font-medium text-gray-900">{vehicle.lotNumber || 'Open'}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Type:</span>
+                                                <span className="font-medium text-gray-900 capitalize">{vehicle.rentalType}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Rent:</span>
+                                                <span className="font-medium text-gray-900">
+                                                    {vehicle.rentalType === 'daily' ? (
+                                                        <>
+                                                            ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                                            <span className="text-gray-500">
+                                                                {' '}({vehicle.numberOfDays} days)
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        `₹${vehicle.rentPrice}`
+                                                    )}
+                                                </span>
+                                            </div>
+                                            {vehicle.endDate && (
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-gray-500">End Date:</span>
+                                                    <span className="font-medium text-gray-900">
+                                                        {formatDate(vehicle.endDate)}
+                                                    </span>
+                                                </div>
                                             )}
-                                        </span>
+                                            {vehicle.ownerName && (
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-gray-500">Owner:</span>
+                                                    <span className="font-medium text-gray-900 truncate max-w-[60%]">
+                                                        MR. {vehicle.ownerName}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {vehicle.contactNumber && (
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-gray-500">Contact:</span>
+                                                    <a 
+                                                        href={`tel:${vehicle.contactNumber}`}
+                                                        className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                                                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
+                                                            />
+                                                        </svg>
+                                                        {vehicle.contactNumber}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    {vehicle.endDate && (
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">End Date:</span>
-                                            <span className="font-medium text-gray-900">
-                                                {formatDate(vehicle.endDate)}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {vehicle.ownerName && (
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Owner:</span>
-                                            <span className="font-medium text-gray-900 truncate max-w-[60%]">
-                                                MR. {vehicle.ownerName}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {vehicle.contactNumber && (
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-500">Contact:</span>
-                                            <a 
-                                                href={`tel:${vehicle.contactNumber}`}
-                                                className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
-                                                    />
-                                                </svg>
-                                                {vehicle.contactNumber}
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const { number } = useSpring({
         from: { number: 0 },
@@ -278,7 +315,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         };
 
         return (
-            <div className="max-w-6xl mx-auto mt-12 px-4">
+            <div id="loginSection" className="max-w-6xl mx-auto mt-12 px-4">
                 <div className="flex flex-col bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden">
                     {/* Welcome Section - Visible on both mobile and desktop */}
                     <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 p-8 md:p-12 relative">

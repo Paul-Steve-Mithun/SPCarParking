@@ -370,6 +370,24 @@ export function AdminPanel() {
         return `Monthly - ₹${vehicle.rentPrice}`;
     };
 
+    // Add the due amount calculation function
+    const calculateDueAmount = (vehicle) => {
+        if (vehicle.rentalType === 'daily' && vehicle.status === 'inactive') {
+            const startDate = new Date(vehicle.endDate);
+            startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(0, 0, 0, 0);
+            
+            const endDate = new Date();
+            endDate.setHours(0, 0, 0, 0);
+
+            const diffTime = endDate.getTime() - startDate.getTime();
+            const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            
+            return vehicle.rentPrice * numberOfDays;
+        }
+        return 0;
+    };
+
     return (
         <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
             <Toaster position="top-right" />
@@ -437,9 +455,16 @@ export function AdminPanel() {
                                 <div className="flex flex-wrap items-center gap-2 mt-1">
                                     <p className="text-sm text-gray-500">{renderRentalInfo(vehicle)}</p>
                                     {vehicle.rentalType === 'daily' && (
-                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                            Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                                Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                            </span>
+                                            {vehicle.status === 'inactive' && (
+                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs border border-red-200">
+                                                    <span className="font-bold">Due: ₹{calculateDueAmount(vehicle)}</span>
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 

@@ -251,7 +251,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 <h3 className="text-lg font-semibold text-blue-800">Rental Extension</h3>
                                 <button
                                     onClick={() => setShowExtendForm(!showExtendForm)}
-                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                    className="text-green-600 hover:text-green-800 flex items-center gap-2"
                                 >
                                     <PlusCircleIcon className="w-5 h-5" />
                                     {showExtendForm ? 'Cancel Extension' : 'Extend Rental'}
@@ -271,9 +271,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         />
                                         <button
                                             onClick={handleExtendRental}
-                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
                                         >
-                                            Extend
+                                            Pay & Extend
                                         </button>
                                     </div>
 

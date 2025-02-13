@@ -72,10 +72,10 @@ export function VehicleInfo() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
+        <div className="min-h-screen bg-gray-50 pt-6 px-4">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Search Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-20 z-40">
                     <div className="relative">
                         <input
                             type="text"
@@ -88,7 +88,7 @@ export function VehicleInfo() {
                     </div>
 
                     {searchQuery && filteredVehicles.length > 0 && !selectedVehicle && (
-                        <div className="mt-4 space-y-2">
+                        <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
                             {filteredVehicles.map(vehicle => (
                                 <button
                                     key={vehicle._id}

@@ -212,7 +212,7 @@ export function AdvanceDashboard() {
             return {
                 vehicleNumber: vehicle.vehicleNumber || '',
                 description: vehicle.vehicleDescription || '',
-                lot: vehicle.lotNumber || '',
+                lot: vehicle.lotNumber || 'Open',
                 mode: vehicle.transactionMode || 'Cash',
                 date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
                 amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
@@ -526,7 +526,7 @@ export function AdvanceDashboard() {
                                                             {vehicle.vehicleDescription}
                                                         </td>
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                            {vehicle.lotNumber}
+                                                            {vehicle.lotNumber || 'Open'}
                                                         </td>
                                                         <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
                                                             {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
