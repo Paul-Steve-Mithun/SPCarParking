@@ -75,7 +75,7 @@ export function VehicleInfo() {
         <div className="min-h-screen bg-gray-50 pt-6 px-4">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Search Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-20 z-40">
+                <div className="bg-white rounded-2xl shadow-lg p-6">
                     <div className="relative">
                         <input
                             type="text"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { 
     DollarSign, 
     Calendar,
@@ -8,11 +8,18 @@ import {
     Search,
     CreditCard,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    User,
+    MapPin,
+    IndianRupee,
+    Wallet,
+    Edit2,
+    Save
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { Dialog, Transition } from '@headlessui/react';
 
 export function AdvanceDashboard() {
     const [vehicles, setVehicles] = useState([]);
@@ -26,10 +33,15 @@ export function AdvanceDashboard() {
     });
     const [stats, setStats] = useState({
         totalAdvance: 0,
-        monthlyAdvance: 0,
-        incomingCount: 0,
-        outgoingCount: 0
+        monthlyAdvance: 0
     });
+    const [showPayAdvanceModal, setShowPayAdvanceModal] = useState(false);
+    const [zeroAdvanceVehicles, setZeroAdvanceVehicles] = useState([]);
+    const [searchZeroAdvance, setSearchZeroAdvance] = useState('');
+    const [selectedZeroAdvanceVehicle, setSelectedZeroAdvanceVehicle] = useState(null);
+    const [isEditingAdvance, setIsEditingAdvance] = useState(false);
+    const [newAdvanceAmount, setNewAdvanceAmount] = useState('');
+    const [advanceTransactionMode, setAdvanceTransactionMode] = useState('Cash');
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -44,42 +56,49 @@ export function AdvanceDashboard() {
         });
     };
 
+    const fetchData = async () => {
+        try {
+            const [vehiclesResponse, totalsResponse] = await Promise.all([
+                fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`),
+                fetch(`https://spcarparkingbknd.onrender.com/advances/total?month=${selectedMonth}&year=${selectedYear}`)
+            ]);
+
+            const vehiclesData = await vehiclesResponse.json();
+            const totalsData = await totalsResponse.json();
+
+            // Filter out zero advance transactions before sorting
+            const nonZeroTransactions = vehiclesData.filter(v => 
+                v.advanceAmount > 0 || v.advanceRefund > 0
+            );
+
+            const sortedData = sortVehiclesByDate(nonZeroTransactions);
+            setVehicles(sortedData);
+            setFilteredVehicles(sortedData);
+
+            setStats({
+                totalAdvance: totalsData.totalAmount || 0,
+                monthlyAdvance: calculateMonthlyAdvance(vehiclesData)
+            });
+
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+            toast.error('Failed to fetch data');
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [vehiclesResponse, totalsResponse] = await Promise.all([
-                    fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`),
-                    fetch(`https://spcarparkingbknd.onrender.com/advances/total?month=${selectedMonth}&year=${selectedYear}`)
-                ]);
-
-                const vehiclesData = await vehiclesResponse.json();
-                const totalsData = await totalsResponse.json();
-
-                const sortedData = sortVehiclesByDate(vehiclesData);
-                setVehicles(sortedData);
-                setFilteredVehicles(sortedData);
-
-                setStats({
-                    totalAdvance: totalsData.totalAmount || 0,
-                    monthlyAdvance: calculateMonthlyAdvance(vehiclesData),
-                    incomingCount: totalsData.incomingCount || 0,
-                    outgoingCount: totalsData.outgoingCount || 0
-                });
-
-            } catch (error) {
-                console.error('Failed to fetch data:', error);
-                toast.error('Failed to fetch data');
-            }
-        };
-
         fetchData();
     }, [selectedMonth, selectedYear]);
 
     useEffect(() => {
-        const filtered = vehicles.filter(vehicle => 
-            vehicle.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (vehicle.vehicleDescription || '').toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const filtered = vehicles
+            .filter(vehicle => 
+                // First filter out zero advance transactions
+                (vehicle.advanceAmount > 0 || vehicle.advanceRefund > 0) &&
+                // Then apply search filter
+                (vehicle.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (vehicle.vehicleDescription || '').toLowerCase().includes(searchQuery.toLowerCase()))
+            );
         setFilteredVehicles(filtered);
     }, [searchQuery, vehicles]);
 
@@ -129,63 +148,40 @@ export function AdvanceDashboard() {
         doc.setFontSize(14);
         doc.text(`${monthNames[selectedMonth]} ${selectedYear} Advance Payment Statement`, pageWidth / 2, 28, { align: 'center' });
 
-        // Summary cards section - 4 cards in a row
+        // Summary cards section - 2 cards centered
         const summaryY = 45;
-        const cardWidth = (pageWidth - 70) / 4; // 4 cards with margins
+        const cardWidth = (pageWidth - 100) / 2; // 2 cards with margins
         const cardHeight = 35;
-        
-        // Card 1 - Incoming Vehicles
-        doc.setFillColor(246, 246, 252);
-        doc.roundedRect(14, summaryY, cardWidth, cardHeight, 2, 2, 'F');
-        doc.setTextColor(79, 70, 229);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Incoming Vehicles', 20, summaryY + 12);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`${stats.incomingCount}`, 20, summaryY + 28);
+        const centerOffset = 50; // Margin from left to center the cards
 
-        // Card 2 - Outgoing Vehicles
+        // Card 1 - Monthly Advance (Net)
         doc.setFillColor(246, 246, 252);
-        doc.roundedRect(cardWidth + 24, summaryY, cardWidth, cardHeight, 2, 2, 'F');
+        doc.roundedRect(centerOffset, summaryY, cardWidth, cardHeight, 2, 2, 'F');
         doc.setTextColor(79, 70, 229);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('Outgoing Vehicles', cardWidth + 30, summaryY + 12);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`${stats.outgoingCount}`, cardWidth + 30, summaryY + 28);
-
-        // Card 3 - Monthly Advance (Net)
-        doc.setFillColor(246, 246, 252);
-        doc.roundedRect((cardWidth * 2) + 34, summaryY, cardWidth, cardHeight, 2, 2, 'F');
-        doc.setTextColor(79, 70, 229);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Monthly Advance (Net)', (cardWidth * 2) + 40, summaryY + 12);
+        doc.text('Monthly Advance (Net)', centerOffset + 6, summaryY + 12);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         if (stats.monthlyAdvance < 0) {
-            doc.setTextColor(239, 68, 68); // text-red-500
-            doc.text(`-INR ${Math.abs(stats.monthlyAdvance).toFixed(2)}`, (cardWidth * 2) + 40, summaryY + 28);
+            doc.setTextColor(239, 68, 68);
+            doc.text(`-INR ${Math.abs(stats.monthlyAdvance).toFixed(2)}`, centerOffset + 6, summaryY + 28);
         } else {
-            doc.text(`INR ${stats.monthlyAdvance.toFixed(2)}`, (cardWidth * 2) + 40, summaryY + 28);
+            doc.text(`INR ${stats.monthlyAdvance.toFixed(2)}`, centerOffset + 6, summaryY + 28);
         }
 
-        // Card 4 - Total Advance Till Date
+        // Card 2 - Total Advance Till Date
         doc.setFillColor(246, 246, 252);
-        doc.roundedRect((cardWidth * 3) + 44, summaryY, cardWidth, cardHeight, 2, 2, 'F');
+        doc.roundedRect(centerOffset + cardWidth + 10, summaryY, cardWidth, cardHeight, 2, 2, 'F');
         doc.setTextColor(79, 70, 229);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text('Total Advance (Till Date)', (cardWidth * 3) + 50, summaryY + 12);
+        doc.text('Total Advance (Till Date)', centerOffset + cardWidth + 16, summaryY + 12);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(`INR ${stats.totalAdvance.toFixed(2)}`, (cardWidth * 3) + 50, summaryY + 28);
+        doc.text(`INR ${stats.totalAdvance.toFixed(2)}`, centerOffset + cardWidth + 16, summaryY + 28);
 
         // Format date function
         const formatDateForPDF = (date) => {
@@ -323,7 +319,52 @@ export function AdvanceDashboard() {
 
         return incomingAmount - outgoingAmount;
     };
-    
+
+    const fetchVehicles = async (searchTerm = '') => {
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/search?query=${searchTerm}`);
+            const data = await response.json();
+            setZeroAdvanceVehicles(data);
+        } catch (error) {
+            toast.error('Failed to fetch vehicles');
+        }
+    };
+
+    useEffect(() => {
+        fetchVehicles(searchZeroAdvance);
+    }, [searchZeroAdvance]);
+
+    const handlePayAdvance = async () => {
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/update-advance/${selectedZeroAdvanceVehicle._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    advanceAmount: Number(newAdvanceAmount),
+                    transactionMode: advanceTransactionMode
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success(data.message || 'Advance payment updated successfully');
+                setShowPayAdvanceModal(false);
+                setSelectedZeroAdvanceVehicle(null);
+                setIsEditingAdvance(false);
+                setNewAdvanceAmount('');
+                await fetchData(); // Wait for data refresh
+                await fetchVehicles(); // Refresh the vehicles list
+            } else {
+                throw new Error(data.error || 'Failed to update advance payment');
+            }
+        } catch (error) {
+            toast.error(error.message || 'Error updating advance payment');
+        }
+    };
+
     return (
         <div className="relative">
             <Toaster position="bottom-right" />
@@ -371,38 +412,27 @@ export function AdvanceDashboard() {
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
                                 </div>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => {
+                                            setShowPayAdvanceModal(true);
+                                            fetchVehicles();
+                                        }}
+                                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                                    >
+                                        <IndianRupee className="w-4 h-4" />
+                                        Pay Advance
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
-                                <div className="flex items-center space-x-4">
-                                    <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <ArrowUp className="w-8 h-8 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600 text-sm font-medium">Incoming Vehicles</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.incomingCount}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
-                                <div className="flex items-center space-x-4">
-                                    <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <ArrowDown className="w-8 h-8 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600 text-sm font-medium">Outgoing Vehicles</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.outgoingCount}</p>
-                                    </div>
-                                </div>
-                            </div>
-
+                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Monthly Advance Card */}
                             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <DollarSign className="w-8 h-8 text-indigo-600" />
+                                        <Calendar className="w-8 h-8 text-indigo-600" />
                                     </div>
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Monthly Advance (Net)</p>
@@ -414,6 +444,7 @@ export function AdvanceDashboard() {
                                 </div>
                             </div>
 
+                            {/* Total Advance Card */}
                             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
@@ -467,7 +498,7 @@ export function AdvanceDashboard() {
                                                             'lotNumber',
                                                             'parkingType',
                                                             'transactionMode',
-                                                            'startDate',
+                                                            'TransactionDate',
                                                             'advanceAmount'
                                                         ].map((column) => (
                                                             <th 
@@ -551,6 +582,220 @@ export function AdvanceDashboard() {
                     </div>
                 </div>
             </div>
+
+            <Transition appear show={showPayAdvanceModal} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => {
+                        setShowPayAdvanceModal(false);
+                        setSelectedZeroAdvanceVehicle(null);
+                        setIsEditingAdvance(false);
+                        setNewAdvanceAmount('');
+                    }}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        {selectedZeroAdvanceVehicle ? (
+                                            <>
+                                                <Car className="w-6 h-6 text-blue-600" />
+                                                Vehicle Details
+                                            </>
+                                        ) : (
+                                            <>
+                                                <IndianRupee className="w-6 h-6 text-green-600" />
+                                                Pay Advance
+                                            </>
+                                        )}
+                                    </Dialog.Title>
+                                    <div className="h-0.5 bg-gray-200 w-full mb-4"></div>
+
+                                    {!selectedZeroAdvanceVehicle ? (
+                                        <>
+                                            <div className="relative mb-4">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search any vehicle..."
+                                                    value={searchZeroAdvance}
+                                                    onChange={(e) => setSearchZeroAdvance(e.target.value)}
+                                                    className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                />
+                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            </div>
+
+                                            <div className="max-h-[400px] overflow-y-auto">
+                                                {zeroAdvanceVehicles.map(vehicle => (
+                                                    <button
+                                                        key={vehicle._id}
+                                                        onClick={() => setSelectedZeroAdvanceVehicle(vehicle)}
+                                                        className="w-full text-left p-4 hover:bg-gray-50 border-b flex items-center gap-4"
+                                                    >
+                                                        <div className="p-2 rounded-full bg-gray-100">
+                                                            <Car className="text-blue-500 w-6 h-6" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-medium">{vehicle.vehicleNumber}</p>
+                                                                {vehicle.advanceAmount > 0 && (
+                                                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                                                                        ₹{vehicle.advanceAmount} paid
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                                                        </div>
+                                                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Vehicle Number</label>
+                                                    <input
+                                                        type="text"
+                                                        value={selectedZeroAdvanceVehicle.vehicleNumber}
+                                                        disabled
+                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                                                    <input
+                                                        type="text"
+                                                        value={selectedZeroAdvanceVehicle.vehicleDescription}
+                                                        disabled
+                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Owner Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={selectedZeroAdvanceVehicle.ownerName}
+                                                        disabled
+                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Lot Number</label>
+                                                    <input
+                                                        type="text"
+                                                        value={selectedZeroAdvanceVehicle.lotNumber}
+                                                        disabled
+                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="block text-sm font-medium text-gray-700">Advance Amount</label>
+                                                        {selectedZeroAdvanceVehicle.advanceAmount > 0 && (
+                                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                                                                ₹{selectedZeroAdvanceVehicle.advanceAmount} already paid
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setIsEditingAdvance(!isEditingAdvance)}
+                                                        className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-full transition-colors"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    value={newAdvanceAmount}
+                                                    onChange={(e) => setNewAdvanceAmount(e.target.value)}
+                                                    disabled={!isEditingAdvance}
+                                                    className={`mt-1 block w-full px-3 py-2 ${!isEditingAdvance ? 'bg-gray-50' : 'bg-white'} border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                                    placeholder="Enter additional advance amount"
+                                                />
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAdvanceTransactionMode('Cash')}
+                                                        className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                            advanceTransactionMode === 'Cash'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                    >
+                                                        <Wallet className="h-5 w-5 mr-2" />
+                                                        Cash
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAdvanceTransactionMode('UPI')}
+                                                        className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                            advanceTransactionMode === 'UPI'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                    >
+                                                        <CreditCard className="h-5 w-5 mr-2" />
+                                                        UPI
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-6 flex justify-end gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedZeroAdvanceVehicle(null);
+                                                        setIsEditingAdvance(false);
+                                                        setNewAdvanceAmount('');
+                                                    }}
+                                                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handlePayAdvance}
+                                                    disabled={!isEditingAdvance || !newAdvanceAmount}
+                                                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                                >
+                                                    <Save className="w-4 h-4" />
+                                                    Pay Advance
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
         </div>
     );
 }
