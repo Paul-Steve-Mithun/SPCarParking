@@ -28,7 +28,10 @@ export function RevenueDashboard() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [error, setError] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ 
+        key: 'transactionDate', 
+        direction: 'asc' 
+    });
     const [stats, setStats] = useState({
         totalRevenue: 0,
         monthlyRentalRevenue: 0,
@@ -41,8 +44,7 @@ export function RevenueDashboard() {
             const query = searchQuery.toLowerCase();
             return (
                 record.vehicleNumber.toLowerCase().includes(query) ||
-                record.vehicleDescription.toLowerCase().includes(query) ||
-                vehicle.ownerName.toUpperCase().includes(searchQuery)
+                (record.vehicleDescription || '').toLowerCase().includes(query)
             );
         });
         setFilteredData(filtered);
@@ -68,6 +70,14 @@ export function RevenueDashboard() {
         fetchRevenueData();
     }, [selectedMonth, selectedYear]);
 
+    const sortByDate = (data) => {
+        return [...data].sort((a, b) => {
+            const dateA = new Date(a.transactionDate);
+            const dateB = new Date(b.transactionDate);
+            return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        });
+    };
+
     const fetchRevenueData = async () => {
         try {
             const [dataResponse, statsResponse] = await Promise.all([
@@ -78,7 +88,8 @@ export function RevenueDashboard() {
             const data = await dataResponse.json();
             const statsData = await statsResponse.json();
 
-            setRevenueData(data);
+            const sortedData = sortByDate(data);
+            setRevenueData(sortedData);
             setError('');
 
             const totalRevenue = statsData.reduce((sum, item) => sum + item.totalRevenue, 0);
@@ -107,6 +118,11 @@ export function RevenueDashboard() {
         setSortConfig({ key, direction });
 
         const sortedData = [...revenueData].sort((a, b) => {
+            if (key === 'transactionDate') {
+                const dateA = new Date(a.transactionDate);
+                const dateB = new Date(b.transactionDate);
+                return direction === 'asc' ? dateA - dateB : dateB - dateA;
+            }
             if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
             if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
             return 0;
@@ -200,20 +216,27 @@ export function RevenueDashboard() {
             { header: 'Amount', dataKey: 'amount' }
         ];
     
-        const tableRows = revenueData.map(record => ({
-            vehicleNumber: record.vehicleNumber,
-            description: record.vehicleDescription || '',
-            lot: record.lotNumber || '',
-            rentalType: record.rentalType.charAt(0).toUpperCase() + record.rentalType.slice(1),
-            transaction: record.transactionType,
-            mode: record.transactionMode,
-            date: formatDateForPDF(record.transactionDate),
-            amount: `INR ${record.revenueAmount.toFixed(2)}`
-        }));
+        // Sort the table rows by date before adding to PDF
+        const sortedTableRows = revenueData
+            .sort((a, b) => {
+                const dateA = new Date(a.transactionDate);
+                const dateB = new Date(b.transactionDate);
+                return dateA - dateB; // Always ascending order for PDF
+            })
+            .map(record => ({
+                vehicleNumber: record.vehicleNumber || '',
+                description: record.vehicleDescription || '',
+                lot: record.lotNumber || 'Open',
+                rentalType: capitalizeFirst(record.rentalType),
+                type: record.transactionType,
+                mode: record.transactionMode,
+                date: formatDateForPDF(record.transactionDate),
+                amount: `INR ${record.revenueAmount.toFixed(2)}`
+            }));
     
         doc.autoTable({
             columns: tableColumn,
-            body: tableRows,
+            body: sortedTableRows,
             startY: summaryY + 40,
             theme: 'grid',
             headStyles: {
@@ -408,102 +431,99 @@ export function RevenueDashboard() {
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full">
-                                <thead>
-                                <tr className="bg-gray-50">
-                                    {[
-                                        'vehicleNumber',
-                                        'vehicleDescription',
-                                        'lotNumber',
-                                        'rentalType',
-                                        'transactionType',
-                                        'transactionMode',
-                                        'transactionDate',
-                                        'revenueAmount'
-                                    ].map((column) => (
-                                        <th 
-                                            key={column}
-                                            onClick={() => handleSort(column)}
-                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                                        >
-                                            <div className="flex items-center">
-                                                <span className="hidden sm:inline">
-                                                    {column.replace(/([A-Z])/g, ' $1').trim()}
-                                                </span>
-                                                <span className="sm:hidden">
-                                                    {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
-                                                </span>
-                                                <SortIcon column={column} />
-                                            </div>
-                                        </th>
-                                    ))}
-                                    <th className="px-4 sm:px-6 py-4 text-center text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                        <span className="hidden sm:inline">Actions</span>
-                                        <span className="sm:hidden">Act</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {revenueData.map((record) => (
-                                    <tr key={record._id} className="hover:bg-gray-50 transition-colors duration-150">
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
-                                            {record.vehicleNumber}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {record.vehicleDescription}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {record.lotNumber}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {capitalizeFirst(record.rentalType)}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {record.transactionType}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                record.transactionMode === 'UPI' 
-                                                    ? 'bg-blue-100 text-blue-800' 
-                                                    : 'bg-green-100 text-green-800'
-                                            }`}>
-                                                {record.transactionMode === 'UPI' ? (
-                                                    <>
-                                                        <CreditCard className="w-3 h-3 mr-1" />
-                                                        <span>UPI</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <DollarSign className="w-3 h-3 mr-1" />
-                                                        <span>Cash</span>
-                                                    </>
-                                                )}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                            {new Date(record.transactionDate).toLocaleDateString('en-GB')}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
-                                            ₹{record.revenueAmount.toFixed(2)}
-                                        </td>
-                                        <td className="px-4 sm:px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedTransaction(record);
-                                                    setIsDeleteDialogOpen(true);
-                                                }}
-                                                className="text-red-500 hover:text-red-700 transition-colors duration-200 p-2 rounded-lg hover:bg-red-50"
-                                            >
-                                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                <div className="max-w-[1400px] mx-auto">
+                                    <div className="inline-block min-w-full align-middle">
+                                        <div className="overflow-hidden">
+                                            {filteredData.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    No transactions found matching your search
+                                                </div>
+                                            ) : (
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead>
+                                                        <tr className="bg-gray-50">
+                                                            {[
+                                                                'vehicleNumber',
+                                                                'vehicleDescription',
+                                                                'lotNumber',
+                                                                'rentalType',
+                                                                'transactionType',
+                                                                'transactionMode',
+                                                                'transactionDate',
+                                                                'revenueAmount'
+                                                            ].map((column) => (
+                                                                <th 
+                                                                    key={column}
+                                                                    onClick={() => handleSort(column)}
+                                                                    className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                                >
+                                                                    <div className="flex items-center">
+                                                                        <span className="hidden sm:inline">
+                                                                            {column.replace(/([A-Z])/g, ' $1').trim()}
+                                                                        </span>
+                                                                        <span className="sm:hidden">
+                                                                            {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
+                                                                        </span>
+                                                                        <SortIcon column={column} />
+                                                                    </div>
+                                                                </th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-200">
+                                                        {revenueData.map((record) => (
+                                                            <tr key={record._id} className="hover:bg-gray-50 transition-colors duration-150">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                    {record.vehicleNumber}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {record.vehicleDescription}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {record.lotNumber}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {capitalizeFirst(record.rentalType)}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {record.transactionType}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                        record.transactionMode === 'UPI' 
+                                                                            ? 'bg-blue-100 text-blue-800' 
+                                                                            : 'bg-green-100 text-green-800'
+                                                                    }`}>
+                                                                        {record.transactionMode === 'UPI' ? (
+                                                                            <>
+                                                                                <CreditCard className="w-3 h-3 mr-1" />
+                                                                                <span>UPI</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DollarSign className="w-3 h-3 mr-1" />
+                                                                                <span>Cash</span>
+                                                                            </>
+                                                                        )}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {new Date(record.transactionDate).toLocaleDateString('en-GB')}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                    ₹{record.revenueAmount.toFixed(2)}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
                 </div>
             </div>
 
