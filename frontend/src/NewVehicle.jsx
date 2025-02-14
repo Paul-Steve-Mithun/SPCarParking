@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
-import { PlusCircleIcon, SaveIcon, Upload, Wallet, CreditCard } from 'lucide-react';
+import { PlusCircleIcon, SaveIcon, Upload, Wallet, CreditCard, Car, User, MapPin, IndianRupee, Calendar } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+
+const capitalizeFirst = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
 
 export function NewVehicle() {
     const [vehicle, setVehicle] = useState({
@@ -32,6 +38,8 @@ export function NewVehicle() {
 
     const [availableLots, setAvailableLots] = useState([]);
     const [selectedLotType, setSelectedLotType] = useState('regular'); // 'regular', 'a', 'b'
+
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     // Generate all possible lots
     const generateAllLots = () => {
@@ -108,16 +116,18 @@ export function NewVehicle() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmedSubmit = async () => {
         try {
             const formData = new FormData();
             
-            // Append vehicle data as JSON string
             formData.append('vehicleData', JSON.stringify({
                 ...vehicle,
                 transactionMode: vehicle.transactionMode
             }));
             
-            // Append files if they exist
             if (files.vehicleImage) {
                 formData.append('vehicleImage', files.vehicleImage);
             }
@@ -167,6 +177,7 @@ export function NewVehicle() {
         } catch (error) {
             toast.error('Error submitting vehicle');
         }
+        setShowConfirmModal(false);
     };
 
     const handleTextInput = (e, field) => {
@@ -498,7 +509,7 @@ export function NewVehicle() {
                                             onChange={(e) => setVehicle({...vehicle, numberOfDays: e.target.value})} 
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             required
-                                            min="1"
+                                            min="0"
                                         />
                                     </div>
                                 )}
@@ -578,10 +589,167 @@ export function NewVehicle() {
                         className="w-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all"
                     >
                         <SaveIcon className="mr-2" />
-                        Submit Vehicle
+                        Register Vehicle
                     </button>
                 </div>
             </form>
+
+            {/* Confirmation Modal */}
+            <Transition appear show={showConfirmModal} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => setShowConfirmModal(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-xl font-bold leading-6 text-gray-900 border-b pb-3 mb-4 text-center"
+                                    >
+                                        Confirm Vehicle Registration
+                                    </Dialog.Title>
+                                    <div className="mt-4 space-y-4">
+                                        <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                                <Car className="w-5 h-5 text-blue-600" />
+                                                Vehicle Details
+                                            </h4>
+                                            <div className="space-y-3 text-sm">
+                                                {/* First Row: Vehicle Number & Description */}
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-gray-600">Number</p>
+                                                        <p className="text-gray-800">{vehicle.vehicleNumber}</p>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-gray-600">Description</p>
+                                                        <p className="text-gray-800">{vehicle.vehicleDescription || '-'}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Second Row: Lot Number & Type */}
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-gray-600">Lot Number</p>
+                                                        <p className="text-gray-800 font-bold">{vehicle.lotNumber || 'Open'}</p>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-gray-600">Type</p>
+                                                        <p className="text-gray-800">{capitalizeFirst(vehicle.vehicleType)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-purple-50 p-4 rounded-lg space-y-3">
+                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                                <User className="w-5 h-5 text-purple-600" />
+                                                Owner Details
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Name</p>
+                                                    <p className="text-gray-800">{vehicle.ownerName}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Contact</p>
+                                                    <p className="text-gray-800">{vehicle.contactNumber}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-green-50 p-4 rounded-lg space-y-3">
+                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                                <Calendar className="w-5 h-5 text-green-600" />
+                                                Rental Details
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Type</p>
+                                                    <p className="text-gray-800">{capitalizeFirst(vehicle.rentalType)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Price</p>
+                                                    <p className="text-gray-800">₹{vehicle.rentPrice}</p>
+                                                </div>
+                                                {vehicle.rentalType === 'monthly' && (
+                                                    <div>
+                                                        <p className="font-semibold text-gray-600">Advance</p>
+                                                        <p className="text-gray-800">₹{vehicle.advanceAmount}</p>
+                                                    </div>
+                                                )}
+                                                {vehicle.rentalType === 'daily' && (
+                                                    <>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-600">Days</p>
+                                                            <p className="text-gray-800">{vehicle.numberOfDays}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-600">Total</p>
+                                                            <p className="text-gray-800">₹{vehicle.rentPrice * vehicle.numberOfDays}</p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Payment</p>
+                                                    <p className="flex items-center gap-1 text-gray-800">
+                                                        {vehicle.transactionMode === 'UPI' ? (
+                                                            <CreditCard className="w-4 h-4" />
+                                                        ) : (
+                                                            <IndianRupee className="w-4 h-4" />
+                                                        )}
+                                                        {vehicle.transactionMode}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            onClick={() => setShowConfirmModal(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-md border border-transparent bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none"
+                                            onClick={handleConfirmedSubmit}
+                                        >
+                                            Register Vehicle
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
         </div>
     );
 }

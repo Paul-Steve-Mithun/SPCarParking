@@ -194,10 +194,20 @@ app.post('/addVehicle', upload.fields([
             }
         }
 
+        // Handle special case for daily rental with 0 days
+        const isZeroDayDaily = vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) === 0;
+        
+        // For zero-day daily rentals, set end date to previous day
+        const currentDate = new Date();
+        const previousDay = new Date(currentDate);
+        previousDay.setDate(previousDay.getDate() - 1);
+        previousDay.setHours(23, 59, 59, 999);
+
         const newVehicle = new Vehicle({
             ...vehicleData,
-            status: 'active',
-            startDate: new Date()
+            status: isZeroDayDaily ? 'inactive' : 'active',
+            startDate: new Date(),
+            endDate: isZeroDayDaily ? previousDay : undefined // Let the schema handle normal end date calculation
         });
         await newVehicle.save();
 
@@ -217,9 +227,8 @@ app.post('/addVehicle', upload.fields([
             await newAdvance.save();
         }
 
-        // Only create revenue record for daily rentals
-        // Monthly rentals will only create revenue on extension
-        if (vehicleData.rentalType === 'daily') {
+        // Create revenue record only for daily rentals with days > 0
+        if (vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) > 0) {
             const newRevenue = new Revenue({
                 vehicleNumber: vehicleData.vehicleNumber,
                 vehicleDescription: vehicleData.vehicleDescription,
@@ -684,6 +693,97 @@ app.put('/advances/refund/:vehicleNumber', async (req, res) => {
         await refundAdvance.save();
 
         res.json({ success: true, advance: refundAdvance });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add this new endpoint to get vehicles with zero advance
+app.get('/vehicles/zero-advance', async (req, res) => {
+    try {
+        const vehicles = await Vehicle.find({ 
+            advanceAmount: 0,
+            status: 'active'
+        });
+        res.json(vehicles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update the endpoint to update advance amount
+app.put('/vehicles/update-advance/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { advanceAmount, transactionMode } = req.body;
+
+        // First get the current vehicle to check existing advance
+        const currentVehicle = await Vehicle.findById(id);
+        if (!currentVehicle) {
+            return res.status(404).json({ error: 'Vehicle not found' });
+        }
+
+        // Calculate total advance by adding new amount to existing advance
+        const totalAdvanceAmount = Number(currentVehicle.advanceAmount) + Number(advanceAmount);
+
+        // Update vehicle with total advance
+        const vehicle = await Vehicle.findByIdAndUpdate(
+            id,
+            { advanceAmount: totalAdvanceAmount },
+            { new: true }
+        );
+
+        // Create advance record for the new payment only
+        const newAdvance = new Advance({
+            vehicleNumber: vehicle.vehicleNumber,
+            vehicleDescription: vehicle.vehicleDescription,
+            lotNumber: vehicle.lotNumber,
+            transactionMode: transactionMode,
+            startDate: new Date(),
+            advanceAmount: advanceAmount, // Record only the new payment amount
+            month: new Date().getMonth(),
+            year: new Date().getFullYear(),
+            parkingType: vehicle.parkingType,
+            advanceRefund: null,
+            refundDate: null
+        });
+
+        await newAdvance.save();
+
+        res.json({ 
+            success: true, 
+            vehicle, 
+            advance: newAdvance,
+            message: `Added ₹${advanceAmount} to existing advance of ₹${currentVehicle.advanceAmount}`
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update the endpoint to search all vehicles
+app.get('/vehicles/search', async (req, res) => {
+    try {
+        const { query } = req.query;
+        if (!query) {
+            // If no search query, return only zero advance vehicles
+            const vehicles = await Vehicle.find({ 
+                advanceAmount: 0,
+                status: 'active'
+            });
+            return res.json(vehicles);
+        }
+
+        // If there's a search query, search all active vehicles
+        const vehicles = await Vehicle.find({
+            status: 'active',
+            $or: [
+                { vehicleNumber: new RegExp(query.toUpperCase(), 'i') },
+                { vehicleDescription: new RegExp(query.toUpperCase(), 'i') },
+                { ownerName: new RegExp(query.toUpperCase(), 'i') }
+            ]
+        });
+        res.json(vehicles);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
