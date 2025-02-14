@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard } from 'lucide-react';
+import { useState, Fragment } from 'react';
+import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard, AlertCircle, Save, XCircle, CheckCircle, Car, User, Calendar, IndianRupee } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Dialog, Transition } from '@headlessui/react';
 
 const modalAnimation = {
     enter: "transition-all duration-300 ease-out",
@@ -31,6 +32,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     });
     const [extensionTransactionMode, setExtensionTransactionMode] = useState('Cash');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [showEndContractModal, setShowEndContractModal] = useState(false);
 
     const handleTextInput = (e, field) => {
         let value = e.target.value;
@@ -113,7 +116,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         setRemovedImages(prev => [...prev, field]);
     };
 
-    const handleSave = async () => {
+    const handleSaveChanges = async () => {
         try {
             const formData = new FormData();
             const vehicleDataWithRemovals = {
@@ -144,6 +147,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         } catch (error) {
             toast.error("Failed to update vehicle");
         }
+        setShowSaveModal(false);
     };
 
     const handleExtendRental = async () => {
@@ -215,6 +219,20 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
             toast.error('Failed to delete vehicle');
             console.error('Error:', error);
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setShowSaveModal(true);
+    };
+
+    const handleEndContract = () => {
+        setShowEndContractModal(true);
+    };
+
+    const handleConfirmEndContract = async () => {
+        await confirmDelete();
+        setShowEndContractModal(false);
     };
 
     return (
@@ -607,15 +625,15 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 <div className="sticky bottom-0 p-6 bg-white border-t">
                     <div className="flex gap-4">
                         <button 
-                            onClick={handleSave}
+                            onClick={handleSubmit}
                             className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
                             disabled={!isEditMode}
                         >
-                            <SaveIcon className="w-5 h-5 mr-2" />
+                            <Save className="w-5 h-5 mr-2" />
                             Save Changes
                         </button>
                         <button 
-                            onClick={handleDelete}
+                            onClick={handleEndContract}
                             className="flex-1 flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
                             disabled={!isEditMode}
                         >
@@ -674,6 +692,169 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     </div>
                 </div>
             )}
+
+            {/* Save Changes Confirmation Modal */}
+            <Transition appear show={showSaveModal} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => setShowSaveModal(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                                    <div className="text-center">
+                                        <Save className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2">
+                                            Save Changes
+                                        </Dialog.Title>
+                                        <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Car className="w-5 h-5 text-blue-600" />
+                                                <p className="text-sm text-gray-600 text-left">
+                                                    Vehicle: {vehicle.vehicleNumber} - {vehicle.vehicleDescription}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <User className="w-5 h-5 text-blue-600" />
+                                                <p className="text-sm text-gray-600 text-left">
+                                                    Owner: {vehicle.ownerName}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 flex justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowSaveModal(false)}
+                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveChanges}
+                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Confirm Save
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* End Contract Confirmation Modal */}
+            <Transition appear show={showEndContractModal} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => setShowEndContractModal(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                                    <div className="text-center">
+                                        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2">
+                                            End Contract
+                                        </Dialog.Title>
+                                        <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <Car className="w-5 h-5 text-red-600" />
+                                                <p className="text-sm text-gray-600 text-left">
+                                                    Vehicle: {vehicle.vehicleNumber} - {vehicle.vehicleDescription}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-5 h-5 text-red-600" />
+                                                <p className="text-sm text-gray-600 text-left">
+                                                    Contract End Date: {new Date().toLocaleDateString('en-GB')}
+                                                </p>
+                                            </div>
+                                            {vehicle.advanceAmount > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <IndianRupee className="w-5 h-5 text-red-600" />
+                                                    <p className="text-sm text-gray-600 text-left">
+                                                        Advance to Refund: ₹{vehicle.advanceAmount}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="mt-4 text-sm text-red-600">
+                                            This action cannot be undone. The vehicle will be removed from the system.
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-6 flex justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEndContractModal(false)}
+                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleConfirmEndContract}
+                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none"
+                                        >
+                                            <XCircle className="w-4 h-4 mr-2" />
+                                            End Contract
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
         </div>
     );
 };
