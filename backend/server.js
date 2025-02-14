@@ -194,6 +194,13 @@ app.post('/addVehicle', upload.fields([
             }
         }
 
+        // Set standard end time for the day (18:29:59.999 UTC = 23:59:59.999 IST)
+        const setStandardEndTime = (date) => {
+            const d = new Date(date);
+            d.setUTCHours(18, 29, 59, 999);
+            return d;
+        };
+
         // Handle special case for daily rental with 0 days
         const isZeroDayDaily = vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) === 0;
         
@@ -201,13 +208,23 @@ app.post('/addVehicle', upload.fields([
         const currentDate = new Date();
         const previousDay = new Date(currentDate);
         previousDay.setDate(previousDay.getDate() - 1);
-        previousDay.setHours(23, 59, 59, 999);
+        
+        // Calculate end date for normal rentals
+        let endDate;
+        if (isZeroDayDaily) {
+            endDate = setStandardEndTime(previousDay);
+        } else if (vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) > 0) {
+            const endDateCalc = new Date(currentDate);
+            endDateCalc.setDate(endDateCalc.getDate() + Number(vehicleData.numberOfDays) - 1);
+            endDate = setStandardEndTime(endDateCalc);
+        }
+        // For monthly rentals, endDate will be handled by the schema as before
 
         const newVehicle = new Vehicle({
             ...vehicleData,
             status: isZeroDayDaily ? 'inactive' : 'active',
             startDate: new Date(),
-            endDate: isZeroDayDaily ? previousDay : undefined // Let the schema handle normal end date calculation
+            endDate: endDate // Will be undefined for monthly rentals
         });
         await newVehicle.save();
 
