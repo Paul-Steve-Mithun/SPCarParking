@@ -13,7 +13,7 @@ export function NewVehicle() {
         vehicleNumber: '', 
         vehicleDescription: '', 
         vehicleType: 'own',
-        lotNumber: '',
+        lotNumber: 'Open',
         ownerName: '', 
         contactNumber: '',
         parkingType: 'private', 

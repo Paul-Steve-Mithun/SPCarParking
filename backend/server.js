@@ -118,23 +118,27 @@ const AdvanceSchema = new mongoose.Schema({
 const Revenue = mongoose.model('Revenue', RevenueSchema);
 const Advance = mongoose.model('Advance', AdvanceSchema);
 
-// Updated pre-save middleware to handle end dates correctly
+// Update VehicleSchema pre-save middleware
 VehicleSchema.pre('save', function(next) {
     if (this.isNew || this.isModified('startDate') || this.isModified('numberOfDays')) {
         const startDate = new Date(this.startDate);
         
+        // Helper function to set standard end time (18:29:59.999 UTC = 23:59:59.999 IST)
+        const setStandardEndTime = (date) => {
+            const d = new Date(date);
+            d.setUTCHours(18, 29, 59, 999);
+            return d;
+        };
+        
         if (this.rentalType === 'monthly') {
             // Get the last day of the current month
             const lastDay = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-            // Set time to end of day (23:59:59.999)
-            lastDay.setHours(23, 59, 59, 999);
-            this.endDate = lastDay;
+            this.endDate = setStandardEndTime(lastDay);
         } else if (this.rentalType === 'daily' && this.numberOfDays) {
-            // For daily rentals, set end date to midnight of the last day
+            // For daily rentals, set end date to standard time of the last day
             const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + this.numberOfDays - 1); // Subtract 1 because the start day counts as day 1
-            endDate.setHours(23, 59, 59, 999);
-            this.endDate = endDate;
+            endDate.setDate(endDate.getDate() + this.numberOfDays - 1); // Subtract 1 because start day counts as day 1
+            this.endDate = setStandardEndTime(endDate);
         }
     }
     next();
@@ -204,27 +208,19 @@ app.post('/addVehicle', upload.fields([
         // Handle special case for daily rental with 0 days
         const isZeroDayDaily = vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) === 0;
         
-        // For zero-day daily rentals, set end date to previous day
-        const currentDate = new Date();
-        const previousDay = new Date(currentDate);
-        previousDay.setDate(previousDay.getDate() - 1);
-        
-        // Calculate end date for normal rentals
+        // For zero-day daily rentals, set end date to previous day with standard time
         let endDate;
         if (isZeroDayDaily) {
+            const previousDay = new Date();
+            previousDay.setDate(previousDay.getDate() - 1);
             endDate = setStandardEndTime(previousDay);
-        } else if (vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) > 0) {
-            const endDateCalc = new Date(currentDate);
-            endDateCalc.setDate(endDateCalc.getDate() + Number(vehicleData.numberOfDays) - 1);
-            endDate = setStandardEndTime(endDateCalc);
         }
-        // For monthly rentals, endDate will be handled by the schema as before
 
         const newVehicle = new Vehicle({
             ...vehicleData,
             status: isZeroDayDaily ? 'inactive' : 'active',
             startDate: new Date(),
-            endDate: endDate // Will be undefined for monthly rentals
+            endDate: endDate // Will be handled by schema for monthly and normal daily rentals
         });
         await newVehicle.save();
 
