@@ -228,7 +228,7 @@ export function RevenueDashboard() {
                 description: record.vehicleDescription || '',
                 lot: record.lotNumber || 'Open',
                 rentalType: capitalizeFirst(record.rentalType),
-                type: record.transactionType,
+                transaction: record.transactionType || 'N/A',
                 mode: record.transactionMode,
                 date: formatDateForPDF(record.transactionDate),
                 amount: `INR ${record.revenueAmount.toFixed(2)}`

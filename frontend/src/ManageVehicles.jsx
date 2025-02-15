@@ -631,7 +631,7 @@ export function ManageVehicles() {
             
             <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 sm:p-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white">Expired Vehicles</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white">Outstanding Vehicles</h1>
                     <button 
                         onClick={fetchExpiredVehicles} 
                         className="text-white hover:bg-white/20 p-2 rounded-full transition-all"

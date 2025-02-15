@@ -96,8 +96,13 @@ export function VehicleInfo() {
                                     className="w-full text-left p-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-4"
                                 >
                                     <Car className="text-blue-500" />
-                                    <div>
-                                        <p className="font-medium">{vehicle.vehicleNumber}</p>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium">{vehicle.vehicleNumber}</p>
+                                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
+                                                {vehicle.lotNumber || 'Open'}
+                                            </span>
+                                        </div>
                                         <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
                                     </div>
                                 </button>
