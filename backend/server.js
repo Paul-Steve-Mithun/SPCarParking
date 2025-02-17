@@ -312,7 +312,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const currentDate = new Date();
         
         const lastDayNextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
-        lastDayNextMonth.setHours(23, 59, 59, 999);
+        lastDayNextMonth.setHours(18, 29, 59, 999);
         
         const daysDifference = Math.ceil((lastDayNextMonth - currentDate) / (1000 * 60 * 60 * 24));
         
@@ -445,10 +445,13 @@ app.put('/extendRental/:id', async (req, res) => {
             const currentEndDate = new Date(vehicle.endDate);
             newEndDate = new Date(currentEndDate);
             newEndDate.setDate(currentEndDate.getDate() + Number(additionalDays));
-            newEndDate.setHours(23, 59, 59, 999);
+            newEndDate.setHours(18, 29, 59, 999);
             vehicle.endDate = newEndDate;
             vehicle.numberOfDays += Number(additionalDays);
-            vehicle.status = 'active';
+
+            // Compare newEndDate with current date to determine status
+            const currentDate = new Date();
+            vehicle.status = newEndDate > currentDate ? 'active' : 'inactive';
 
             // Add revenue record for daily extension
             const extensionRevenue = new Revenue({
