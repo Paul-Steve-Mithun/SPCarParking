@@ -311,10 +311,9 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const { status, transactionMode, rentPrice } = req.body;
         const currentDate = new Date();
         
-        const lastDayNextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
-        lastDayNextMonth.setHours(18, 29, 59, 999);
-        
-        const daysDifference = Math.ceil((lastDayNextMonth - currentDate) / (1000 * 60 * 60 * 24));
+        // Changed from +2 to +1 to get last day of current month
+        const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        lastDayOfMonth.setHours(18, 29, 59, 999);
         
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
@@ -323,8 +322,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
 
         // Update vehicle
         vehicle.status = status || 'active';
-        vehicle.endDate = lastDayNextMonth;
-        vehicle.additionalDays = (vehicle.additionalDays || 0) + daysDifference;
+        vehicle.endDate = lastDayOfMonth;
         await vehicle.save();
 
         // Create revenue record for monthly extension
