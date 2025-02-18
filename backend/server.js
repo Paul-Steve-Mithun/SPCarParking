@@ -315,8 +315,6 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         lastDayOfMonth.setHours(18, 29, 59, 999);
         
-        const daysDifference = Math.ceil((lastDayOfMonth - currentDate) / (1000 * 60 * 60 * 24));
-        
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
@@ -325,7 +323,6 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         // Update vehicle
         vehicle.status = status || 'active';
         vehicle.endDate = lastDayOfMonth;
-        vehicle.additionalDays = (vehicle.additionalDays || 0) + daysDifference;
         await vehicle.save();
 
         // Create revenue record for monthly extension
