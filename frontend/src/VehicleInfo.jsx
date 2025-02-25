@@ -50,11 +50,18 @@ export function VehicleInfo() {
         setTransactions([]);
     };
 
-    const filteredVehicles = vehicles.filter(vehicle =>
-        vehicle.vehicleNumber.includes(searchQuery) ||
-        vehicle.vehicleDescription.toUpperCase().includes(searchQuery) ||
-        vehicle.ownerName.toUpperCase().includes(searchQuery)
-    );
+    const filteredVehicles = vehicles.filter(vehicle => {
+        const searchTermUpper = searchQuery.toUpperCase();
+        return (
+            vehicle.vehicleNumber.includes(searchTermUpper) ||
+            vehicle.vehicleDescription.toUpperCase().includes(searchTermUpper) ||
+            vehicle.ownerName.toUpperCase().includes(searchTermUpper) ||
+            // Check for both lot number and "open" parking
+            (vehicle.lotNumber 
+                ? vehicle.lotNumber.toUpperCase().includes(searchTermUpper)
+                : searchTermUpper === 'OPEN')
+        );
+    });
 
     // Function to handle image click
     const handleImageClick = (imageUrl, title, vehicle) => {
@@ -79,7 +86,7 @@ export function VehicleInfo() {
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="Search Vehicle..."
+                            placeholder="Search by vehicle number, description, owner name, or lot number..."
                             value={searchQuery}
                             onChange={handleSearch}
                             className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
