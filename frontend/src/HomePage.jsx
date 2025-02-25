@@ -81,6 +81,23 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             color: 'from-orange-500 to-orange-600'
         },
         {
+            icon: <CarTaxiFront className="w-6 h-6" />,
+            label: 'New Registrations',
+            value: vehicles.filter(v => {
+                const startDate = new Date(v.startDate);
+                const currentDate = new Date();
+                return startDate.getMonth() === currentDate.getMonth() && 
+                       startDate.getFullYear() === currentDate.getFullYear();
+            }).length,
+            filter: () => vehicles.filter(v => {
+                const startDate = new Date(v.startDate);
+                const currentDate = new Date();
+                return startDate.getMonth() === currentDate.getMonth() && 
+                       startDate.getFullYear() === currentDate.getFullYear();
+            }),
+            color: 'from-emerald-500 to-emerald-600'
+        },
+        {
             icon: <MapPin className="w-6 h-6" />,
             label: 'Private Parking',
             value: vehicles.filter(v => v.parkingType === 'private').length,
@@ -114,31 +131,6 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             value: vehicles.filter(v => v.status === 'inactive' && v.rentalType === 'monthly').length,
             filter: () => vehicles.filter(v => v.status === 'inactive' && v.rentalType === 'monthly'),
             color: 'from-red-500 to-red-600'
-        },
-        {
-            icon: <Timer className="w-6 h-6" />,
-            label: 'Daily Rentals Expiring Today',
-            value: vehicles.filter(v => {
-                const today = new Date();
-                const endDate = new Date(v.endDate);
-                return (
-                    v.rentalType === 'daily' &&
-                    endDate.getDate() === today.getDate() &&
-                    endDate.getMonth() === today.getMonth() &&
-                    endDate.getFullYear() === today.getFullYear()
-                );
-            }).length,
-            filter: () => vehicles.filter(v => {
-                const today = new Date();
-                const endDate = new Date(v.endDate);
-                return (
-                    v.rentalType === 'daily' &&
-                    endDate.getDate() === today.getDate() &&
-                    endDate.getMonth() === today.getMonth() &&
-                    endDate.getFullYear() === today.getFullYear()
-                );
-            }),
-            color: 'from-amber-500 to-amber-600'
         }
     ];
 

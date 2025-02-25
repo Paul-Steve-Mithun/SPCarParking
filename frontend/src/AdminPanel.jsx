@@ -319,11 +319,18 @@ export function AdminPanel() {
     };
 
     const filteredVehicles = sortByLotNumber(
-        vehicles.filter(vehicle =>
-            vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vehicle.vehicleDescription.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        vehicles.filter(vehicle => {
+            const searchTermLower = searchTerm.toLowerCase();
+            return (
+                vehicle.vehicleNumber.toLowerCase().includes(searchTermLower) ||
+                vehicle.ownerName.toLowerCase().includes(searchTermLower) ||
+                vehicle.vehicleDescription.toLowerCase().includes(searchTermLower) ||
+                // Check for both lot number and "open" parking
+                (vehicle.lotNumber 
+                    ? vehicle.lotNumber.toLowerCase().includes(searchTermLower)
+                    : searchTermLower === 'open')
+            );
+        })
     );
 
     const isExpired = (endDate) => {
@@ -406,7 +413,7 @@ export function AdminPanel() {
                 <div className="relative">
                     <input 
                         type="text" 
-                        placeholder="Search by vehicle number or owner name..." 
+                        placeholder="Search by vehicle number, owner name, or lot number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
