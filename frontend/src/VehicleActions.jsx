@@ -160,19 +160,25 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
 
                                             {vehicle.rentalType === 'daily' ? (
                                                 <div className="mb-4">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-sm font-medium text-gray-700">Extend Rental Period</span>
+                                                    {!showExtendForm ? (
                                                         <button
-                                                            onClick={() => setShowExtendForm(!showExtendForm)}
-                                                            className="text-green-600 hover:text-green-800 text-base flex items-center gap-2"
+                                                            onClick={() => setShowExtendForm(true)}
+                                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                                                         >
                                                             <PlusCircleIcon className="w-5 h-5" />
-                                                            {showExtendForm ? 'Cancel' : 'Extend Rental'}
+                                                            <span className="font-medium">Extend Rental</span>
                                                         </button>
-                                                    </div>
-                                                    
-                                                    {showExtendForm && (
-                                                        <div className="flex flex-col gap-2">
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-sm font-medium text-gray-700">Extend Rental Period</span>
+                                                                <button
+                                                                    onClick={() => setShowExtendForm(false)}
+                                                                    className="text-gray-500 hover:text-gray-700"
+                                                                >
+                                                                    <XIcon className="w-5 h-5" />
+                                                                </button>
+                                                            </div>
                                                             <div className="flex gap-2">
                                                                 <input
                                                                     type="number"
