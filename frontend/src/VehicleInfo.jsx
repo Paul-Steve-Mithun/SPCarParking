@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X } from 'lucide-react';
+import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import QRCode from 'qrcode';
 
 export function VehicleInfo() {
     const [vehicles, setVehicles] = useState([]);
@@ -78,6 +81,257 @@ export function VehicleInfo() {
         setSelectedImage(null);
     };
 
+    const capitalizeFirst = (str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
+    const handlePrintInvoice = async (vehicle) => {
+        try {
+            // Calculate total amount based on rental type
+            const totalAmount = vehicle.rentalType === 'daily' ? 
+                vehicle.rentPrice * vehicle.numberOfDays : 
+                vehicle.rentPrice;
+    
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const columnWidth = 85;
+            const startX1 = 15;
+            const startX2 = 110;
+            
+            // Modern Header with Gradient
+            const gradient = doc.setFillColor(0, 128, 0);
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(28);
+            doc.text('SP CAR PARKING', pageWidth/2, 25, { align: 'center' });
+            
+            // Subtitle
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 35, { align: 'center' });
+            
+            // Reset color and set modern font
+            doc.setTextColor(44, 62, 80);
+            doc.setFont("helvetica", "bold");
+            
+            // Section Styling Function
+            const createSection = (title, x, y) => {
+                doc.setFontSize(16);
+                doc.setTextColor(0, 128, 0);
+                doc.text(title, x, y);
+                doc.setDrawColor(0, 128, 0);
+                doc.setLineWidth(0.5);
+                doc.line(x, y + 2, x + columnWidth, y + 2);
+                doc.setTextColor(44, 62, 80);
+            };
+    
+            // Left Column
+            createSection('Vehicle Details', startX1, 55);
+    
+            const vehicleDetails = [
+                ['Vehicle No:', vehicle.vehicleNumber],
+                ['Description:', vehicle.vehicleDescription],
+                ['Lot Number:', vehicle.lotNumber || 'Open'],
+                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
+                ['Advance:', `INR ${vehicle.advanceAmount}`],
+                ['Rent:', `INR ${vehicle.rentPrice}`],
+                ['Duration:', vehicle.rentalType === 'daily' ? 
+                    `${vehicle.numberOfDays} days` : 'Every Month'],
+                ['Total:', `INR ${totalAmount}`]
+            ];
+    
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX1 },
+                head: [],
+                body: vehicleDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+    
+            createSection('Agreement Details', startX1, doc.autoTable.previous.finalY + 15);
+    
+            const agreementDetails = [
+                ['Start Date:', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
+                ['End Date:', new Date(vehicle.endDate).toLocaleDateString('en-GB')],
+                ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
+            ];
+    
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 20,
+                margin: { left: startX1 },
+                head: [],
+                body: agreementDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Add Vehicle Image Section with smaller dimensions
+            if (vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+
+                    // Center image in left column
+                    const imageWidth = 70;
+                    const imageX = startX1 + ((columnWidth - imageWidth) / 2); // Center horizontally
+
+                    doc.addImage(
+                        imgBase64, 
+                        'JPEG', 
+                        imageX,  // centered X position
+                        doc.autoTable.previous.finalY + 5,
+                        imageWidth,
+                        50
+                    );
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
+            }
+
+            
+    
+            // Right Column - adjust Y position
+            const rightColumnY = vehicle.vehicleImage?.url ? 
+                doc.autoTable.previous.finalY + 60 : 55; // reduced from 80
+            
+            createSection('Owner Details', startX2, 55); // Keep at top
+    
+            const ownerDetails = [
+                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
+                ['Contact:', vehicle.contactNumber || 'N/A'],
+                ['Address:', vehicle.ownerAddress || 'N/A']
+            ];
+
+    
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX2 },
+                head: [],
+                body: ownerDetails,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+    
+            // Terms and Conditions - Reduced padding
+            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10); // reduced from 15
+    
+            const terms = [
+                ['1.', 'Rent must be paid before 5th of each month'],
+                ['2.', 'Parking spot must be kept clean'],
+                ['3.', 'No unauthorized vehicle transfers'],
+                ['4.', 'Save Water and Electricity']
+            ];
+    
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 15, // reduced from 20
+                margin: { left: startX2 },
+                head: [],
+                body: terms,
+                theme: 'plain',
+                styles: { 
+                    fontSize: 10,
+                    cellPadding: 2, // reduced from 3
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 10 },
+                    1: { cellWidth: 75 }
+                }
+            });
+    
+            // QR Code Section - Reduced size and padding
+            doc.setFontSize(16);
+            doc.setTextColor(0, 128, 0);
+            doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
+            // Add smaller text
+            doc.setFontSize(10);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
+            // Add the green line
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
+            doc.setTextColor(44, 62, 80);
+            
+            // Generate smaller QR Code
+            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrDataUrl = await QRCode.toDataURL(qrData, {
+                width: 30,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
+            
+            // Center QR code in right column
+            const qrWidth = 60;
+            const qrX = startX2 + ((columnWidth - qrWidth) / 2); // Center horizontally
+
+            doc.addImage(
+                qrDataUrl, 
+                'PNG', 
+                qrX,  // centered X position
+                doc.autoTable.previous.finalY + 25,
+                qrWidth,
+                60
+            );
+    
+            // Modern Footer
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(44, 62, 80);
+            const footer = "JESUS LEADS YOU";
+            doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
+    
+            // Save
+            doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
+            toast.success('Receipt generated successfully');
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            toast.error('Failed to generate receipt');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pt-6 px-4">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -123,12 +377,21 @@ export function VehicleInfo() {
                     <div className="space-y-6">
                         {/* Basic Info Card */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-2xl font-bold text-white">Vehicle Information</h2>
-                                    <span className="px-4 py-2 bg-white/30 text-white text-lg font-bold rounded-full shadow-lg">
-                                        {selectedVehicle.lotNumber || 'Open'}
-                                    </span>
+                                    <h2 className="text-lg sm:text-2xl font-bold text-white">Vehicle Details</h2>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-3 py-1.5 bg-white/30 text-white text-sm sm:text-base font-extrabold rounded-lg shadow-lg">
+                                            {selectedVehicle.lotNumber || 'Open'}
+                                        </span>
+                                        <button
+                                            onClick={() => handlePrintInvoice(selectedVehicle)}
+                                            className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                                            title="Print Receipt"
+                                        >
+                                            <PrinterIcon className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             

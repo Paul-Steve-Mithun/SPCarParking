@@ -94,7 +94,7 @@ export function AdminPanel() {
             // Subtitle
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text('Welcomes You', pageWidth/2, 35, { align: 'center' });
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 35, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
@@ -199,10 +199,7 @@ export function AdminPanel() {
                 }
             }
 
-            // Add a green line after the image
-            doc.setDrawColor(0, 128, 0);
-            doc.setLineWidth(0.5);
-            doc.line(startX1, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5), startX1 + columnWidth, doc.autoTable.previous.finalY + (vehicle.vehicleImage?.url ? 60 : 5));
+            
     
             // Right Column - adjust Y position
             const rightColumnY = vehicle.vehicleImage?.url ? 
@@ -241,7 +238,8 @@ export function AdminPanel() {
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month'],
                 ['2.', 'Parking spot must be kept clean'],
-                ['3.', 'No unauthorized vehicle transfers']
+                ['3.', 'No unauthorized vehicle transfers'],
+                ['4.', 'Save Water and Electricity']
             ];
     
             doc.autoTable({
@@ -305,8 +303,8 @@ export function AdminPanel() {
             doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
             
             doc.setFontSize(9);
-            doc.setTextColor(128, 128, 128);
-            const footer = "This is a computer-generated document. No signature is required.";
+            doc.setTextColor(44, 62, 80);
+            const footer = "JESUS LEADS YOU";
             doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
     
             // Save
