@@ -480,7 +480,7 @@ export function RevenueDashboard() {
                                                                     {record.vehicleDescription}
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
-                                                                    {record.lotNumber}
+                                                                    {record.lotNumber || 'Open'}
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
                                                                     {capitalizeFirst(record.rentalType)}
