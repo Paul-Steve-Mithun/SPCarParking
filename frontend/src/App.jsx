@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink, Navigate, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { 
+    Menu, 
+    X, 
+    Home,
+    PlusCircle,
+    Car,
+    IndianRupee,
+    Wallet,
+    AlertCircle,
+    Receipt,
+    Settings,
+    LogOut,
+    LogIn
+} from 'lucide-react';
 import HomePage from './HomePage';
 import NewVehicle from './NewVehicle';
 import AdminPanel from './AdminPanel';
@@ -8,6 +21,7 @@ import RevenueDashboard from './RevenueDashboard';
 import ManageVehicles from './ManageVehicles';
 import AdvanceDashboard from './AdvanceDashboard';
 import VehicleInfo from './VehicleInfo';
+import ExpensesDashboard from './ExpensesDashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -85,10 +99,11 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                         <div className="hidden md:flex items-center space-x-4">
                             <NavItem to="/">Home</NavItem>
                             <NavItem to="/new-vehicle" requiresAuth>New Vehicle</NavItem>
-                            <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
+                            <NavItem to="/vehicle-info">Vehicle Info</NavItem>
                             <NavItem to="/revenuedashboard">Rent</NavItem>
                             <NavItem to="/advance">Advance</NavItem>
-                            <NavItem to="/vehicle-info">Vehicle Info</NavItem>
+                            <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
+                            <NavItem to="/expenses">Expenses</NavItem>
                             <NavItem to="/admin" requiresAuth>Admin</NavItem>
                             {isAuthenticated ? (
                                 <button
@@ -120,30 +135,67 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
 
                     {/* Mobile Navigation */}
                     {isMenuOpen && (
-                        <div className="md:hidden absolute top-16 left-0 w-full bg-gradient-to-r from-blue-600 to-purple-700 border-t border-white/10">
-                            <div className="flex flex-col">
-                                <NavItem to="/">Home</NavItem>
-                                <NavItem to="/new-vehicle" requiresAuth>New Vehicle</NavItem>
-                                <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
-                                <NavItem to="/revenuedashboard">Rent</NavItem>
-                                <NavItem to="/advance">Advance</NavItem>
-                                <NavItem to="/vehicle-info">Vehicle Info</NavItem>
-                                <NavItem to="/admin" requiresAuth>Admin</NavItem>
-                                {isAuthenticated ? (
+                        <div className="md:hidden fixed inset-0 z-50">
+                            <div className="fixed inset-0 bg-black/30 backdrop-blur-md" onClick={() => setIsMenuOpen(false)} />
+                            <div className="fixed inset-y-0 right-0 w-[80%] max-w-sm bg-white/90 backdrop-blur-lg shadow-2xl transform transition-all duration-300 translate-x-0">
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-5 border-b border-gray-200/50">
+                                    <span className="text-xl font-bold text-gray-900">
+                                        Menu
+                                    </span>
                                     <button
-                                        onClick={handleLogout}
-                                        className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="p-2 rounded-full bg-gray-100/80 text-gray-600 hover:bg-gray-200/80 transition-all duration-200"
                                     >
-                                        Logout
+                                        <X className="h-5 w-5" />
                                     </button>
-                                ) : (
-                                    <button 
-                                        onClick={scrollToLogin}
-                                        className="text-white text-left px-4 py-2 hover:bg-white/10 w-full"
-                                    >
-                                        Login
-                                    </button>
-                                )}
+                                </div>
+
+                                {/* Navigation Links */}
+                                <div className="py-6 px-3 overflow-y-auto">
+                                    <div className="flex flex-col space-y-2">
+                                        {[
+                                            { to: "/", label: "Home", icon: <Home className="w-5 h-5" /> },
+                                            { to: "/new-vehicle", label: "New Vehicle", icon: <PlusCircle className="w-5 h-5" />, requiresAuth: true },
+                                            { to: "/vehicle-info", label: "Vehicle Info", icon: <Car className="w-5 h-5" /> },
+                                            { to: "/revenuedashboard", label: "Rent", icon: <IndianRupee className="w-5 h-5" /> },
+                                            { to: "/advance", label: "Advance", icon: <Wallet className="w-5 h-5" /> },
+                                            { to: "/managevehicles", label: "Outstanding", icon: <AlertCircle className="w-5 h-5" />, requiresAuth: true },
+                                            { to: "/expenses", label: "Expenses", icon: <Receipt className="w-5 h-5" /> },
+                                            { to: "/admin", label: "Admin", icon: <Settings className="w-5 h-5" />, requiresAuth: true }
+                                        ].map((item) => (
+                                            <NavItem key={item.to} to={item.to} requiresAuth={item.requiresAuth}>
+                                                <div className="flex items-center py-3.5 px-4 rounded-xl bg-white/50 hover:bg-white hover:shadow-md active:scale-[0.98] transition-all duration-200">
+                                                    <span className="text-gray-500 mr-3">{item.icon}</span>
+                                                    <span className="text-gray-700 font-medium">{item.label}</span>
+                                                </div>
+                                            </NavItem>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Footer with Login/Logout */}
+                                <div className="absolute bottom-0 left-0 right-0 p-5 border-t border-gray-200/50 bg-white/50 backdrop-blur-sm">
+                                    {isAuthenticated ? (
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium 
+                                            hover:from-red-600 hover:to-red-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-red-500/25 flex items-center justify-center"
+                                        >
+                                            <LogOut className="w-5 h-5 mr-2" />
+                                            Logout
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={scrollToLogin}
+                                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium 
+                                            hover:from-blue-600 hover:to-purple-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center"
+                                        >
+                                            <LogIn className="w-5 h-5 mr-2" />
+                                            Login
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -187,6 +239,7 @@ function App() {
                         <Route path="/revenuedashboard" element={<RevenueDashboard />} />
                         <Route path="/advance" element={<AdvanceDashboard />} />
                         <Route path="/vehicle-info" element={<VehicleInfo />} />
+                        <Route path="/expenses" element={<ExpensesDashboard />} />
                         <Route path="/admin" element={
                             <ProtectedRoute>
                                 <AdminPanel />

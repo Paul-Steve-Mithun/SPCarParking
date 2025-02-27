@@ -115,8 +115,41 @@ const AdvanceSchema = new mongoose.Schema({
     refundDate: { type: Date, default: null }
 });
 
+const ExpenseSchema = new mongoose.Schema({
+    expenseType: { 
+        type: String, 
+        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Miscellaneous'],
+        required: true 
+    },
+    spentBy: {
+        type: String,
+        enum: ['Balu', 'Mani'],
+        required: true
+    },
+    description: { 
+        type: String,
+        required: function() { return this.expenseType === 'Miscellaneous'; }
+    },
+    amount: { 
+        type: Number, 
+        required: true 
+    },
+    transactionMode: { 
+        type: String, 
+        enum: ['Cash', 'UPI'], 
+        required: true 
+    },
+    transactionDate: { 
+        type: Date, 
+        default: Date.now 
+    },
+    month: { type: Number, required: true },
+    year: { type: Number, required: true }
+});
+
 const Revenue = mongoose.model('Revenue', RevenueSchema);
 const Advance = mongoose.model('Advance', AdvanceSchema);
+const Expense = mongoose.model('Expense', ExpenseSchema);
 
 // Update VehicleSchema pre-save middleware
 VehicleSchema.pre('save', function(next) {
@@ -311,7 +344,6 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const { status, transactionMode, rentPrice } = req.body;
         const currentDate = new Date();
         
-        // Changed from +2 to +1 to get last day of current month
         const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         lastDayOfMonth.setHours(18, 29, 59, 999);
         
@@ -331,10 +363,10 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
             vehicleDescription: vehicle.vehicleDescription,
             lotNumber: vehicle.lotNumber,
             rentalType: vehicle.rentalType,
-            rentPrice: rentPrice || vehicle.rentPrice,
+            rentPrice: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
             month: new Date().getMonth(),
             year: new Date().getFullYear(),
-            revenueAmount: rentPrice || vehicle.rentPrice,
+            revenueAmount: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
             transactionType: 'Extension',
             transactionMode: transactionMode
         });
@@ -798,6 +830,77 @@ app.get('/vehicles/search', async (req, res) => {
             ]
         });
         res.json(vehicles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add new expense
+app.post('/expenses', async (req, res) => {
+    try {
+        const expenseData = {
+            ...req.body,
+            month: new Date(req.body.transactionDate).getMonth(),
+            year: new Date(req.body.transactionDate).getFullYear()
+        };
+        const newExpense = new Expense(expenseData);
+        await newExpense.save();
+        res.json({ success: true, expense: newExpense });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get expenses with optional month/year filter
+app.get('/expenses', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const query = {};
+        
+        if (month !== undefined) query.month = parseInt(month);
+        if (year !== undefined) query.year = parseInt(year);
+
+        const expenses = await Expense.find(query).sort({ transactionDate: -1 });
+        res.json(expenses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get expense statistics
+app.get('/expenses/stats', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const query = {};
+        
+        if (month !== undefined) query.month = parseInt(month);
+        if (year !== undefined) query.year = parseInt(year);
+
+        const stats = await Expense.aggregate([
+            { $match: query },
+            {
+                $group: {
+                    _id: '$spentBy',
+                    totalAmount: { $sum: '$amount' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete expense
+app.delete('/expenses/:id', async (req, res) => {
+    try {
+        const deletedExpense = await Expense.findByIdAndDelete(req.params.id);
+        if (!deletedExpense) {
+            return res.status(404).json({ error: 'Expense not found' });
+        }
+        res.json({ success: true, expense: deletedExpense });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
