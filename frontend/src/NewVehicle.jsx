@@ -675,7 +675,7 @@ export function NewVehicle() {
                                                     <p className="text-gray-800">{vehicle.ownerName}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Contact</p>
+                                                    <p className="font-semibold text-gray-600">Contact Number</p>
                                                     <p className="text-gray-800">{vehicle.contactNumber}</p>
                                                 </div>
                                             </div>
@@ -692,7 +692,7 @@ export function NewVehicle() {
                                                     <p className="text-gray-800">{capitalizeFirst(vehicle.rentalType)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Price</p>
+                                                    <p className="font-semibold text-gray-600">Rent</p>
                                                     <p className="text-gray-800">₹{vehicle.rentPrice}</p>
                                                 </div>
                                                 {vehicle.rentalType === 'monthly' && (

@@ -372,15 +372,15 @@ export function AdvanceDashboard() {
             <div className="min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300">
                 <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                     {/* First Main Div - Header, Filters and Stats */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                        <div className="bg-gradient-to-r from-orange-500 to-amber-600 p-4 sm:p-6">
+                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                                     Advance Payment Dashboard
                                 </h1>
                                 <button 
                                     onClick={generatePDF} 
-                                    className="w-full sm:w-auto bg-white text-orange-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    className="w-full sm:w-auto bg-white text-orange-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
                                 >
                                     <Printer className="w-5 h-5" />
                                     <span className="font-semibold">Export PDF</span>
@@ -388,7 +388,7 @@ export function AdvanceDashboard() {
                             </div>
                             
                             <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                                <div className="relative flex-1 sm:flex-none">
+                                <div className="relative w-full sm:w-48">
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -400,7 +400,7 @@ export function AdvanceDashboard() {
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
                                 </div>
-                                <div className="relative flex-1 sm:flex-none">
+                                <div className="relative w-full sm:w-32">
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -412,46 +412,46 @@ export function AdvanceDashboard() {
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
                                 </div>
-                                <div className="flex items-center gap-4">
+                                <div className="w-full sm:w-auto">
                                     <button
                                         onClick={() => {
                                             setShowPayAdvanceModal(true);
                                             fetchVehicles();
                                         }}
-                                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                                        className="w-full px-4 py-3 bg-white text-orange-600 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 font-medium shadow-md transition-colors duration-200"
                                     >
-                                        <IndianRupee className="w-4 h-4" />
+                                        <IndianRupee className="w-5 h-5" />
                                         Pay Advance
                                     </button>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Stats Cards */}
                         <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Monthly Advance Card */}
                             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <Calendar className="w-8 h-8 text-indigo-600" />
+                                        <Calendar className="w-6 h-6 text-indigo-600" />
                                     </div>
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Monthly Advance (Net)</p>
-                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-500' : 'text-gray-900'}`}>
-                                            {stats.monthlyAdvance < 0 ? '-₹' : '₹'}
-                                            {Math.abs(stats.monthlyAdvance).toFixed(2)}
+                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                            {stats.monthlyAdvance < 0 ? '-' : ''}₹{Math.abs(stats.monthlyAdvance).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Total Advance Card */}
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <DollarSign className="w-8 h-8 text-blue-600" />
+                                        <DollarSign className="w-6 h-6 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Advance (Till {monthNames[selectedMonth]} {selectedYear})</p>
+                                        <p className="text-gray-600 text-sm font-medium">Total Advance (Till Date)</p>
                                         <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.totalAdvance.toFixed(2)}</p>
                                     </div>
                                 </div>
@@ -463,118 +463,118 @@ export function AdvanceDashboard() {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div className="p-4 sm:p-6">
                             <div className="flex flex-col space-y-4">
-                                <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center sm:text-left">
+                                <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
                                     Transaction History
                                 </h2>
-                                <div className="w-full relative">
+                                
+                                <div className="relative w-full mb-6">
                                     <input
                                         type="text"
-                                        placeholder="Search Vehicle..."
+                                        placeholder="Search transactions..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     />
-                                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Table section remains the same */}
-                        <div className="overflow-x-auto">
-                            <div className="max-w-[1400px] mx-auto">
-                                <div className="inline-block min-w-full align-middle">
-                                    <div className="overflow-hidden">
-                                        {filteredVehicles.length === 0 ? (
-                                            <div className="text-center py-8 text-gray-500">
-                                                No transactions found matching your search
-                                            </div>
-                                        ) : (
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead>
-                                                    <tr className="bg-gray-50">
-                                                        {[
-                                                            'vehicleNumber',
-                                                            'vehicleDescription',
-                                                            'lotNumber',
-                                                            'parkingType',
-                                                            'transactionMode',
-                                                            'TransactionDate',
-                                                            'advanceAmount'
-                                                        ].map((column) => (
-                                                            <th 
-                                                                key={column}
-                                                                onClick={() => handleSort(column)}
-                                                                className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                                                            >
-                                                                <div className="flex items-center">
-                                                                    <span className="hidden sm:inline">
-                                                                        {column.replace(/([A-Z])/g, ' $1').trim()}
-                                                                    </span>
-                                                                    <span className="sm:hidden">
-                                                                        {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
-                                                                    </span>
-                                                                    <SortIcon column={column} />
-                                                                </div>
-                                                            </th>
-                                                        ))}
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                    {filteredVehicles.map((vehicle) => (
-                                                        <tr 
-                                                            key={vehicle._id} 
-                                                            className={`transition-colors duration-150 ${
-                                                                vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
-                                                            }`}
-                                                        >
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
-                                                                {vehicle.vehicleNumber}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
-                                                                {vehicle.vehicleDescription}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                {vehicle.lotNumber || 'Open'}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4">
-                                                                <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
-                                                                    vehicle.transactionMode === 'UPI' 
-                                                                        ? 'bg-blue-100 text-blue-800' 
-                                                                        : 'bg-green-100 text-green-800'
-                                                                }`}>
-                                                                    {vehicle.transactionMode === 'UPI' ? (
-                                                                        <>
-                                                                            <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                            <span>UPI</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                            <span>Cash</span>
-                                                                        </>
-                                                                    )}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                {vehicle.advanceRefund 
-                                                                    ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
-                                                                    : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
-                                                                <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
-                                                                    {vehicle.advanceRefund 
-                                                                        ? `-₹${vehicle.advanceRefund}`
-                                                                        : `₹${vehicle.advanceAmount}`}
-                                                                </span>
-                                                            </td>
+                            <div className="overflow-x-auto -mx-6 sm:mx-0">
+                                <div className="max-w-[1400px] mx-auto">
+                                    <div className="inline-block min-w-full align-middle">
+                                        <div className="overflow-hidden">
+                                            {filteredVehicles.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    No transactions found matching your search
+                                                </div>
+                                            ) : (
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead>
+                                                        <tr className="bg-gray-50">
+                                                            {[
+                                                                'vehicleNumber',
+                                                                'vehicleDescription',
+                                                                'lotNumber',
+                                                                'parkingType',
+                                                                'transactionMode',
+                                                                'TransactionDate',
+                                                                'advanceAmount'
+                                                            ].map((column) => (
+                                                                <th 
+                                                                    key={column}
+                                                                    onClick={() => handleSort(column)}
+                                                                    className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                                >
+                                                                    <div className="flex items-center">
+                                                                        <span className="hidden sm:inline">
+                                                                            {column.replace(/([A-Z])/g, ' $1').trim()}
+                                                                        </span>
+                                                                        <span className="sm:hidden">
+                                                                            {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
+                                                                        </span>
+                                                                        <SortIcon column={column} />
+                                                                    </div>
+                                                                </th>
+                                                            ))}
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        )}
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {filteredVehicles.map((vehicle) => (
+                                                            <tr 
+                                                                key={vehicle._id} 
+                                                                className={`transition-colors duration-150 ${
+                                                                    vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                                                    {vehicle.vehicleNumber}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
+                                                                    {vehicle.vehicleDescription}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {vehicle.lotNumber || 'Open'}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4">
+                                                                    <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
+                                                                        vehicle.transactionMode === 'UPI' 
+                                                                            ? 'bg-blue-100 text-blue-800' 
+                                                                            : 'bg-green-100 text-green-800'
+                                                                    }`}>
+                                                                        {vehicle.transactionMode === 'UPI' ? (
+                                                                            <>
+                                                                                <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                                <span>UPI</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                                <span>Cash</span>
+                                                                            </>
+                                                                        )}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                    {vehicle.advanceRefund 
+                                                                        ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
+                                                                        : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
+                                                                    <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
+                                                                        {vehicle.advanceRefund 
+                                                                            ? `-₹${vehicle.advanceRefund}`
+                                                                            : `₹${vehicle.advanceAmount}`}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

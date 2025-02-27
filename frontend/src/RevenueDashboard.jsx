@@ -414,20 +414,18 @@ export function RevenueDashboard() {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div className="p-4 sm:p-6">
                             <div className="flex flex-col space-y-4">
-                                <h2 className="text-lg sm:text-xl font-bold text-gray-800 text-center sm:text-left">
+                                <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
                                     Transaction History
                                 </h2>
-                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                                    <div className="w-full relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Search vehicle..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                        />
-                                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    </div>
+                                <div className="relative w-full mb-6">
+                                    <input
+                                        type="text"
+                                        placeholder="Search transactions..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 </div>
                             </div>
                             <div className="overflow-x-auto">

@@ -34,6 +34,10 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                 const currentDate = new Date();
                 const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
         
+                const rentPriceToUse = customRentPrice === '' ? 
+                    vehicle.rentPrice : 
+                    Number(customRentPrice);
+
                 const response = await fetch(`https://spcarparkingbknd.onrender.com/reactivateVehicle/${vehicle._id}`, {
                     method: 'PUT',
                     headers: {
@@ -43,7 +47,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                         status: 'active',
                         endDate: nextMonth,
                         transactionMode: transactionMode,
-                        rentPrice: customRentPrice ? Number(customRentPrice) : vehicle.rentPrice
+                        rentPrice: rentPriceToUse
                     })
                 });
         
