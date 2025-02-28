@@ -35,16 +35,67 @@ export function ManageVehicles() {
         fetchExpiredVehicles();
     }, []);
 
-    const filteredMonthlyVehicles = vehicles.filter(vehicle => 
-        vehicle.rentalType === 'monthly' && 
-        (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+    const sortByLotNumber = (vehicles) => {
+        // Group vehicles by wing
+        const wingGroups = {
+            A: [],
+            B: [],
+            C: [],
+            Open: []
+        };
+
+        // Sort vehicles into their respective wings
+        vehicles.forEach(vehicle => {
+            if (!vehicle.lotNumber) {
+                wingGroups.Open.push(vehicle);
+            } else {
+                const wing = vehicle.lotNumber.charAt(0).toUpperCase();
+                if (wing === 'A') wingGroups.A.push(vehicle);
+                else if (wing === 'B') wingGroups.B.push(vehicle);
+                else if (wing === 'C') wingGroups.C.push(vehicle);
+                else wingGroups.Open.push(vehicle);
+            }
+        });
+
+        // Helper function to extract number from lot number
+        const getLotNumber = (lotNumber) => {
+            if (!lotNumber) return 999999; // For open parking
+            const num = parseInt(lotNumber.substring(1));
+            return isNaN(num) ? 999999 : num;
+        };
+
+        // Sort vehicles within each wing by numeric value
+        Object.keys(wingGroups).forEach(wing => {
+            wingGroups[wing].sort((a, b) => {
+                if (!a.lotNumber) return 1;
+                if (!b.lotNumber) return -1;
+                return getLotNumber(a.lotNumber) - getLotNumber(b.lotNumber);
+            });
+        });
+
+        // Combine all sorted groups in the desired order
+        return [
+            ...wingGroups.A,  // A1-A11
+            ...wingGroups.B,  // B1-B20
+            ...wingGroups.C,  // C1-C21
+            ...wingGroups.Open
+        ];
+    };
+
+    const filteredMonthlyVehicles = sortByLotNumber(
+        vehicles.filter(vehicle => 
+            vehicle.rentalType === 'monthly' && 
+            (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
     );
 
-    const filteredDailyVehicles = vehicles.filter(vehicle => 
-        vehicle.rentalType === 'daily' && 
-        (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filteredDailyVehicles = sortByLotNumber(
+        vehicles.filter(vehicle => 
+            vehicle.rentalType === 'daily' && 
+            (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
     );
 
     const handlePrintInvoice = async (vehicle) => {
