@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, IndianRupee, AlertCircle } from 'lucide-react';
+import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, IndianRupee, AlertCircle, Phone } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -130,6 +130,14 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                 </button>
                                             </div>
                                             <span className="text-sm text-white/80">{vehicle.vehicleDescription}</span>
+                                            <a 
+                                                href={`tel:${vehicle.contactNumber}`}
+                                                className="text-sm text-white/90 hover:text-white flex items-center gap-1 mt-1"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <Phone className="w-4 h-4" />
+                                                {vehicle.contactNumber}
+                                            </a>
                                         </div>
                                     </div>
                                     <div className="p-6">
@@ -297,6 +305,16 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                             </p>
                                             <p className="text-sm text-gray-600">
                                                 <span className="font-medium">Description:</span> {vehicle.vehicleDescription}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <span className="font-medium">Contact:</span>{' '}
+                                                <a 
+                                                    href={`tel:${vehicle.contactNumber}`}
+                                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {vehicle.contactNumber}
+                                                </a>
                                             </p>
                                             {confirmationType === 'monthly' ? (
                                                 <>
