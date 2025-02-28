@@ -181,20 +181,33 @@ const Vehicle = mongoose.model('Vehicle', VehicleSchema);
 
 // Function to update vehicle status
 const updateVehicleStatus = async () => {
-    const currentDate = new Date();
-    await Vehicle.updateMany(
-        { 
-            endDate: { $lt: currentDate },
-            status: 'active'
-        },
-        { 
-            $set: { status: 'inactive' }
-        }
-    );
+    try {
+        const currentDate = new Date();
+        const result = await Vehicle.updateMany(
+            { 
+                endDate: { $lt: currentDate },
+                status: 'active'
+            },
+            { 
+                $set: { status: 'inactive' }
+            }
+        );
+        console.log(`Updated ${result.modifiedCount} vehicles to inactive status`);
+    } catch (error) {
+        console.error('Error updating vehicle status:', error);
+    }
 };
 
-// Run status update every hour
-setInterval(updateVehicleStatus, 1000 * 60 * 60 );
+// Instead of using setInterval, check status on every relevant API call
+const checkVehicleStatus = async (req, res, next) => {
+    try {
+        await updateVehicleStatus();
+        next();
+    } catch (error) {
+        console.error('Error in status check middleware:', error);
+        next(); // Continue to the route handler even if status update fails
+    }
+};
 
 app.get('/', (req, res) => {
     res.send('SP Car Parking');
@@ -298,7 +311,7 @@ app.post('/addVehicle', upload.fields([
 });
 
 // Get All Vehicles
-app.get('/vehicles', async (req, res) => {
+app.get('/vehicles', checkVehicleStatus, async (req, res) => {
     try {
         const vehicles = await Vehicle.find();
         res.json(vehicles);
@@ -508,7 +521,7 @@ app.put('/extendRental/:id', async (req, res) => {
 });
 
 // Get Vehicle Status Statistics
-app.get('/vehicleStats', async (req, res) => {
+app.get('/vehicleStats', checkVehicleStatus, async (req, res) => {
     try {
         const stats = await Vehicle.aggregate([
             {
@@ -808,11 +821,10 @@ app.put('/vehicles/update-advance/:id', async (req, res) => {
 });
 
 // Update the endpoint to search all vehicles
-app.get('/vehicles/search', async (req, res) => {
+app.get('/vehicles/search', checkVehicleStatus, async (req, res) => {
     try {
         const { query } = req.query;
         if (!query) {
-            // If no search query, return only zero advance vehicles
             const vehicles = await Vehicle.find({ 
                 advanceAmount: 0,
                 status: 'active'
@@ -820,7 +832,6 @@ app.get('/vehicles/search', async (req, res) => {
             return res.json(vehicles);
         }
 
-        // If there's a search query, search all active vehicles
         const vehicles = await Vehicle.find({
             status: 'active',
             $or: [
