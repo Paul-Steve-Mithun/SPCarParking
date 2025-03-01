@@ -598,8 +598,9 @@ export function ManageVehicles() {
     };
 
     const renderVehicleCard = (vehicle) => {
-        // Calculate due amount for daily rentals
+        // Calculate due amount and days for daily rentals
         let dueAmount = 0;
+        let dueDays = 0;
         if (vehicle.rentalType === 'daily') {
             const startDate = new Date(vehicle.endDate);
             startDate.setDate(startDate.getDate() + 1);
@@ -609,9 +610,8 @@ export function ManageVehicles() {
             endDate.setHours(0, 0, 0, 0);
 
             const diffTime = endDate.getTime() - startDate.getTime();
-            const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            
-            dueAmount = vehicle.rentPrice * numberOfDays;
+            dueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            dueAmount = vehicle.rentPrice * dueDays;
         }
 
         return (
@@ -655,11 +655,11 @@ export function ManageVehicles() {
                         {vehicle.rentalType === 'daily' && (
                             <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                    Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                    Paid: ₹{vehicle.rentPrice * vehicle.numberOfDays}
                                 </span>
                                 {dueAmount > 0 && (
                                     <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs border border-red-200">
-                                        <span className="font-bold">Due: ₹{dueAmount}</span>
+                                        <span className="font-bold">Due ({dueDays} days): ₹{dueAmount}</span>
                                     </span>
                                 )}
                             </div>
