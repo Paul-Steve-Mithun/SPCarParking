@@ -86,7 +86,9 @@ export function ManageVehicles() {
         vehicles.filter(vehicle => 
             vehicle.rentalType === 'monthly' && 
             (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+             vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
         )
     );
 
@@ -94,7 +96,9 @@ export function ManageVehicles() {
         vehicles.filter(vehicle => 
             vehicle.rentalType === 'daily' && 
             (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
+             vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
         )
     );
 
@@ -178,15 +182,14 @@ export function ManageVehicles() {
 
             const agreementDetails = [
                 ['Start Date:', (() => {
-                    const date = new Date();
-                    date.setMonth(date.getMonth() - 1);
-                    date.setDate(1);
-                    return date.toLocaleDateString('en-GB');
+                    const endDate = new Date(vehicle.endDate);
+                    const firstDay = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+                    return firstDay.toLocaleDateString('en-GB');
                 })()],
                 ['End Date:', (() => {
-                    const date = new Date();
-                    date.setDate(0); // Last day of previous month
-                    return date.toLocaleDateString('en-GB');
+                    const endDate = new Date(vehicle.endDate);
+                    const lastDay = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+                    return lastDay.toLocaleDateString('en-GB');
                 })()],
                 ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
             ];
@@ -690,7 +693,7 @@ export function ManageVehicles() {
                 <div className="relative">
                     <input 
                         type="text" 
-                        placeholder="Search by vehicle number or owner name..." 
+                        placeholder="Search by vehicle number, description, owner name, or lot number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 text-sm sm:text-base"

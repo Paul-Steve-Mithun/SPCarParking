@@ -355,19 +355,22 @@ app.delete('/removeVehicle/:id', async (req, res) => {
 app.put('/reactivateVehicle/:id', async (req, res) => {
     try {
         const { status, transactionMode, rentPrice } = req.body;
-        const currentDate = new Date();
-        
-        const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-        lastDayOfMonth.setHours(18, 29, 59, 999);
         
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
+        // Get the original end date from the database
+        const originalEndDate = new Date(vehicle.endDate);
+        
+        // Calculate the last day of the next month after the original end date
+        const nextMonthEndDate = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 2, 0);
+        nextMonthEndDate.setHours(18, 29, 59, 999); // Set to 23:59:59 IST
+
         // Update vehicle
         vehicle.status = status || 'active';
-        vehicle.endDate = lastDayOfMonth;
+        vehicle.endDate = nextMonthEndDate;
         await vehicle.save();
 
         // Create revenue record for monthly extension
