@@ -829,14 +829,12 @@ app.get('/vehicles/search', checkVehicleStatus, async (req, res) => {
         const { query } = req.query;
         if (!query) {
             const vehicles = await Vehicle.find({ 
-                advanceAmount: 0,
-                status: 'active'
+                advanceAmount: 0
             });
             return res.json(vehicles);
         }
 
         const vehicles = await Vehicle.find({
-            status: 'active',
             $or: [
                 { vehicleNumber: new RegExp(query.toUpperCase(), 'i') },
                 { vehicleDescription: new RegExp(query.toUpperCase(), 'i') },
