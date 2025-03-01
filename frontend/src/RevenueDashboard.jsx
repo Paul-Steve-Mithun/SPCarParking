@@ -44,7 +44,8 @@ export function RevenueDashboard() {
             const query = searchQuery.toLowerCase();
             return (
                 record.vehicleNumber.toLowerCase().includes(query) ||
-                (record.vehicleDescription || '').toLowerCase().includes(query)
+                (record.vehicleDescription || '').toLowerCase().includes(query) ||
+                (record.lotNumber || '').toLowerCase().includes(query)
             );
         });
         setFilteredData(filtered);
@@ -420,7 +421,7 @@ export function RevenueDashboard() {
                                 <div className="relative w-full mb-6">
                                     <input
                                         type="text"
-                                        placeholder="Search transactions..."
+                                        placeholder="Search by vehicle number, description, or lot number..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
