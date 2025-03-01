@@ -636,18 +636,197 @@ export function AdminPanel() {
         return 0;
     };
 
+    const generateDatabaseReport = async () => {
+        try {
+            const doc = new jsPDF('landscape');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            
+            // Modern header with gradient
+            doc.setFillColor(79, 70, 229);
+            doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            // Company name
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
+            
+            // Report title and date
+            doc.setFontSize(14);
+            const currentDate = new Date().toLocaleDateString('en-GB');
+            doc.text(`Vehicle Database Report (Generated: ${currentDate})`, pageWidth / 2, 28, { align: 'center' });
+
+            // Summary cards section
+            const summaryY = 45;
+            const cardWidth = (pageWidth - 70) / 5; // Divide available space into 5 cards
+            const cardMargin = 14;
+            
+            // Calculate statistics
+            const totalVehicles = vehicles.length;
+            const activeMonthly = vehicles.filter(v => v.status === 'active' && v.rentalType === 'monthly').length;
+            const inactiveMonthly = vehicles.filter(v => v.status === 'inactive' && v.rentalType === 'monthly').length;
+            const activeDaily = vehicles.filter(v => v.status === 'active' && v.rentalType === 'daily').length;
+            const inactiveDaily = vehicles.filter(v => v.status === 'inactive' && v.rentalType === 'daily').length;
+
+            // Create summary cards
+            const summaryCards = [
+                { title: 'Total Vehicles', value: totalVehicles },
+                { title: 'Active Monthly', value: activeMonthly },
+                { title: 'Inactive Monthly', value: inactiveMonthly },
+                { title: 'Active Daily', value: activeDaily },
+                { title: 'Inactive Daily', value: inactiveDaily }
+            ];
+
+            // Draw cards
+            summaryCards.forEach((card, index) => {
+                const cardX = cardMargin + (index * (cardWidth + 10));
+                
+                // Card background
+                doc.setFillColor(246, 246, 252);
+                doc.roundedRect(cardX, summaryY, cardWidth, 30, 2, 2, 'F');
+                
+                // Card title
+                doc.setTextColor(79, 70, 229);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(card.title, cardX + 5, summaryY + 12);
+                
+                // Card value
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text(card.value.toString(), cardX + 5, summaryY + 25);
+            });
+
+            // Calculate total table width with adjusted S.No column width
+            const columnWidths = {
+                serialNumber: 25,    // Increased from 15
+                vehicleNumber: 35,
+                description: 50,
+                parkingType: 30,
+                rentalType: 40,
+                status: 30,
+                rentPrice: 40
+            };
+            
+            const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+            const leftMargin = Math.floor((pageWidth - totalTableWidth) / 2);
+
+            // Table columns
+            const tableColumn = [
+                { header: 'S.No', dataKey: 'serialNumber' },
+                { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
+                { header: 'Description', dataKey: 'description' },
+                { header: 'Parking Type', dataKey: 'parkingType' },
+                { header: 'Rental Type', dataKey: 'rentalType' },
+                { header: 'Status', dataKey: 'status' },
+                { header: 'Rent Price', dataKey: 'rentPrice' }
+            ];
+
+            // Prepare table data
+            const tableRows = sortByLotNumber(vehicles).map((vehicle, index) => {
+                const dueAmount = calculateDueAmount(vehicle);
+                return {
+                    serialNumber: index + 1,
+                    vehicleNumber: vehicle.vehicleNumber,
+                    description: vehicle.vehicleDescription || '',
+                    parkingType: vehicle.lotNumber || 'Open',
+                    rentalType: `${capitalizeFirst(vehicle.rentalType)}${vehicle.rentalType === 'daily' ? ` (${vehicle.numberOfDays} days)` : ''}`,
+                    status: vehicle.status === 'active' ? 'Paid' : 'Not Paid',
+                    rentPrice: vehicle.rentalType === 'daily' && dueAmount > 0 
+                        ? `Due: INR ${dueAmount}.00`
+                        : `INR ${vehicle.rentPrice}.00`,
+                    isInactive: vehicle.status === 'inactive'
+                };
+            });
+
+            // Generate table with updated column widths
+            doc.autoTable({
+                columns: tableColumn,
+                body: tableRows,
+                startY: summaryY + 40,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [79, 70, 229],
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    fontStyle: 'bold',
+                    cellPadding: 6,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineWidth: 0.1,
+                    minCellHeight: 14
+                },
+                bodyStyles: {
+                    fontSize: 9,
+                    cellPadding: 4,
+                    lineColor: [237, 237, 237],
+                    valign: 'middle'
+                },
+                columnStyles: {
+                    serialNumber: { cellWidth: columnWidths.serialNumber, halign: 'center' },
+                    vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
+                    description: { cellWidth: columnWidths.description, halign: 'left' },
+                    parkingType: { cellWidth: columnWidths.parkingType, halign: 'center' },
+                    rentalType: { cellWidth: columnWidths.rentalType, halign: 'center' },
+                    status: { cellWidth: columnWidths.status, halign: 'center' },
+                    rentPrice: { cellWidth: columnWidths.rentPrice, halign: 'right' }
+                },
+                alternateRowStyles: {
+                    fillColor: [250, 250, 255]
+                },
+                margin: { 
+                    left: leftMargin,
+                    right: leftMargin
+                },
+                tableWidth: totalTableWidth,
+                didParseCell: function(data) {
+                    // Color inactive vehicle rows in red
+                    if (data.row.raw && data.row.raw.isInactive) {
+                        data.cell.styles.textColor = [220, 38, 38]; // Red color
+                    }
+                },
+                didDrawPage: function(data) {
+                    doc.setFontSize(10);
+                    doc.text(
+                        `Page ${data.pageNumber}`,
+                        pageWidth / 2,
+                        pageHeight - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            doc.save(`SP_Vehicle_Database_Report_${currentDate.replace(/\//g, '-')}.pdf`);
+            toast.success('Database report generated successfully');
+        } catch (error) {
+            console.error('Error generating report:', error);
+            toast.error('Failed to generate report');
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
             <Toaster position="top-right" />
             
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-white">Vehicles Database</h1>
-                <button 
-                    onClick={fetchVehicles} 
-                    className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
-                >
-                    <RefreshCwIcon />
-                </button>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={generateDatabaseReport}
+                        className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
+                        title="Generate Database Report"
+                    >
+                        <PrinterIcon className="w-6 h-6" />
+                    </button>
+                    <button 
+                        onClick={fetchVehicles} 
+                        className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
+                    >
+                        <RefreshCwIcon className="w-6 h-6" />
+                    </button>
+                </div>
             </div>
 
             <div className="p-4">

@@ -598,8 +598,9 @@ export function ManageVehicles() {
     };
 
     const renderVehicleCard = (vehicle) => {
-        // Calculate due amount for daily rentals
+        // Calculate due amount and days for daily rentals
         let dueAmount = 0;
+        let dueDays = 0;
         if (vehicle.rentalType === 'daily') {
             const startDate = new Date(vehicle.endDate);
             startDate.setDate(startDate.getDate() + 1);
@@ -609,9 +610,8 @@ export function ManageVehicles() {
             endDate.setHours(0, 0, 0, 0);
 
             const diffTime = endDate.getTime() - startDate.getTime();
-            const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            
-            dueAmount = vehicle.rentPrice * numberOfDays;
+            dueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            dueAmount = vehicle.rentPrice * dueDays;
         }
 
         return (
@@ -655,11 +655,11 @@ export function ManageVehicles() {
                         {vehicle.rentalType === 'daily' && (
                             <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                    Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
+                                    Paid: ₹{vehicle.rentPrice * vehicle.numberOfDays}
                                 </span>
                                 {dueAmount > 0 && (
                                     <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs border border-red-200">
-                                        <span className="font-bold">Due: ₹{dueAmount}</span>
+                                        <span className="font-bold">Due ({dueDays} days): ₹{dueAmount}</span>
                                     </span>
                                 )}
                             </div>
@@ -673,6 +673,198 @@ export function ManageVehicles() {
         );
     };
 
+    const generateDatabaseReport = async () => {
+        try {
+            const doc = new jsPDF('landscape');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            
+            // Modern header with gradient
+            doc.setFillColor(220, 38, 38); // Changed to red to match theme
+            doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            // Company name
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
+            
+            // Report title and date
+            doc.setFontSize(14);
+            const currentDate = new Date().toLocaleDateString('en-GB');
+            doc.text(`Outstanding Vehicles Report (Generated: ${currentDate})`, pageWidth / 2, 28, { align: 'center' });
+
+            // Summary cards section
+            const summaryY = 45;
+            const cardWidth = (pageWidth - 70) / 5;
+            const cardMargin = 14;
+            
+            // Calculate statistics
+            const totalVehicles = vehicles.length;
+            const expiredMonthly = vehicles.filter(v => v.rentalType === 'monthly').length;
+            const expiredDaily = vehicles.filter(v => v.rentalType === 'daily').length;
+            const totalMonthlyDue = vehicles
+                .filter(v => v.rentalType === 'monthly')
+                .reduce((sum, v) => sum + v.rentPrice, 0);
+            const totalDailyDue = vehicles
+                .filter(v => v.rentalType === 'daily')
+                .reduce((sum, v) => {
+                    const startDate = new Date(v.endDate);
+                    startDate.setDate(startDate.getDate() + 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    
+                    const endDate = new Date();
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const diffTime = endDate.getTime() - startDate.getTime();
+                    const dueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    return sum + (v.rentPrice * dueDays);
+                }, 0);
+
+            // Create summary cards
+            const summaryCards = [
+                { title: 'Total Outstanding', value: totalVehicles },
+                { title: 'Monthly Outstanding', value: expiredMonthly },
+                { title: 'Daily Outstanding', value: expiredDaily },
+                { title: 'Monthly Due Amount', value: `₹${totalMonthlyDue}` },
+                { title: 'Daily Due Amount', value: `₹${totalDailyDue}` }
+            ];
+
+            // Draw cards
+            summaryCards.forEach((card, index) => {
+                const cardX = cardMargin + (index * (cardWidth + 10));
+                
+                // Card background
+                doc.setFillColor(254, 242, 242); // Light red background
+                doc.roundedRect(cardX, summaryY, cardWidth, 30, 2, 2, 'F');
+                
+                // Card title
+                doc.setTextColor(220, 38, 38); // Red text
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(card.title, cardX + 5, summaryY + 12);
+                
+                // Card value
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text(card.value.toString(), cardX + 5, summaryY + 25);
+            });
+
+            // Calculate total table width
+            const columnWidths = {
+                serialNumber: 25,
+                vehicleNumber: 35,
+                description: 50,
+                parkingType: 30,
+                rentalType: 40,
+                daysOverdue: 30,
+                dueAmount: 40
+            };
+            
+            const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+            const leftMargin = Math.floor((pageWidth - totalTableWidth) / 2);
+
+            // Table columns
+            const tableColumn = [
+                { header: 'S.No', dataKey: 'serialNumber' },
+                { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
+                { header: 'Description', dataKey: 'description' },
+                { header: 'Parking Type', dataKey: 'parkingType' },
+                { header: 'Rental Type', dataKey: 'rentalType' },
+                { header: 'Days Overdue', dataKey: 'daysOverdue' },
+                { header: 'Due Amount', dataKey: 'dueAmount' }
+            ];
+
+            // Prepare table data
+            const tableRows = sortByLotNumber(vehicles).map((vehicle, index) => {
+                let dueAmount = vehicle.rentPrice; // Default for monthly
+                let daysOverdue = 'Monthly';
+                
+                if (vehicle.rentalType === 'daily') {
+                    const startDate = new Date(vehicle.endDate);
+                    startDate.setDate(startDate.getDate() + 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    
+                    const endDate = new Date();
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const diffTime = endDate.getTime() - startDate.getTime();
+                    daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    dueAmount = vehicle.rentPrice * daysOverdue;
+                }
+                
+                return {
+                    serialNumber: index + 1,
+                    vehicleNumber: vehicle.vehicleNumber,
+                    description: vehicle.vehicleDescription || '',
+                    parkingType: vehicle.lotNumber || 'Open',
+                    rentalType: `${capitalizeFirst(vehicle.rentalType)}${vehicle.rentalType === 'daily' ? ` (${vehicle.numberOfDays} days)` : ''}`,
+                    daysOverdue: daysOverdue,
+                    dueAmount: `INR ${dueAmount}.00`
+                };
+            });
+
+            // Generate table
+            doc.autoTable({
+                columns: tableColumn,
+                body: tableRows,
+                startY: summaryY + 40,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [220, 38, 38],
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    fontStyle: 'bold',
+                    cellPadding: 6,
+                    halign: 'center',
+                    valign: 'middle',
+                    lineWidth: 0.1,
+                    minCellHeight: 14
+                },
+                bodyStyles: {
+                    fontSize: 9,
+                    cellPadding: 4,
+                    lineColor: [237, 237, 237],
+                    valign: 'middle',
+                    textColor: [220, 38, 38]
+                },
+                columnStyles: {
+                    serialNumber: { cellWidth: columnWidths.serialNumber, halign: 'center' },
+                    vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
+                    description: { cellWidth: columnWidths.description, halign: 'left' },
+                    parkingType: { cellWidth: columnWidths.parkingType, halign: 'center' },
+                    rentalType: { cellWidth: columnWidths.rentalType, halign: 'center' },
+                    daysOverdue: { cellWidth: columnWidths.daysOverdue, halign: 'center' },
+                    dueAmount: { cellWidth: columnWidths.dueAmount, halign: 'right' }
+                },
+                alternateRowStyles: {
+                    fillColor: [254, 242, 242]
+                },
+                margin: { 
+                    left: leftMargin,
+                    right: leftMargin
+                },
+                tableWidth: totalTableWidth,
+                didDrawPage: function(data) {
+                    doc.setFontSize(10);
+                    doc.text(
+                        `Page ${data.pageNumber}`,
+                        pageWidth / 2,
+                        pageHeight - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            doc.save(`SP_Outstanding_Vehicles_Report_${currentDate.replace(/\//g, '-')}.pdf`);
+            toast.success('Outstanding vehicles report generated successfully');
+        } catch (error) {
+            console.error('Error generating report:', error);
+            toast.error('Failed to generate report');
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
             <Toaster position="top-right" />
@@ -680,12 +872,21 @@ export function ManageVehicles() {
             <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl sm:text-3xl font-bold text-white">Outstanding Vehicles</h1>
-                    <button 
-                        onClick={fetchExpiredVehicles} 
-                        className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
-                    >
-                        <RefreshCwIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={generateDatabaseReport}
+                            className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
+                            title="Generate Database Report"
+                        >
+                            <PrinterIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                        <button 
+                            onClick={fetchExpiredVehicles} 
+                            className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
+                        >
+                            <RefreshCwIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
