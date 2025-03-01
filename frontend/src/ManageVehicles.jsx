@@ -726,8 +726,8 @@ export function ManageVehicles() {
                 { title: 'Total Outstanding', value: totalVehicles },
                 { title: 'Monthly Outstanding', value: expiredMonthly },
                 { title: 'Daily Outstanding', value: expiredDaily },
-                { title: 'Monthly Due Amount', value: `₹${totalMonthlyDue}` },
-                { title: 'Daily Due Amount', value: `₹${totalDailyDue}` }
+                { title: 'Monthly Due Amount', value: `INR ${totalMonthlyDue}` },
+                { title: 'Daily Due Amount', value: `INR ${totalDailyDue}` }
             ];
 
             // Draw cards
