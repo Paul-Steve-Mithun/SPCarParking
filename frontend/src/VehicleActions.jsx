@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, IndianRupee, AlertCircle, Phone } from 'lucide-react';
+import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, IndianRupee, AlertCircle, Phone, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -12,6 +12,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const [customRentPrice, setCustomRentPrice] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmationType, setConfirmationType] = useState('');
+    const [receivedBy, setReceivedBy] = useState('Balu');
 
     const handlePaidRent = async () => {
         setConfirmationType('monthly');
@@ -47,7 +48,8 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                         status: 'active',
                         endDate: nextMonth,
                         transactionMode: transactionMode,
-                        rentPrice: rentPriceToUse
+                        rentPrice: rentPriceToUse,
+                        receivedBy: receivedBy
                     })
                 });
         
@@ -64,7 +66,8 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         additionalDays: Number(additionalDays),
-                        transactionMode: transactionMode 
+                        transactionMode: transactionMode,
+                        receivedBy: receivedBy
                     }),
                 });
 
@@ -143,31 +146,78 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                     <div className="p-6">
                                         <p className="text-gray-600 mb-6">Select an action for this vehicle:</p>
                                         <div className="flex flex-col gap-3">
-                                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setTransactionMode('Cash')}
-                                                    className={`px-4 py-2 rounded-lg flex items-center justify-center ${
-                                                        transactionMode === 'Cash'
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}
-                                                >
-                                                    <Wallet className="h-5 w-5 mr-2" />
-                                                    Cash
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setTransactionMode('UPI')}
-                                                    className={`px-4 py-2 rounded-lg flex items-center justify-center ${
-                                                        transactionMode === 'UPI'
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}
-                                                >
-                                                    <CreditCard className="h-5 w-5 mr-2" />
-                                                    UPI
-                                                </button>
+                                            {/* Transaction Mode Buttons */}
+                                            <div className="mb-4">
+                                                <label className="block text-gray-700 font-medium mb-2">Transaction Mode</label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setTransactionMode('Cash')}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            transactionMode === 'Cash'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <Wallet className="h-5 w-5 mr-2" />
+                                                        Cash
+                                                        {transactionMode === 'Cash' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setTransactionMode('UPI')}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            transactionMode === 'UPI'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <CreditCard className="h-5 w-5 mr-2" />
+                                                        UPI
+                                                        {transactionMode === 'UPI' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Received By Buttons */}
+                                            <div className="mb-4">
+                                                <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setReceivedBy('Balu')}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            receivedBy === 'Balu'
+                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <User className="h-5 w-5 mr-2" />
+                                                        Balu
+                                                        {receivedBy === 'Balu' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setReceivedBy('Mani')}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            receivedBy === 'Mani'
+                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <User className="h-5 w-5 mr-2" />
+                                                        Mani
+                                                        {receivedBy === 'Mani' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {vehicle.rentalType === 'daily' ? (
@@ -324,6 +374,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     <p className="text-sm text-gray-600">
                                                         <span className="font-medium">Payment Mode:</span> {transactionMode}
                                                     </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        <span className="font-medium">Received By:</span> {receivedBy}
+                                                    </p>
                                                 </>
                                             ) : (
                                                 <>
@@ -335,6 +388,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     </p>
                                                     <p className="text-sm text-gray-600">
                                                         <span className="font-medium">Payment Mode:</span> {transactionMode}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        <span className="font-medium">Received By:</span> {receivedBy}
                                                     </p>
                                                 </>
                                             )}

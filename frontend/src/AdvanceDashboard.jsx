@@ -146,7 +146,13 @@ export function AdvanceDashboard() {
         doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
         
         doc.setFontSize(14);
-        doc.text(`${monthNames[selectedMonth]} ${selectedYear} Advance Payment Statement`, pageWidth / 2, 28, { align: 'center' });
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-gb', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        doc.text(`${monthNames[selectedMonth]} ${selectedYear} Advance Payment Statement (Generated: ${formattedDate})`, pageWidth / 2, 28, { align: 'center' });
 
         // Summary cards section - 2 cards centered
         const summaryY = 45;
@@ -191,6 +197,7 @@ export function AdvanceDashboard() {
 
         // Updated table columns with better spacing
         const tableColumn = [
+            { header: 'S.No', dataKey: 'sno' },
             { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
             { header: 'Description', dataKey: 'description' },
             { header: 'Lot', dataKey: 'lot' },
@@ -200,17 +207,18 @@ export function AdvanceDashboard() {
         ];
 
         // First, calculate the total table width and margins
-        const totalTableWidth = 35 + 50 + 20 + 35 + 30 + 35; // Sum of column widths
+        const totalTableWidth = 20 + 35 + 50 + 20 + 35 + 30 + 35; // Sum of column widths including S.No
         const leftMargin = (pageWidth - totalTableWidth) / 2;
 
-        // Update the tableRows to better handle refund information
-        const tableRows = vehicles.map(vehicle => {
+        // Update the tableRows to include S.No
+        const tableRows = vehicles.map((vehicle, index) => {
             const isRefund = !!vehicle.advanceRefund;
             const amount = isRefund 
                 ? vehicle.advanceRefund 
                 : (vehicle.advanceAmount || 0);
 
             return {
+                sno: (index + 1).toString(),
                 vehicleNumber: vehicle.vehicleNumber || '',
                 description: vehicle.vehicleDescription || '',
                 lot: vehicle.lotNumber || 'Open',
@@ -218,7 +226,7 @@ export function AdvanceDashboard() {
                 date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
                 amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
                 isRefund: isRefund,
-                rawAmount: isRefund ? -amount : amount // Store raw amount for sorting
+                rawAmount: isRefund ? -amount : amount
             };
         });
 
@@ -246,6 +254,7 @@ export function AdvanceDashboard() {
                 valign: 'middle'
             },
             columnStyles: {
+                sno: { cellWidth: 20, halign: 'center' },
                 vehicleNumber: { cellWidth: 35, halign: 'center' },
                 description: { cellWidth: 50, halign: 'left' },
                 lot: { cellWidth: 20, halign: 'center' },
@@ -491,11 +500,15 @@ export function AdvanceDashboard() {
                                                 <table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr className="bg-gray-50">
+                                                            <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                                                S.No
+                                                            </th>
                                                             {[
                                                                 'vehicleNumber',
                                                                 'vehicleDescription',
                                                                 'lotNumber',
                                                                 'parkingType',
+                                                                'receivedBy',
                                                                 'transactionMode',
                                                                 'TransactionDate',
                                                                 'advanceAmount'
@@ -519,7 +532,7 @@ export function AdvanceDashboard() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="bg-white divide-y divide-gray-200">
-                                                        {filteredVehicles.map((vehicle) => (
+                                                        {filteredVehicles.map((vehicle, index) => (
                                                             <tr 
                                                                 key={vehicle._id} 
                                                                 className={`transition-colors duration-150 ${
@@ -527,6 +540,9 @@ export function AdvanceDashboard() {
                                                                 }`}
                                                             >
                                                                 <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                                                    {index + 1}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
                                                                     {vehicle.vehicleNumber}
                                                                 </td>
                                                                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
@@ -537,6 +553,12 @@ export function AdvanceDashboard() {
                                                                 </td>
                                                                 <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
                                                                     {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
+                                                                </td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <User className="w-4 h-4 text-gray-500" />
+                                                                        {vehicle.receivedBy || 'N/A'}
+                                                                    </span>
                                                                 </td>
                                                                 <td className="px-3 sm:px-6 py-3 sm:py-4">
                                                                     <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${

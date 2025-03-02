@@ -72,6 +72,7 @@ const VehicleSchema = new mongoose.Schema({
     additionalDays: {type: Number},
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     transactionMode: { type: String, enum: ['Cash', 'UPI'], default: 'Cash' },
+    receivedBy: { type: String, enum: ['Balu', 'Mani'], required: true },
     vehicleImage: { 
         url: String,
         public_id: String
@@ -98,7 +99,8 @@ const RevenueSchema = new mongoose.Schema({
     revenueAmount: { type: Number, required: true },
     transactionDate: { type: Date, default: Date.now },
     transactionType: { type: String, enum: ['New', 'Extension'], required: true },
-    transactionMode: { type: String, enum: ['Cash', 'UPI'], required: true }
+    transactionMode: { type: String, enum: ['Cash', 'UPI'], required: true },
+    receivedBy: { type: String, enum: ['Balu', 'Mani'], required: true }
 });
 
 const AdvanceSchema = new mongoose.Schema({
@@ -112,7 +114,8 @@ const AdvanceSchema = new mongoose.Schema({
     year: { type: Number, required: true },
     parkingType: { type: String, enum: ['private', 'open'], required: true },
     advanceRefund: { type: Number, default: null },
-    refundDate: { type: Date, default: null }
+    refundDate: { type: Date, default: null },
+    receivedBy: { type: String, enum: ['Balu', 'Mani'], required: true }
 });
 
 const ExpenseSchema = new mongoose.Schema({
@@ -281,7 +284,8 @@ app.post('/addVehicle', upload.fields([
                 advanceAmount: vehicleData.advanceAmount,
                 month: new Date().getMonth(),
                 year: new Date().getFullYear(),
-                parkingType: vehicleData.parkingType
+                parkingType: vehicleData.parkingType,
+                receivedBy: vehicleData.receivedBy
             });
             await newAdvance.save();
         }
@@ -299,7 +303,8 @@ app.post('/addVehicle', upload.fields([
                 year: new Date().getFullYear(),
                 revenueAmount: vehicleData.rentPrice * vehicleData.numberOfDays,
                 transactionType: 'New',
-                transactionMode: vehicleData.transactionMode
+                transactionMode: vehicleData.transactionMode,
+                receivedBy: vehicleData.receivedBy
             });
             await newRevenue.save();
         }
@@ -384,7 +389,8 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
             year: new Date().getFullYear(),
             revenueAmount: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
             transactionType: 'Extension',
-            transactionMode: transactionMode
+            transactionMode: transactionMode,
+            receivedBy: vehicle.receivedBy
         });
         await extensionRevenue.save();
 
@@ -511,7 +517,8 @@ app.put('/extendRental/:id', async (req, res) => {
                 year: new Date().getFullYear(),
                 revenueAmount: vehicle.rentPrice * Number(additionalDays),
                 transactionType: 'Extension',
-                transactionMode: transactionMode
+                transactionMode: transactionMode,
+                receivedBy: vehicle.receivedBy
             });
             await extensionRevenue.save();
         }
@@ -749,7 +756,8 @@ app.put('/advances/refund/:vehicleNumber', async (req, res) => {
             month: new Date().getMonth(),
             year: new Date().getFullYear(),
             advanceRefund: advanceRefund,
-            refundDate: new Date()
+            refundDate: new Date(),
+            receivedBy: originalAdvance.receivedBy
         });
 
         await refundAdvance.save();
@@ -807,7 +815,8 @@ app.put('/vehicles/update-advance/:id', async (req, res) => {
             year: new Date().getFullYear(),
             parkingType: vehicle.parkingType,
             advanceRefund: null,
-            refundDate: null
+            refundDate: null,
+            receivedBy: vehicle.receivedBy || 'Mani'
         });
 
         await newAdvance.save();

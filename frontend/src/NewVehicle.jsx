@@ -21,7 +21,8 @@ export function NewVehicle() {
         rentPrice: '',
         numberOfDays: '', 
         advanceAmount: '5000',
-        transactionMode: 'Cash' // Add default transaction mode
+        transactionMode: 'Cash',
+        receivedBy: 'Balu' // Add default value
     });
 
     const [files, setFiles] = useState({
@@ -123,9 +124,11 @@ export function NewVehicle() {
         try {
             const formData = new FormData();
             
+            // Include all vehicle data including receivedBy
             formData.append('vehicleData', JSON.stringify({
                 ...vehicle,
-                transactionMode: vehicle.transactionMode
+                transactionMode: vehicle.transactionMode,
+                receivedBy: vehicle.receivedBy // Explicitly include receivedBy
             }));
             
             if (files.vehicleImage) {
@@ -158,7 +161,8 @@ export function NewVehicle() {
                     rentPrice: '',
                     numberOfDays: '',
                     advanceAmount: '5000',
-                    transactionMode: 'Cash'
+                    transactionMode: 'Cash',
+                    receivedBy: 'Balu'
                 });
                 setFiles({
                     vehicleImage: null,
@@ -242,24 +246,30 @@ export function NewVehicle() {
                                         <button
                                             type="button"
                                             onClick={() => setVehicle({...vehicle, vehicleType: 'own'})}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.vehicleType === 'own'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
+                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             Own Board
+                                            {vehicle.vehicleType === 'own' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                            )}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setVehicle({...vehicle, vehicleType: 'tboard'})}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.vehicleType === 'tboard'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
+                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             T Board
+                                            {vehicle.vehicleType === 'tboard' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -554,26 +564,69 @@ export function NewVehicle() {
                                         <button
                                             type="button"
                                             onClick={() => setVehicle({...vehicle, transactionMode: 'Cash'})}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.transactionMode === 'Cash'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
+                                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <Wallet className="h-5 w-5 mr-2" />
                                             Cash
+                                            {vehicle.transactionMode === 'Cash' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full"></span>
+                                            )}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setVehicle({...vehicle, transactionMode: 'UPI'})}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.transactionMode === 'UPI'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
+                                                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <CreditCard className="h-5 w-5 mr-2" />
                                             UPI
+                                            {vehicle.transactionMode === 'UPI' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full"></span>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* New Received By Buttons */}
+                                <div className="mt-4">
+                                    <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, receivedBy: 'Balu'})}
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                vehicle.receivedBy === 'Balu'
+                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            <User className="h-5 w-5 mr-2" />
+                                            Balu
+                                            {vehicle.receivedBy === 'Balu' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                            )}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVehicle({...vehicle, receivedBy: 'Mani'})}
+                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                vehicle.receivedBy === 'Mani'
+                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            <User className="h-5 w-5 mr-2" />
+                                            Mani
+                                            {vehicle.receivedBy === 'Mani' && (
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
