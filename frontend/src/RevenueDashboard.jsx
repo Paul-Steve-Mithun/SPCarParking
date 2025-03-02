@@ -11,7 +11,8 @@ import {
     ArrowUp,
     ArrowDown,
     CreditCard,
-    Search
+    Search,
+    User
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -36,7 +37,9 @@ export function RevenueDashboard() {
         totalRevenue: 0,
         monthlyRentalRevenue: 0,
         dailyRentalRevenue: 0,
-        vehicleCount: 0
+        vehicleCount: 0,
+        baluCollection: 0,
+        maniCollection: 0
     });
 
     useEffect(() => {
@@ -98,11 +101,22 @@ export function RevenueDashboard() {
             const dailyStats = statsData.find(item => item._id === 'daily') || { totalRevenue: 0 };
             const vehicleCount = statsData.reduce((sum, item) => sum + item.count, 0);
 
+            // Calculate collections by receiver
+            const baluCollection = data
+                .filter(record => record.receivedBy === 'Balu')
+                .reduce((sum, record) => sum + record.revenueAmount, 0);
+
+            const maniCollection = data
+                .filter(record => record.receivedBy === 'Mani')
+                .reduce((sum, record) => sum + record.revenueAmount, 0);
+
             setStats({
                 totalRevenue,
                 monthlyRentalRevenue: monthlyStats.totalRevenue,
                 dailyRentalRevenue: dailyStats.totalRevenue,
-                vehicleCount
+                vehicleCount,
+                baluCollection,
+                maniCollection
             });
         } catch (error) {
             setError('Failed to fetch revenue data');
@@ -158,9 +172,20 @@ export function RevenueDashboard() {
         const pageHeight = doc.internal.pageSize.getHeight();
         
         // Calculate total table width based on column widths
-        const totalTableWidth = 35 + 50 + 20 + 40 + 35 + 25 + 30 + 35; // Sum of all column widths
+        const columnWidths = {
+            sno: 15,
+            vehicleNumber: 25,
+            description: 35,
+            lot: 15,
+            rentalType: 25,
+            transaction: 25,
+            receivedBy: 25,
+            mode: 20,
+            date: 25,
+            amount: 25
+        };
         
-        // Calculate left margin to center the table
+        const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
         const leftMargin = (pageWidth - totalTableWidth) / 2;
 
         // Modern header with gradient-like effect
@@ -173,31 +198,44 @@ export function RevenueDashboard() {
         doc.setFont('helvetica', 'bold');
         doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
         
-        // Statement title
+        // Statement title with generation date
         doc.setFontSize(14);
-        doc.text(`${monthNames[selectedMonth]} ${selectedYear} Revenue Statement`, pageWidth / 2, 28, { align: 'center' });
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-gb', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        doc.text(`${monthNames[selectedMonth]} ${selectedYear} Revenue Statement (Generated: ${formattedDate})`, pageWidth / 2, 28, { align: 'center' });
     
-        // Summary cards section
+        // Summary cards section - Updated layout for 5 cards in 2 rows
         const summaryY = 45;
-        const cardWidth = (pageWidth - 40) / 2;
+        const cardWidth = (pageWidth - 80) / 3; // Reduced width
+        const cardHeight = 25; // Reduced height from 30 to 25
+        const cardGap = 8; // Reduced gap from 10 to 8
         
-        // Modern card styling
-        doc.setFillColor(246, 246, 252);
-        doc.roundedRect(14, summaryY, cardWidth, 30, 2, 2, 'F');
-        doc.roundedRect(cardWidth + 26, summaryY, cardWidth, 30, 2, 2, 'F');
-        
-        // Card content
-        doc.setTextColor(79, 70, 229);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Total Revenue', 20, summaryY + 12);
-        doc.text('Total Transactions', cardWidth + 32, summaryY + 12);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`INR ${stats.totalRevenue.toFixed(2)}`, 20, summaryY + 25);
-        doc.text(`${stats.vehicleCount}`, cardWidth + 32, summaryY + 25);
+        // First Row of Cards
+        const createCard = (x, y, label, value, color) => {
+            doc.setFillColor(...color);
+            doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'F');
+            doc.setTextColor(79, 70, 229);
+            doc.setFontSize(9); // Reduced from 10
+            doc.setFont('helvetica', 'normal');
+            doc.text(label, x + 5, y + 10); // Adjusted y position
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12); // Reduced from 14
+            doc.text(value, x + 5, y + 20); // Adjusted y position
+        };
+
+        // First Row - Adjusted x positions
+        createCard(30, summaryY, 'Total Revenue', `INR ${stats.totalRevenue.toFixed(2)}`, [246, 246, 252]);
+        createCard(30 + cardWidth + cardGap, summaryY, 'Monthly Revenue', `INR ${stats.monthlyRentalRevenue.toFixed(2)}`, [239, 246, 255]);
+        createCard(30 + (cardWidth + cardGap) * 2, summaryY, 'Daily Revenue', `INR ${stats.dailyRentalRevenue.toFixed(2)}`, [236, 254, 255]);
+
+        // Second Row - Adjusted x positions and y position
+        createCard(30 + cardWidth/2, summaryY + cardHeight + cardGap, "Balu's Collection", `INR ${stats.baluCollection.toFixed(2)}`, [236, 253, 245]);
+        createCard(30 + cardWidth * 1.5 + cardGap, summaryY + cardHeight + cardGap, "Mani's Collection", `INR ${stats.maniCollection.toFixed(2)}`, [240, 253, 250]);
     
         // Format date function
         const formatDateForPDF = (date) => {
@@ -205,31 +243,35 @@ export function RevenueDashboard() {
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
     
-        // Updated table columns with better spacing
+        // Updated table columns with S.No
         const tableColumn = [
+            { header: 'S.No', dataKey: 'sno' },
             { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
             { header: 'Description', dataKey: 'description' },
             { header: 'Lot', dataKey: 'lot' },
             { header: 'Rental Type', dataKey: 'rentalType' },
             { header: 'Transaction', dataKey: 'transaction' },
+            { header: 'Received By', dataKey: 'receivedBy' },
             { header: 'Mode', dataKey: 'mode' },
             { header: 'Date', dataKey: 'date' },
             { header: 'Amount', dataKey: 'amount' }
         ];
     
-        // Sort the table rows by date before adding to PDF
+        // Sort the table rows by date and add S.No
         const sortedTableRows = revenueData
             .sort((a, b) => {
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
-                return dateA - dateB; // Always ascending order for PDF
+                return dateA - dateB;
             })
-            .map(record => ({
+            .map((record, index) => ({
+                sno: (index + 1).toString(),
                 vehicleNumber: record.vehicleNumber || '',
                 description: record.vehicleDescription || '',
                 lot: record.lotNumber || 'Open',
                 rentalType: capitalizeFirst(record.rentalType),
                 transaction: record.transactionType || 'N/A',
+                receivedBy: record.receivedBy || 'N/A',
                 mode: record.transactionMode,
                 date: formatDateForPDF(record.transactionDate),
                 amount: `INR ${record.revenueAmount.toFixed(2)}`
@@ -238,43 +280,43 @@ export function RevenueDashboard() {
         doc.autoTable({
             columns: tableColumn,
             body: sortedTableRows,
-            startY: summaryY + 40,
+            startY: summaryY + (cardHeight + cardGap) * 2 + 10,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
-                fontSize: 10,
+                fontSize: 9,
                 fontStyle: 'bold',
-                cellPadding: 6,
+                cellPadding: 3,
                 halign: 'center',
                 valign: 'middle',
                 lineWidth: 0.1,
-                minCellHeight: 14
+                minCellHeight: 12
             },
             bodyStyles: {
-                fontSize: 9,
-                cellPadding: 4,
+                fontSize: 8,
+                cellPadding: 2,
                 lineColor: [237, 237, 237],
                 valign: 'middle'
             },
             columnStyles: {
-                vehicleNumber: { cellWidth: 35, halign: 'center' },
-                description: { cellWidth: 50, halign: 'left' },
-                lot: { cellWidth: 20, halign: 'center' },
-                rentalType: { cellWidth: 40, halign: 'center' },
-                transaction: { cellWidth: 35, halign: 'center' },
-                mode: { cellWidth: 25, halign: 'center' },
-                date: { cellWidth: 30, halign: 'center' },
-                amount: { cellWidth: 35, halign: 'center' }
+                sno: { cellWidth: columnWidths.sno, halign: 'center' },
+                vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
+                description: { cellWidth: columnWidths.description, halign: 'left' },
+                lot: { cellWidth: columnWidths.lot, halign: 'center' },
+                rentalType: { cellWidth: columnWidths.rentalType, halign: 'center' },
+                transaction: { cellWidth: columnWidths.transaction, halign: 'center' },
+                receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
+                mode: { cellWidth: columnWidths.mode, halign: 'center' },
+                date: { cellWidth: columnWidths.date, halign: 'center' },
+                amount: { cellWidth: columnWidths.amount, halign: 'center' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
             },
             margin: { 
                 left: leftMargin,
-                right: leftMargin,
-                top: 10,
-                bottom: 10
+                right: leftMargin
             },
             styles: {
                 fontSize: 9,
@@ -300,12 +342,6 @@ export function RevenueDashboard() {
 
     const revenueStats = [
         {
-            icon: <Car className="w-8 h-8 text-purple-600" />,
-            label: "Total Transactions",
-            value: stats.vehicleCount,
-            bgGradient: "from-purple-50 to-purple-100"
-        },
-        {
             icon: <DollarSign className="w-8 h-8 text-indigo-600" />, 
             label: "Total Revenue", 
             value: `₹${stats.totalRevenue.toFixed(2)}`,
@@ -322,6 +358,18 @@ export function RevenueDashboard() {
             label: "Daily Revenue", 
             value: `₹${stats.dailyRentalRevenue.toFixed(2)}`,
             bgGradient: "from-cyan-50 to-cyan-100"
+        },
+        {
+            icon: <User className="w-8 h-8 text-emerald-600" />,
+            label: "Balu's Collection",
+            value: `₹${stats.baluCollection.toFixed(2)}`,
+            bgGradient: "from-emerald-50 to-emerald-100"
+        },
+        {
+            icon: <User className="w-8 h-8 text-teal-600" />,
+            label: "Mani's Collection",
+            value: `₹${stats.maniCollection.toFixed(2)}`,
+            bgGradient: "from-teal-50 to-teal-100"
         }
     ];
 
@@ -394,7 +442,7 @@ export function RevenueDashboard() {
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {revenueStats.map((stat, index) => (
                                 <div 
                                     key={index} 
@@ -441,12 +489,16 @@ export function RevenueDashboard() {
                                                 <table className="min-w-full divide-y divide-gray-200">
                                                     <thead>
                                                         <tr className="bg-gray-50">
+                                                            <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                                                S.No
+                                                            </th>
                                                             {[
                                                                 'vehicleNumber',
                                                                 'vehicleDescription',
                                                                 'lotNumber',
                                                                 'rentalType',
                                                                 'transactionType',
+                                                                'receivedBy',
                                                                 'transactionMode',
                                                                 'transactionDate',
                                                                 'revenueAmount'
@@ -470,8 +522,11 @@ export function RevenueDashboard() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-200">
-                                                        {revenueData.map((record) => (
+                                                        {revenueData.map((record, index) => (
                                                             <tr key={record._id} className="hover:bg-gray-50 transition-colors duration-150">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                    {index + 1}
+                                                                </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
                                                                     {record.vehicleNumber}
                                                                 </td>
@@ -486,6 +541,12 @@ export function RevenueDashboard() {
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
                                                                     {record.transactionType}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <User className="w-4 h-4 text-gray-500" />
+                                                                        {record.receivedBy || 'N/A'}
+                                                                    </span>
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
                                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
