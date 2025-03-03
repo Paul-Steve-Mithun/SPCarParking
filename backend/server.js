@@ -377,10 +377,6 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         vehicle.status = status || 'active';
         vehicle.endDate = nextMonthEndDate;
 
-        if (rentPrice) {
-            vehicle.rentPrice = rentPrice;
-        }
-
         await vehicle.save();
 
         // Create revenue record for monthly extension
@@ -389,7 +385,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
             vehicleDescription: vehicle.vehicleDescription,
             lotNumber: vehicle.lotNumber,
             rentalType: vehicle.rentalType,
-            rentPrice: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
+            rentPrice: vehicle.rentPrice,
             month: new Date().getMonth(),
             year: new Date().getFullYear(),
             revenueAmount: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
