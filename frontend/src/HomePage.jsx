@@ -454,47 +454,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             opacity: 0.1
                         }}
                     />
-
-                    {/* Animated Particles */}
-                    <div className="absolute inset-0">
-                        {[...Array(40)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute rounded-full bg-blue-500/50"
-                                style={{
-                                    width: Math.random() * 4 + 2 + 'px',
-                                    height: Math.random() * 4 + 2 + 'px',
-                                    left: Math.random() * 100 + '%',
-                                    top: Math.random() * 100 + '%',
-                                    animation: `float ${Math.random() * 15 + 15}s linear infinite`,
-                                    animationDelay: `-${Math.random() * 15}s`
-                                }}
-                            />
-                        ))}
-                    </div>
-                    
-                    {/* Connection Lines */}
-                    <div className="absolute inset-0">
-                        {[...Array(25)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute bg-blue-500/30"
-                                style={{
-                                    width: Math.random() * 300 + 150 + 'px',
-                                    height: '1.5px',
-                                    left: Math.random() * 100 + '%',
-                                    top: Math.random() * 100 + '%',
-                                    transform: `rotate(${Math.random() * 360}deg)`,
-                                    animation: `pulse 4s ease-in-out infinite`,
-                                    animationDelay: `-${Math.random() * 4}s`,
-                                    boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)'
-                                }}
-                            />
-                        ))}
-                    </div>
                     
                     {/* Simple Overlay */}
-                    <div className="absolute inset-0 bg-white/50" />
+                    <div className="absolute inset-0 bg-/50" />
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -606,6 +568,30 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             {!isAuthenticated && <LoginSection />}
             
             {showModal && <VehicleModal />}
+
+            {/* Footer */}
+            <footer className="mt-16 relative overflow-hidden">
+                {/* Separator Line */}
+                <div className="w-full h-px bg-gray-200" />
+                
+                <div className="py-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="flex flex-col-reverse md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                            {/* Copyright - Now on the left */}
+                            <div className="text-gray-500 text-sm">
+                                © {new Date().getFullYear()} SP Car Parking. All rights reserved.
+                            </div>
+
+                            {/* Company Info - Now on the right */}
+                            <div className="flex items-center space-x-2">
+                                <div className="text-blue-600 font-bold text-xl tracking-tight hover:text-blue-700 transition-colors">
+                                    Sterix Enterprises
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
