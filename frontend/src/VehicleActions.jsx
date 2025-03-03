@@ -39,7 +39,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                     vehicle.rentPrice : 
                     Number(customRentPrice);
 
-                const response = await fetch(`https://spcarparkingbknd.onrender.com/reactivateVehicle/${vehicle._id}`, {
+                const response = await fetch(`http://localhost:5000/reactivateVehicle/${vehicle._id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

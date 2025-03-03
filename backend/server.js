@@ -359,7 +359,7 @@ app.delete('/removeVehicle/:id', async (req, res) => {
 // Updated reactivateVehicle endpoint
 app.put('/reactivateVehicle/:id', async (req, res) => {
     try {
-        const { status, transactionMode, rentPrice } = req.body;
+        const { status, transactionMode, rentPrice, receivedBy } = req.body;
         
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
@@ -373,9 +373,10 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const nextMonthEndDate = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 2, 0);
         nextMonthEndDate.setHours(18, 29, 59, 999); // Set to 23:59:59 IST
 
-        // Update vehicle
+        // Update vehicle with all necessary fields
         vehicle.status = status || 'active';
         vehicle.endDate = nextMonthEndDate;
+
         await vehicle.save();
 
         // Create revenue record for monthly extension
@@ -384,17 +385,28 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
             vehicleDescription: vehicle.vehicleDescription,
             lotNumber: vehicle.lotNumber,
             rentalType: vehicle.rentalType,
-            rentPrice: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
+            rentPrice: vehicle.rentPrice,
             month: new Date().getMonth(),
             year: new Date().getFullYear(),
             revenueAmount: rentPrice !== undefined ? rentPrice : vehicle.rentPrice,
             transactionType: 'Extension',
             transactionMode: transactionMode,
-            receivedBy: vehicle.receivedBy
+            receivedBy: receivedBy
         });
+
+        // Validate revenue record before saving
+        const validationError = extensionRevenue.validateSync();
+        if (validationError) {
+            return res.status(400).json({ error: 'Invalid revenue data', details: validationError.message });
+        }
+
         await extensionRevenue.save();
 
-        res.json(vehicle);
+        res.json({ 
+            success: true,
+            vehicle,
+            revenue: extensionRevenue
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -485,7 +497,7 @@ app.put('/updateVehicle/:id', upload.fields([
 // Update the extendRental endpoint
 app.put('/extendRental/:id', async (req, res) => {
     try {
-        const { additionalDays, transactionMode } = req.body;
+        const { additionalDays, transactionMode, receivedBy } = req.body;
         const vehicle = await Vehicle.findById(req.params.id);
         
         if (!vehicle) {
@@ -518,7 +530,7 @@ app.put('/extendRental/:id', async (req, res) => {
                 revenueAmount: vehicle.rentPrice * Number(additionalDays),
                 transactionType: 'Extension',
                 transactionMode: transactionMode,
-                receivedBy: vehicle.receivedBy
+                receivedBy: receivedBy  // Use the receivedBy from request body
             });
             await extensionRevenue.save();
         }
@@ -921,7 +933,11 @@ app.delete('/expenses/:id', async (req, res) => {
         if (!deletedExpense) {
             return res.status(404).json({ error: 'Expense not found' });
         }
-        res.json({ success: true, expense: deletedExpense });
+        res.json({ 
+            success: true, 
+            message: 'Expense deleted successfully',
+            expense: deletedExpense 
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

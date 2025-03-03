@@ -16,7 +16,8 @@ import {
     FileText,
     X,
     Banknote,
-    Users
+    Users,
+    TrashIcon
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -213,6 +214,27 @@ export function ExpensesDashboard() {
             <ArrowDown className="w-4 h-4 ml-1" />;
     };
 
+    const handleDeleteExpense = async (expenseId) => {
+        if (!window.confirm('Are you sure you want to delete this expense?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${expenseId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete expense');
+            }
+
+            await fetchExpenses(); // Refresh the expenses list
+            toast.success('Expense deleted successfully');
+        } catch (error) {
+            toast.error('Failed to delete expense');
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Toaster position="top-right" />
@@ -334,16 +356,17 @@ export function ExpensesDashboard() {
                                                 { key: 'transactionMode', label: 'Mode' },
                                                 { key: 'transactionDate', label: 'Date' },
                                                 { key: 'amount', label: 'Amount' },
-                                                { key: 'spentBy', label: 'Spent By' }
+                                                { key: 'spentBy', label: 'Spent By' },
+                                                { key: 'actions', label: 'Actions' }
                                             ].map((column) => (
                                                 <th 
                                                     key={column.key}
-                                                    onClick={() => handleSort(column.key)}
-                                                    className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                    onClick={() => column.key !== 'actions' && handleSort(column.key)}
+                                                    className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                                                 >
                                                     <div className="flex items-center">
                                                         {column.label}
-                                                        <SortIcon column={column.key} />
+                                                        {column.key !== 'actions' && <SortIcon column={column.key} />}
                                                     </div>
                                                 </th>
                                             ))}
@@ -385,6 +408,15 @@ export function ExpensesDashboard() {
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {expense.spentBy}
+                                                </td>
+                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <button
+                                                        onClick={() => handleDeleteExpense(expense._id)}
+                                                        className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
+                                                        title="Delete expense"
+                                                    >
+                                                        <TrashIcon className="w-5 h-5" />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
