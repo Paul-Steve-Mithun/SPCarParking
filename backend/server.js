@@ -121,7 +121,7 @@ const AdvanceSchema = new mongoose.Schema({
 const ExpenseSchema = new mongoose.Schema({
     expenseType: { 
         type: String, 
-        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Miscellaneous'],
+        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Wi-Fi', 'Sweeper', 'Telephone', 'Miscellaneous'],
         required: true 
     },
     spentBy: {
@@ -131,7 +131,9 @@ const ExpenseSchema = new mongoose.Schema({
     },
     description: { 
         type: String,
-        required: function() { return this.expenseType === 'Miscellaneous'; }
+        required: function() { 
+            return this.expenseType === 'Miscellaneous'; 
+        }
     },
     amount: { 
         type: Number, 

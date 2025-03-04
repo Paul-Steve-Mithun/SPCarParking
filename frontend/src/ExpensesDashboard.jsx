@@ -32,6 +32,9 @@ export function ExpensesDashboard() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [expenseToDelete, setExpenseToDelete] = useState(null);
+    const [isAddingExpense, setIsAddingExpense] = useState(false);
     const [newExpense, setNewExpense] = useState({
         expenseType: 'Watchman Night',
         spentBy: 'Balu',
@@ -99,6 +102,8 @@ export function ExpensesDashboard() {
     };
 
     const handleAddExpense = async () => {
+        if (isAddingExpense) return; // Prevent double submission
+        setIsAddingExpense(true);
         try {
             const response = await fetch('https://spcarparkingbknd.onrender.com/expenses', {
                 method: 'POST',
@@ -123,6 +128,8 @@ export function ExpensesDashboard() {
             toast.success('Expense added successfully');
         } catch (error) {
             toast.error('Failed to add expense');
+        } finally {
+            setIsAddingExpense(false);
         }
     };
 
@@ -137,8 +144,14 @@ export function ExpensesDashboard() {
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
         doc.text('SP CAR PARKING', pageWidth/2, 20, { align: 'center' });
-        doc.setFontSize(16);
-        doc.text(`Expenses Report - ${monthNames[selectedMonth]} ${selectedYear}`, pageWidth/2, 35, { align: 'center' });
+        
+        // Reset text color for the report title and generation date
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        doc.text(`Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} (Generated: ${formattedDate})`, pageWidth/2, 35, { align: 'center' });
 
         // Summary
         const summaryData = [
@@ -148,7 +161,7 @@ export function ExpensesDashboard() {
         ];
 
         doc.autoTable({
-            startY: 50,
+            startY: 45, // Adjusted to accommodate the combined title and date
             head: [['Category', 'Amount']],
             body: summaryData,
             theme: 'grid',
@@ -159,23 +172,33 @@ export function ExpensesDashboard() {
         });
 
         // Transactions
-        const tableData = expenses.map(expense => [
+        const tableData = expenses.map((expense, index) => [
+            index + 1,
             expense.expenseType,
             expense.description || '-',
             expense.transactionMode,
             new Date(expense.transactionDate).toLocaleDateString('en-GB'),
-            `₹${expense.amount.toFixed(2)}`,
+            `INR ${expense.amount.toFixed(2)}`,
             expense.spentBy
         ]);
 
         doc.autoTable({
             startY: doc.previousAutoTable.finalY + 15,
-            head: [['Type', 'Description', 'Mode', 'Date', 'Amount', 'Spent By']],
+            head: [['S.NO', 'Type', 'Description', 'Mode', 'Date', 'Amount', 'Spent By']],
             body: tableData,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
                 textColor: [255, 255, 255]
+            },
+            didDrawPage: function(data) {
+                // Add page number
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(0, 0, 0);
+                const pageCount = doc.internal.getNumberOfPages();
+                const pageHeight = doc.internal.pageSize.height;
+                doc.text(`Page ${data.pageNumber}`, pageWidth/2, pageHeight - 10, { align: 'center' });
             }
         });
 
@@ -214,13 +237,14 @@ export function ExpensesDashboard() {
             <ArrowDown className="w-4 h-4 ml-1" />;
     };
 
-    const handleDeleteExpense = async (expenseId) => {
-        if (!window.confirm('Are you sure you want to delete this expense?')) {
-            return;
-        }
+    const handleDeleteExpense = async (expenseId, expense) => {
+        setExpenseToDelete({ id: expenseId, ...expense });
+        setIsDeleteModalOpen(true);
+    };
 
+    const confirmDelete = async () => {
         try {
-            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${expenseId}`, {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${expenseToDelete.id}`, {
                 method: 'DELETE',
             });
 
@@ -230,6 +254,8 @@ export function ExpensesDashboard() {
 
             await fetchExpenses(); // Refresh the expenses list
             toast.success('Expense deleted successfully');
+            setIsDeleteModalOpen(false);
+            setExpenseToDelete(null);
         } catch (error) {
             toast.error('Failed to delete expense');
         }
@@ -350,6 +376,9 @@ export function ExpensesDashboard() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
+                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                S.NO
+                                            </th>
                                             {[
                                                 { key: 'expenseType', label: 'Type' },
                                                 { key: 'description', label: 'Description' },
@@ -373,8 +402,11 @@ export function ExpensesDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredData.map((expense) => (
+                                        {filteredData.map((expense, index) => (
                                             <tr key={expense._id} className="hover:bg-gray-50">
+                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {index + 1}
+                                                </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {expense.expenseType}
                                                 </td>
@@ -407,11 +439,14 @@ export function ExpensesDashboard() {
                                                     ₹{expense.amount.toFixed(2)}
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {expense.spentBy}
+                                                    <div className="flex items-center gap-1">
+                                                        <User className="w-4 h-4 text-gray-400" />
+                                                        {expense.spentBy}
+                                                    </div>
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <button
-                                                        onClick={() => handleDeleteExpense(expense._id)}
+                                                        onClick={() => handleDeleteExpense(expense._id, expense)}
                                                         className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
                                                         title="Delete expense"
                                                     >
@@ -481,6 +516,9 @@ export function ExpensesDashboard() {
                                                 <option value="Watchman Night">Watchman Night</option>
                                                 <option value="Watchman Day">Watchman Day</option>
                                                 <option value="Electricity Bill">Electricity Bill</option>
+                                                <option value="Wi-Fi">Wi-Fi</option>
+                                                <option value="Sweeper">Sweeper</option>
+                                                <option value="Telephone">Telephone</option>
                                                 <option value="Miscellaneous">Miscellaneous</option>
                                             </select>
                                         </div>
@@ -603,18 +641,114 @@ export function ExpensesDashboard() {
                                     <div className="mt-8 flex justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-all"
+                                            className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             onClick={() => setIsAddExpenseOpen(false)}
+                                            disabled={isAddingExpense}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="px-6 py-2.5 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium transition-all flex items-center"
+                                            className="px-6 py-2.5 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                                             onClick={handleAddExpense}
+                                            disabled={isAddingExpense}
                                         >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Expense
+                                            {isAddingExpense ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                    Adding...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Add Expense
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* Delete Confirmation Modal */}
+            <Transition appear show={isDeleteModalOpen} as={Fragment}>
+                <Dialog as="div" className="relative z-10" onClose={() => setIsDeleteModalOpen(false)}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4">
+                                    <div className="flex items-center justify-center mb-6">
+                                        <div className="bg-red-100 rounded-full p-3">
+                                            <AlertCircle className="h-6 w-6 text-red-600" />
+                                        </div>
+                                    </div>
+                                    
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-lg font-bold text-center text-gray-900 mb-4"
+                                    >
+                                        Delete Expense
+                                    </Dialog.Title>
+
+                                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                        <div className="space-y-2">
+                                            <p className="text-sm text-gray-600">
+                                                <span className="font-medium">Type:</span> {expenseToDelete?.expenseType}
+                                            </p>
+                                            {expenseToDelete?.description && (
+                                                <p className="text-sm text-gray-600">
+                                                    <span className="font-medium">Description:</span> {expenseToDelete.description}
+                                                </p>
+                                            )}
+                                            <p className="text-sm text-gray-600">
+                                                <span className="font-medium">Amount:</span> ₹{expenseToDelete?.amount.toFixed(2)}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <span className="font-medium">Date:</span> {new Date(expenseToDelete?.transactionDate).toLocaleDateString('en-GB')}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <span className="font-medium">Spent By:</span> {expenseToDelete?.spentBy}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            onClick={() => setIsDeleteModalOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none"
+                                            onClick={confirmDelete}
+                                        >
+                                            Delete
                                         </button>
                                     </div>
                                 </Dialog.Panel>
