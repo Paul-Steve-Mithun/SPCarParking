@@ -359,8 +359,7 @@ app.delete('/removeVehicle/:id', async (req, res) => {
 // Updated reactivateVehicle endpoint
 app.put('/reactivateVehicle/:id', async (req, res) => {
     try {
-        const { status, transactionMode, rentPrice, receivedBy } = req.body;
-        
+        const { status, transactionMode, rentPrice, receivedBy } = req.body;        
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
@@ -371,15 +370,21 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         
         // Calculate the last day of the next month after the original end date
         const nextMonthEndDate = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 2, 0);
-        nextMonthEndDate.setHours(18, 29, 59, 999); // Set to 23:59:59 IST
+        
+        // Set the time to 23:59:59.999 in local timezone
+        nextMonthEndDate.setHours(23, 59, 59, 999);
 
-        // Update vehicle with all necessary fields
-        vehicle.status = status || 'active';
-        vehicle.endDate = nextMonthEndDate;
+        // Update vehicle with existing receivedBy value
+        const updatedVehicle = await Vehicle.findByIdAndUpdate(
+            req.params.id,
+            {
+                status: status || 'active',
+                endDate: nextMonthEndDate
+            },
+            { new: true }
+        );
 
-        await vehicle.save();
-
-        // Create revenue record for monthly extension
+        // Create revenue record for monthly extension with new transaction details
         const extensionRevenue = new Revenue({
             vehicleNumber: vehicle.vehicleNumber,
             vehicleDescription: vehicle.vehicleDescription,
@@ -404,10 +409,11 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
 
         res.json({ 
             success: true,
-            vehicle,
+            vehicle: updatedVehicle,
             revenue: extensionRevenue
         });
     } catch (error) {
+        console.error('Error in reactivateVehicle:', error);
         res.status(500).json({ error: error.message });
     }
 });
