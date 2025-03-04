@@ -121,7 +121,7 @@ const AdvanceSchema = new mongoose.Schema({
 const ExpenseSchema = new mongoose.Schema({
     expenseType: { 
         type: String, 
-        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Miscellaneous'],
+        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Wi-Fi', 'Sweeper', 'Telephone', 'Miscellaneous'],
         required: true 
     },
     spentBy: {
@@ -131,7 +131,9 @@ const ExpenseSchema = new mongoose.Schema({
     },
     description: { 
         type: String,
-        required: function() { return this.expenseType === 'Miscellaneous'; }
+        required: function() { 
+            return this.expenseType === 'Miscellaneous'; 
+        }
     },
     amount: { 
         type: Number, 
@@ -372,7 +374,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
         const nextMonthEndDate = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 2, 0);
         
         // Set the time to 23:59:59.999 in local timezone
-        nextMonthEndDate.setHours(23, 59, 59, 999);
+        nextMonthEndDate.setHours(18, 29, 59, 999);
 
         // Update vehicle with existing receivedBy value
         const updatedVehicle = await Vehicle.findByIdAndUpdate(

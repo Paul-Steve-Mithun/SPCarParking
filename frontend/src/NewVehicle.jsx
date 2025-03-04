@@ -41,6 +41,7 @@ export function NewVehicle() {
     const [selectedLotType, setSelectedLotType] = useState('regular'); // 'regular', 'a', 'b'
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
 
     // Generate all possible lots
     const generateAllLots = () => {
@@ -121,6 +122,8 @@ export function NewVehicle() {
     };
 
     const handleConfirmedSubmit = async () => {
+        if (isRegistering) return; // Prevent double submission
+        setIsRegistering(true);
         try {
             const formData = new FormData();
             
@@ -128,7 +131,7 @@ export function NewVehicle() {
             formData.append('vehicleData', JSON.stringify({
                 ...vehicle,
                 transactionMode: vehicle.transactionMode,
-                receivedBy: vehicle.receivedBy // Explicitly include receivedBy
+                receivedBy: vehicle.receivedBy
             }));
             
             if (files.vehicleImage) {
@@ -180,8 +183,10 @@ export function NewVehicle() {
             }
         } catch (error) {
             toast.error('Error submitting vehicle');
+        } finally {
+            setIsRegistering(false);
+            setShowConfirmModal(false);
         }
-        setShowConfirmModal(false);
     };
 
     const handleTextInput = (e, field) => {
@@ -784,17 +789,26 @@ export function NewVehicle() {
                                     <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             onClick={() => setShowConfirmModal(false)}
+                                            disabled={isRegistering}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none"
+                                            className="inline-flex justify-center rounded-md border border-transparent bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             onClick={handleConfirmedSubmit}
+                                            disabled={isRegistering}
                                         >
-                                            Register Vehicle
+                                            {isRegistering ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                    Registering...
+                                                </>
+                                            ) : (
+                                                'Register Vehicle'
+                                            )}
                                         </button>
                                     </div>
                                 </Dialog.Panel>
