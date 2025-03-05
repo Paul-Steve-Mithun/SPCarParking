@@ -1,5 +1,5 @@
-import { useState, Fragment } from 'react';
-import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard, AlertCircle, Save, XCircle, CheckCircle, Car, User, Calendar, IndianRupee } from 'lucide-react';
+import { useState, Fragment, useEffect } from 'react';
+import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard, AlertCircle, Save, XCircle, CheckCircle, Car, User, Calendar, IndianRupee, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 
@@ -34,6 +34,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showEndContractModal, setShowEndContractModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [availableLots, setAvailableLots] = useState([]);
+    const [selectedLotType, setSelectedLotType] = useState('regular');
 
     const handleTextInput = (e, field) => {
         let value = e.target.value;
@@ -118,6 +121,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
     const handleSaveChanges = async () => {
         try {
+            setIsLoading(true);
             const formData = new FormData();
             const vehicleDataWithRemovals = {
                 ...updatedVehicle,
@@ -146,8 +150,10 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
             onClose();
         } catch (error) {
             toast.error("Failed to update vehicle");
+        } finally {
+            setIsLoading(false);
+            setShowSaveModal(false);
         }
-        setShowSaveModal(false);
     };
 
     const handleExtendRental = async () => {
@@ -187,6 +193,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
     const confirmDelete = async () => {
         try {
+            setIsLoading(true);
             // First update the advance record with refund details
             if (vehicle.rentalType === 'monthly') {
                 const advanceResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances/refund/${vehicle.vehicleNumber}`, {
@@ -218,6 +225,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         } catch (error) {
             toast.error('Failed to delete vehicle');
             console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -233,6 +242,54 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const handleConfirmEndContract = async () => {
         await confirmDelete();
         setShowEndContractModal(false);
+    };
+
+    const generateAllLots = () => {
+        const aLots = Array.from({ length: 11 }, (_, i) => `A${i + 1}`);
+        const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
+        const cLots = Array.from({ length: 21 }, (_, i) => `C${i + 1}`);
+        return [...aLots, ...bLots, ...cLots];
+    };
+
+    useEffect(() => {
+        const fetchAvailableLots = async () => {
+            try {
+                const response = await fetch('https://spcarparkingbknd.onrender.com/vehicles');
+                const vehicles = await response.json();
+                const occupiedLots = vehicles
+                    .filter(v => v._id !== vehicle._id) // Exclude current vehicle
+                    .map(v => v.lotNumber);
+                
+                // Calculate available lots
+                const allLots = generateAllLots();
+                const available = allLots.filter(lot => !occupiedLots.includes(lot));
+                
+                // Include current vehicle's lot
+                if (!available.includes(vehicle.lotNumber)) {
+                    available.push(vehicle.lotNumber);
+                }
+                
+                setAvailableLots(available);
+            } catch (error) {
+                console.error('Error fetching lots:', error);
+                toast.error('Error loading available lots');
+            }
+        };
+
+        fetchAvailableLots();
+    }, [vehicle._id, vehicle.lotNumber]);
+
+    const getFilteredLots = () => {
+        switch (selectedLotType) {
+            case 'a':
+                return availableLots.filter(lot => lot.startsWith('A'));
+            case 'b':
+                return availableLots.filter(lot => lot.startsWith('B'));
+            case 'c':
+                return availableLots.filter(lot => lot.startsWith('C'));
+            default:
+                return availableLots;
+        }
     };
 
     return (
@@ -360,26 +417,32 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'own'})}
-                                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                     updatedVehicle.vehicleType === 'own'
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'bg-gray-100 text-gray-700'
+                                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
                                                 Own Board
+                                                {updatedVehicle.vehicleType === 'own' && (
+                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                )}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'tboard'})}
-                                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                     updatedVehicle.vehicleType === 'tboard'
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'bg-gray-100 text-gray-700'
+                                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
                                                 T Board
+                                                {updatedVehicle.vehicleType === 'tboard' && (
+                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                )}
                                             </button>
                                         </div>
                                     </div>
@@ -388,10 +451,73 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <input 
                                             type="text"
                                             value={updatedVehicle.lotNumber}
-                                            onChange={(e) => handleTextInput(e, 'lotNumber')}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                                            disabled={!isEditMode}
+                                            disabled={true}
                                         />
+                                        
+                                        {isEditMode && (
+                                            <>
+                                                {/* Lot Type Selector */}
+                                                <div className="mt-2 mb-3">
+                                                    <div className="flex space-x-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('a')}
+                                                            className={`px-3 py-1 rounded-md ${
+                                                                selectedLotType === 'a' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            A Wing (1A-11A)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('b')}
+                                                            className={`px-3 py-1 rounded-md ${
+                                                                selectedLotType === 'b' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            B Wing (1B-20B)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('c')}
+                                                            className={`px-3 py-1 rounded-md ${
+                                                                selectedLotType === 'c' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            C Wing (1C-21C)
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Available Lots Display */}
+                                                <div className="mt-2">
+                                                    <p className="text-sm text-gray-600 font-medium">Available Lots:</p>
+                                                    <div className="flex flex-wrap gap-2 mt-1 max-h-40 overflow-y-auto">
+                                                        {getFilteredLots().map((lot) => (
+                                                            <button
+                                                                key={lot}
+                                                                type="button"
+                                                                onClick={() => setUpdatedVehicle({...updatedVehicle, lotNumber: lot})}
+                                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                                    updatedVehicle.lotNumber === lot
+                                                                        ? 'bg-blue-600 text-white'
+                                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                                }`}
+                                                            >
+                                                                {lot}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -550,14 +676,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <label className="block text-gray-700 font-medium mb-2">Rental Type</label>
                                         <select 
                                             value={updatedVehicle.rentalType}
-                                            onChange={(e) => setUpdatedVehicle({
-                                                ...updatedVehicle, 
-                                                rentalType: e.target.value,
-                                                advanceAmount: e.target.value === 'monthly' ? '5000' : '',
-                                                numberOfDays: e.target.value === 'daily' ? '' : ''
-                                            })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                                            disabled={!isEditMode}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                                            disabled={true}
                                         >
                                             <option value="monthly">Monthly</option>
                                             <option value="daily">Daily</option>
@@ -607,11 +727,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             <input 
                                                 type="number"
                                                 value={updatedVehicle.advanceAmount}
-                                                onChange={(e) => handleNumberInput(e, 'advanceAmount')}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                                                placeholder="Enter advance amount"
-                                                min="0"
-                                                disabled={!isEditMode}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                                                disabled={true}
                                             />
                                         </div>
                                     )}
@@ -626,19 +743,27 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     <div className="flex gap-4">
                         <button 
                             onClick={handleSubmit}
-                            className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-                            disabled={!isEditMode}
+                            className="flex-1 flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+                            disabled={!isEditMode || isLoading}
                         >
-                            <Save className="w-5 h-5 mr-2" />
-                            Save Changes
+                            {isLoading ? (
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            ) : (
+                                <Save className="w-5 h-5 mr-2" />
+                            )}
+                            {isLoading ? 'Saving...' : 'Save Changes'}
                         </button>
                         <button 
                             onClick={handleEndContract}
                             className="flex-1 flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
-                            disabled={!isEditMode}
+                            disabled={!isEditMode || isLoading}
                         >
-                            <Trash2Icon className="w-5 h-5 mr-2" />
-                            End Contract
+                            {isLoading ? (
+                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            ) : (
+                                <Trash2Icon className="w-5 h-5 mr-2" />
+                            )}
+                            {isLoading ? 'Processing...' : 'End Contract'}
                         </button>
                     </div>
                 </div>
@@ -750,16 +875,27 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             type="button"
                                             onClick={() => setShowSaveModal(false)}
                                             className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            disabled={isLoading}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleSaveChanges}
-                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
+                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none disabled:opacity-50"
+                                            disabled={isLoading}
                                         >
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            Confirm Save
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                                    Confirm Save
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </Dialog.Panel>
@@ -837,16 +973,27 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             type="button"
                                             onClick={() => setShowEndContractModal(false)}
                                             className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            disabled={isLoading}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleConfirmEndContract}
-                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none"
+                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none disabled:opacity-50"
+                                            disabled={isLoading}
                                         >
-                                            <XCircle className="w-4 h-4 mr-2" />
-                                            End Contract
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <XCircle className="w-4 h-4 mr-2" />
+                                                    End Contract
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </Dialog.Panel>
