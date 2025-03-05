@@ -133,14 +133,21 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                 </button>
                                             </div>
                                             <span className="text-sm text-white/80">{vehicle.vehicleDescription}</span>
-                                            <a 
-                                                href={`tel:${vehicle.contactNumber}`}
-                                                className="text-sm text-white/90 hover:text-white flex items-center gap-1 mt-1"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <Phone className="w-4 h-4" />
-                                                {vehicle.contactNumber}
-                                            </a>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <div className="flex items-center gap-1">
+                                                    <User className="w-4 h-4 text-white/90" />
+                                                    <span className="text-sm text-white/90">{vehicle.ownerName}</span>
+                                                </div>
+                                                <span className="text-white/50">•</span>
+                                                <a 
+                                                    href={`tel:${vehicle.contactNumber}`}
+                                                    className="text-sm text-white/90 hover:text-white flex items-center gap-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Phone className="w-4 h-4" />
+                                                    {vehicle.contactNumber}
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="p-6">

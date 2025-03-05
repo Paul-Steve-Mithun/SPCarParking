@@ -12,7 +12,9 @@ import {
     ArrowDown,
     CreditCard,
     Search,
-    User
+    User,
+    Edit2,
+    Wallet
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -40,6 +42,14 @@ export function RevenueDashboard() {
         vehicleCount: 0,
         baluCollection: 0,
         maniCollection: 0
+    });
+    const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState(null);
+    const [editForm, setEditForm] = useState({
+        transactionDate: '',
+        transactionMode: 'Cash',
+        receivedBy: 'Balu'
     });
 
     useEffect(() => {
@@ -166,11 +176,27 @@ export function RevenueDashboard() {
         }
     };
 
-    const generatePDF = () => {
+    const generateFilteredPDF = (filterBy = null) => {
         const doc = new jsPDF('landscape');
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         
+        // Filter data based on selection
+        const filteredData = filterBy 
+            ? revenueData.filter(record => record.receivedBy === filterBy)
+            : revenueData;
+
+        // Calculate totals for filtered data
+        const filteredStats = {
+            totalRevenue: filteredData.reduce((sum, record) => sum + record.revenueAmount, 0),
+            monthlyRevenue: filteredData
+                .filter(record => record.rentalType === 'monthly')
+                .reduce((sum, record) => sum + record.revenueAmount, 0),
+            dailyRevenue: filteredData
+                .filter(record => record.rentalType === 'daily')
+                .reduce((sum, record) => sum + record.revenueAmount, 0)
+        };
+
         // Calculate total table width based on column widths
         const columnWidths = {
             sno: 15,
@@ -206,37 +232,35 @@ export function RevenueDashboard() {
             month: '2-digit',
             year: 'numeric'
         });
-        doc.text(`${monthNames[selectedMonth]} ${selectedYear} Revenue Statement (Generated: ${formattedDate})`, pageWidth / 2, 28, { align: 'center' });
+        const titleText = filterBy 
+            ? `${monthNames[selectedMonth]} ${selectedYear} Revenue Statement - ${filterBy}'s Collection (Generated: ${formattedDate})`
+            : `${monthNames[selectedMonth]} ${selectedYear} Revenue Statement (Generated: ${formattedDate})`;
+        doc.text(titleText, pageWidth / 2, 28, { align: 'center' });
     
-        // Summary cards section - Updated layout for 5 cards in 2 rows
+        // Summary cards section
         const summaryY = 45;
-        const cardWidth = (pageWidth - 80) / 3; // Reduced width
-        const cardHeight = 25; // Reduced height from 30 to 25
-        const cardGap = 8; // Reduced gap from 10 to 8
+        const cardWidth = (pageWidth - 80) / 3;
+        const cardHeight = 25;
+        const cardGap = 8;
         
-        // First Row of Cards
         const createCard = (x, y, label, value, color) => {
             doc.setFillColor(...color);
             doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'F');
             doc.setTextColor(79, 70, 229);
-            doc.setFontSize(9); // Reduced from 10
+            doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
-            doc.text(label, x + 5, y + 10); // Adjusted y position
+            doc.text(label, x + 5, y + 10);
             doc.setTextColor(0, 0, 0);
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12); // Reduced from 14
-            doc.text(value, x + 5, y + 20); // Adjusted y position
+            doc.setFontSize(12);
+            doc.text(value, x + 5, y + 20);
         };
 
-        // First Row - Adjusted x positions
-        createCard(30, summaryY, 'Total Revenue', `INR ${stats.totalRevenue.toFixed(2)}`, [246, 246, 252]);
-        createCard(30 + cardWidth + cardGap, summaryY, 'Monthly Revenue', `INR ${stats.monthlyRentalRevenue.toFixed(2)}`, [239, 246, 255]);
-        createCard(30 + (cardWidth + cardGap) * 2, summaryY, 'Daily Revenue', `INR ${stats.dailyRentalRevenue.toFixed(2)}`, [236, 254, 255]);
+        // Create summary cards with filtered totals
+        createCard(30, summaryY, 'Total Revenue', `INR ${filteredStats.totalRevenue.toFixed(2)}`, [246, 246, 252]);
+        createCard(30 + cardWidth + cardGap, summaryY, 'Monthly Revenue', `INR ${filteredStats.monthlyRevenue.toFixed(2)}`, [239, 246, 255]);
+        createCard(30 + (cardWidth + cardGap) * 2, summaryY, 'Daily Revenue', `INR ${filteredStats.dailyRevenue.toFixed(2)}`, [236, 254, 255]);
 
-        // Second Row - Adjusted x positions and y position
-        createCard(30 + cardWidth/2, summaryY + cardHeight + cardGap, "Balu's Collection", `INR ${stats.baluCollection.toFixed(2)}`, [236, 253, 245]);
-        createCard(30 + cardWidth * 1.5 + cardGap, summaryY + cardHeight + cardGap, "Mani's Collection", `INR ${stats.maniCollection.toFixed(2)}`, [240, 253, 250]);
-    
         // Format date function
         const formatDateForPDF = (date) => {
             const d = new Date(date);
@@ -257,8 +281,8 @@ export function RevenueDashboard() {
             { header: 'Amount', dataKey: 'amount' }
         ];
     
-        // Sort the table rows by date and add S.No
-        const sortedTableRows = revenueData
+        // Sort and prepare the filtered table rows
+        const sortedTableRows = filteredData
             .sort((a, b) => {
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
@@ -280,7 +304,7 @@ export function RevenueDashboard() {
         doc.autoTable({
             columns: tableColumn,
             body: sortedTableRows,
-            startY: summaryY + (cardHeight + cardGap) * 2 + 10,
+            startY: summaryY + cardHeight + 15,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
@@ -337,7 +361,11 @@ export function RevenueDashboard() {
             }
         });
     
-        doc.save(`SP_Parking_Revenue_${monthNames[selectedMonth]}_${selectedYear}.pdf`);
+        const filename = filterBy 
+            ? `SP_Parking_Revenue_${filterBy}_${monthNames[selectedMonth]}_${selectedYear}.pdf`
+            : `SP_Parking_Revenue_${monthNames[selectedMonth]}_${selectedYear}.pdf`;
+        doc.save(filename);
+        setIsPdfModalOpen(false);
     };
 
     const revenueStats = [
@@ -384,6 +412,40 @@ export function RevenueDashboard() {
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    const handleEditClick = (transaction) => {
+        setEditingTransaction(transaction);
+        setEditForm({
+            transactionDate: new Date(transaction.transactionDate).toISOString().split('T')[0],
+            transactionMode: transaction.transactionMode,
+            receivedBy: transaction.receivedBy
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSubmit = async () => {
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/revenue/${editingTransaction._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(editForm)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update transaction');
+            }
+
+            await fetchRevenueData();
+            toast.success('Transaction updated successfully');
+            setIsEditModalOpen(false);
+            setEditingTransaction(null);
+        } catch (error) {
+            toast.error('Failed to update transaction');
+            console.error('Error updating transaction:', error);
+        }
+    };
+
     return (
         <div className="relative">
             <Toaster position="bottom-right" />
@@ -406,7 +468,7 @@ export function RevenueDashboard() {
                                     Rent Payment Dashboard
                                 </h1>
                                 <button 
-                                    onClick={generatePDF} 
+                                    onClick={() => setIsPdfModalOpen(true)}
                                     className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
                                 >
                                     <Printer className="w-5 h-5" />
@@ -528,7 +590,11 @@ export function RevenueDashboard() {
                                                                     {index + 1}
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
-                                                                    {record.vehicleNumber}
+                                                                    <span title={record.vehicleNumber}>
+                                                                        {record.vehicleNumber.length > 10 
+                                                                            ? `${record.vehicleNumber.slice(0, 10)}...` 
+                                                                            : record.vehicleNumber}
+                                                                    </span>
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
                                                                     {record.vehicleDescription}
@@ -572,6 +638,14 @@ export function RevenueDashboard() {
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
                                                                     ₹{record.revenueAmount.toFixed(2)}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm">
+                                                                    <button
+                                                                        onClick={() => handleEditClick(record)}
+                                                                        className="text-blue-600 hover:text-blue-800"
+                                                                    >
+                                                                        <Edit2 className="w-4 h-4" />
+                                                                    </button>
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -654,6 +728,257 @@ export function RevenueDashboard() {
                                             onClick={() => selectedTransaction && handleDeleteTransaction(selectedTransaction._id)}
                                         >
                                             Delete
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* PDF Generation Modal */}
+            <Transition appear show={isPdfModalOpen} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => setIsPdfModalOpen(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-lg font-bold text-gray-900 mb-4"
+                                    >
+                                        Generate PDF Report
+                                    </Dialog.Title>
+                                    <div className="space-y-4">
+                                        <button
+                                            onClick={() => generateFilteredPDF()}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <Printer className="w-5 h-5 text-gray-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Complete Report</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with all transactions</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => generateFilteredPDF('Balu')}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <User className="w-5 h-5 text-blue-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Balu's Collection</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with Balu's transactions only</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => generateFilteredPDF('Mani')}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <User className="w-5 h-5 text-green-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Mani's Collection</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with Mani's transactions only</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div className="mt-6">
+                                        <button
+                                            type="button"
+                                            className="w-full inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            onClick={() => setIsPdfModalOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* Edit Modal */}
+            <Transition appear show={isEditModalOpen} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-50" 
+                    onClose={() => setIsEditModalOpen(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/25" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-lg font-bold leading-6 text-gray-900 mb-4"
+                                    >
+                                        Edit Transaction
+                                    </Dialog.Title>
+                                    
+                                    {editingTransaction && (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Transaction Date
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    value={editForm.transactionDate}
+                                                    onChange={(e) => setEditForm({
+                                                        ...editForm,
+                                                        transactionDate: e.target.value
+                                                    })}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+
+                                            {/* Transaction Mode Buttons */}
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">Transaction Mode</label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({
+                                                            ...editForm,
+                                                            transactionMode: 'Cash'
+                                                        })}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            editForm.transactionMode === 'Cash'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <Wallet className="h-5 w-5 mr-2" />
+                                                        Cash
+                                                        {editForm.transactionMode === 'Cash' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({
+                                                            ...editForm,
+                                                            transactionMode: 'UPI'
+                                                        })}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            editForm.transactionMode === 'UPI'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <CreditCard className="h-5 w-5 mr-2" />
+                                                        UPI
+                                                        {editForm.transactionMode === 'UPI' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Received By Buttons */}
+                                            <div>
+                                                <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({
+                                                            ...editForm,
+                                                            receivedBy: 'Balu'
+                                                        })}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            editForm.receivedBy === 'Balu'
+                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <User className="h-5 w-5 mr-2" />
+                                                        Balu
+                                                        {editForm.receivedBy === 'Balu' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditForm({
+                                                            ...editForm,
+                                                            receivedBy: 'Mani'
+                                                        })}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                            editForm.receivedBy === 'Mani'
+                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                    >
+                                                        <User className="h-5 w-5 mr-2" />
+                                                        Mani
+                                                        {editForm.receivedBy === 'Mani' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            onClick={() => setIsEditModalOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
+                                            onClick={handleEditSubmit}
+                                        >
+                                            Save Changes
                                         </button>
                                     </div>
                                 </Dialog.Panel>
