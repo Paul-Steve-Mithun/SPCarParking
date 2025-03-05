@@ -609,6 +609,43 @@ app.get('/revenueStats', async (req, res) => {
     }
 });
 
+// Update revenue transaction
+app.put('/revenue/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { transactionDate, transactionMode, receivedBy } = req.body;
+
+        const updateData = {
+            transactionDate: new Date(transactionDate),
+            transactionMode,
+            receivedBy,
+            month: new Date(transactionDate).getMonth(),
+            year: new Date(transactionDate).getFullYear()
+        };
+
+        const updatedRevenue = await Revenue.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedRevenue) {
+            return res.status(404).json({ error: 'Transaction not found' });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Transaction updated successfully',
+            transaction: updatedRevenue 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            message: 'Failed to update transaction' 
+        });
+    }
+});
+
 // Delete Revenue Transaction
 app.delete('/revenue/:id', async (req, res) => {
     try {

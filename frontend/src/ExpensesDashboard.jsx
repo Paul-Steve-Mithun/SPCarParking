@@ -52,6 +52,7 @@ export function ExpensesDashboard() {
         key: 'transactionDate', 
         direction: 'asc' 
     });
+    const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -133,10 +134,22 @@ export function ExpensesDashboard() {
         }
     };
 
-    const generatePDF = () => {
+    const generateFilteredPDF = (filterBy = null) => {
         const doc = new jsPDF('landscape');
         const pageWidth = doc.internal.pageSize.getWidth();
         
+        // Filter data based on selection
+        const filteredExpenses = filterBy 
+            ? expenses.filter(expense => expense.spentBy === filterBy)
+            : expenses;
+
+        // Calculate filtered totals
+        const filteredTotals = {
+            totalExpenses: filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+            baluExpenses: filterBy === 'Balu' ? filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0) : 0,
+            maniExpenses: filterBy === 'Mani' ? filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0) : 0
+        };
+
         // Header
         doc.setFillColor(79, 70, 229);
         doc.rect(0, 0, pageWidth, 40, 'F');
@@ -145,23 +158,26 @@ export function ExpensesDashboard() {
         doc.setFont('helvetica', 'bold');
         doc.text('SP CAR PARKING', pageWidth/2, 20, { align: 'center' });
         
-        // Reset text color for the report title and generation date
+        // Report title with generation date
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         const today = new Date();
         const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        doc.text(`Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} (Generated: ${formattedDate})`, pageWidth/2, 35, { align: 'center' });
+        const titleText = filterBy 
+            ? `Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} - ${filterBy}'s Expenses (Generated: ${formattedDate})`
+            : `Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} (Generated: ${formattedDate})`;
+        doc.text(titleText, pageWidth/2, 35, { align: 'center' });
 
-        // Summary
-        const summaryData = [
-            ['Total Expenses:', `INR ${stats.totalExpenses.toFixed(2)}`],
-            ['Balu\'s Expenses:', `INR ${stats.baluExpenses.toFixed(2)}`],
-            ['Mani\'s Expenses:', `INR ${stats.maniExpenses.toFixed(2)}`]
-        ];
+        // Summary section with filtered totals
+        const summaryData = filterBy === 'Balu' 
+            ? [['Total Expenses:', `INR ${filteredTotals.baluExpenses.toFixed(2)}`]]
+            : filterBy === 'Mani'
+            ? [['Total Expenses:', `INR ${filteredTotals.maniExpenses.toFixed(2)}`]]
+            : [['Total Expenses:', `INR ${filteredTotals.totalExpenses.toFixed(2)}`]];
 
         doc.autoTable({
-            startY: 45, // Adjusted to accommodate the combined title and date
+            startY: 45,
             head: [['Category', 'Amount']],
             body: summaryData,
             theme: 'grid',
@@ -171,8 +187,8 @@ export function ExpensesDashboard() {
             }
         });
 
-        // Transactions
-        const tableData = expenses.map((expense, index) => [
+        // Transactions table with filtered data
+        const tableData = filteredExpenses.map((expense, index) => [
             index + 1,
             expense.expenseType,
             expense.description || '-',
@@ -202,7 +218,11 @@ export function ExpensesDashboard() {
             }
         });
 
-        doc.save(`SP_Parking_Expenses_${monthNames[selectedMonth]}_${selectedYear}.pdf`);
+        const filename = filterBy 
+            ? `SP_Parking_Expenses_${filterBy}_${monthNames[selectedMonth]}_${selectedYear}.pdf`
+            : `SP_Parking_Expenses_${monthNames[selectedMonth]}_${selectedYear}.pdf`;
+        doc.save(filename);
+        setIsPdfModalOpen(false);
     };
 
     const handleSort = (key) => {
@@ -281,7 +301,7 @@ export function ExpensesDashboard() {
                                 <span className="font-semibold">Add Expense</span>
                             </button>
                             <button 
-                                onClick={generatePDF} 
+                                onClick={() => setIsPdfModalOpen(true)}
                                 className="w-full sm:w-auto bg-white text-yellow-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
                             >
                                 <Printer className="w-5 h-5" />
@@ -749,6 +769,91 @@ export function ExpensesDashboard() {
                                             onClick={confirmDelete}
                                         >
                                             Delete
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* Add the PDF Generation Modal */}
+            <Transition appear show={isPdfModalOpen} as={Fragment}>
+                <Dialog 
+                    as="div" 
+                    className="relative z-10" 
+                    onClose={() => setIsPdfModalOpen(false)}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-lg font-bold text-gray-900 mb-4"
+                                    >
+                                        Generate PDF Report
+                                    </Dialog.Title>
+                                    <div className="space-y-4">
+                                        <button
+                                            onClick={() => generateFilteredPDF()}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <Printer className="w-5 h-5 text-gray-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Complete Report</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with all expenses</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => generateFilteredPDF('Balu')}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <User className="w-5 h-5 text-yellow-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Balu's Expenses</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with Balu's expenses only</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => generateFilteredPDF('Mani')}
+                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                        >
+                                            <User className="w-5 h-5 text-yellow-600" />
+                                            <div>
+                                                <p className="font-medium text-gray-900">Mani's Expenses</p>
+                                                <p className="text-sm text-gray-500">Generate PDF with Mani's expenses only</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <div className="mt-6">
+                                        <button
+                                            type="button"
+                                            className="w-full inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            onClick={() => setIsPdfModalOpen(false)}
+                                        >
+                                            Cancel
                                         </button>
                                     </div>
                                 </Dialog.Panel>
