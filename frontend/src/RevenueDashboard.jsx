@@ -14,7 +14,8 @@ import {
     Search,
     User,
     Edit2,
-    Wallet
+    Wallet,
+    MapPin
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -51,16 +52,23 @@ export function RevenueDashboard() {
         transactionMode: 'Cash',
         receivedBy: 'Balu'
     });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        const filtered = revenueData.filter(record => {
-            const query = searchQuery.toLowerCase();
-            return (
-                record.vehicleNumber.toLowerCase().includes(query) ||
-                (record.vehicleDescription || '').toLowerCase().includes(query) ||
-                (record.lotNumber || '').toLowerCase().includes(query)
-            );
-        });
+        const filtered = revenueData
+            .filter(record => {
+                // First filter out records with zero, null, or 0.00 revenue amounts
+                if (!record.revenueAmount || record.revenueAmount === 0 || record.revenueAmount === 0.00) {
+                    return false;
+                }
+                // Then apply search query filter
+                const query = searchQuery.toLowerCase();
+                return (
+                    record.vehicleNumber.toLowerCase().includes(query) ||
+                    (record.vehicleDescription || '').toLowerCase().includes(query) ||
+                    (record.lotNumber || '').toLowerCase().includes(query)
+                );
+            });
         setFilteredData(filtered);
     }, [searchQuery, revenueData]);
 
@@ -88,7 +96,7 @@ export function RevenueDashboard() {
         return [...data].sort((a, b) => {
             const dateA = new Date(a.transactionDate);
             const dateB = new Date(b.transactionDate);
-            return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+            return dateB - dateA; // Changed to show latest first
         });
     };
 
@@ -423,6 +431,8 @@ export function RevenueDashboard() {
     };
 
     const handleEditSubmit = async () => {
+        if (isSaving) return; // Prevent double submission
+        setIsSaving(true);
         try {
             const response = await fetch(`https://spcarparkingbknd.onrender.com/revenue/${editingTransaction._id}`, {
                 method: 'PUT',
@@ -443,6 +453,8 @@ export function RevenueDashboard() {
         } catch (error) {
             toast.error('Failed to update transaction');
             console.error('Error updating transaction:', error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -584,37 +596,41 @@ export function RevenueDashboard() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-200">
-                                                        {revenueData.map((record, index) => (
-                                                            <tr key={record._id} className="hover:bg-gray-50 transition-colors duration-150">
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                        {filteredData.map((record, index) => (
+                                                            <tr 
+                                                                key={record._id} 
+                                                                onClick={() => handleEditClick(record)}
+                                                                className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
+                                                            >
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     {index + 1}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     <span title={record.vehicleNumber}>
                                                                         {record.vehicleNumber.length > 10 
                                                                             ? `${record.vehicleNumber.slice(0, 10)}...` 
                                                                             : record.vehicleNumber}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.vehicleDescription}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.lotNumber || 'Open'}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {capitalizeFirst(record.rentalType)}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.transactionType}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     <span className="inline-flex items-center gap-1">
                                                                         <User className="w-4 h-4 text-gray-500" />
                                                                         {record.receivedBy || 'N/A'}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                                         record.transactionMode === 'UPI' 
                                                                             ? 'bg-blue-100 text-blue-800' 
@@ -633,19 +649,14 @@ export function RevenueDashboard() {
                                                                         )}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {new Date(record.transactionDate).toLocaleDateString('en-GB')}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     ₹{record.revenueAmount.toFixed(2)}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm">
-                                                                    <button
-                                                                        onClick={() => handleEditClick(record)}
-                                                                        className="text-blue-600 hover:text-blue-800"
-                                                                    >
-                                                                        <Edit2 className="w-4 h-4" />
-                                                                    </button>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm group-hover:bg-gray-50">
+                                                                    <Edit2 className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -862,6 +873,43 @@ export function RevenueDashboard() {
                                     
                                     {editingTransaction && (
                                         <div className="space-y-4">
+                                            {/* Vehicle Details Section */}
+                                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200 shadow-sm">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                        <Car className="w-6 h-6 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-gray-400">Vehicle Number</h4>
+                                                        <p className="text-lg font-bold text-gray-900">
+                                                            {editingTransaction.vehicleNumber}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <AlertCircle className="w-4 h-4 text-purple-600" />
+                                                            <span className="text-xs font-medium text-gray-500">Description</span>
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                                                            {editingTransaction.vehicleDescription || 'No description'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <MapPin className="w-4 h-4 text-red-600" />
+                                                            <span className="text-xs font-medium text-gray-500">Lot Number</span>
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-gray-900">
+                                                            {editingTransaction.lotNumber || 'Open'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                                     Transaction Date
@@ -970,15 +1018,24 @@ export function RevenueDashboard() {
                                             type="button"
                                             className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
                                             onClick={() => setIsEditModalOpen(false)}
+                                            disabled={isSaving}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none"
+                                            className="inline-flex justify-center rounded-lg border border-transparent bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50"
                                             onClick={handleEditSubmit}
+                                            disabled={isSaving}
                                         >
-                                            Save Changes
+                                            {isSaving ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save Changes'
+                                            )}
                                         </button>
                                     </div>
                                 </Dialog.Panel>

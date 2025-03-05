@@ -232,7 +232,8 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     {!showExtendForm ? (
                                                         <button
                                                             onClick={() => setShowExtendForm(true)}
-                                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                                            disabled={loading}
+                                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
                                                         >
                                                             <PlusCircleIcon className="w-5 h-5" />
                                                             <span className="font-medium">Extend Rental</span>
@@ -256,13 +257,21 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                                     className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                                                                     placeholder="Number of days"
                                                                     min="1"
+                                                                    disabled={loading}
                                                                 />
                                                                 <button
                                                                     onClick={handleExtendRental}
-                                                                    disabled={loading}
-                                                                    className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-base font-medium"
+                                                                    disabled={loading || !additionalDays}
+                                                                    className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-base font-medium flex items-center gap-2"
                                                                 >
-                                                                    Extend
+                                                                    {loading ? (
+                                                                        <>
+                                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                                            <span>Saving...</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span>Extend</span>
+                                                                    )}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -285,6 +294,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                                 placeholder={`Current: ₹${vehicle.rentPrice}`}
                                                                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                                 min="0"
+                                                                disabled={loading}
                                                             />
                                                         </div>
                                                         <p className="mt-1 text-sm text-gray-500">
@@ -295,10 +305,19 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     <button 
                                                         onClick={handlePaidRent}
                                                         disabled={loading}
-                                                        className="w-full flex items-center justify-center bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors disabled:opacity-50 text-base font-medium"
+                                                        className="w-full flex items-center justify-center bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors disabled:opacity-50 text-base font-medium gap-2"
                                                     >
-                                                        <CheckIcon className="w-6 h-6 mr-2" />
-                                                        <span>Extend 30 Days</span>
+                                                        {loading ? (
+                                                            <>
+                                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                                <span>Processing...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <CheckIcon className="w-6 h-6" />
+                                                                <span>Extend 30 Days</span>
+                                                            </>
+                                                        )}
                                                     </button>
                                                 </div>
                                             )}
@@ -407,18 +426,29 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                     <div className="flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50"
                                             onClick={() => setShowConfirmModal(false)}
+                                            disabled={loading}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none"
+                                            className="inline-flex justify-center items-center rounded-lg border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none disabled:opacity-50 gap-2"
                                             onClick={handleConfirmedSubmit}
                                             disabled={loading}
                                         >
-                                            {loading ? 'Processing...' : 'Confirm & Pay'}
+                                            {loading ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Processing...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckIcon className="w-4 h-4" />
+                                                    <span>Confirm & Pay</span>
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </Dialog.Panel>

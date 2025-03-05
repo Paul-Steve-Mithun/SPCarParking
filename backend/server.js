@@ -842,7 +842,7 @@ app.get('/vehicles/zero-advance', async (req, res) => {
 app.put('/vehicles/update-advance/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { advanceAmount, transactionMode } = req.body;
+        const { advanceAmount, transactionMode, receivedBy } = req.body;
 
         // First get the current vehicle to check existing advance
         const currentVehicle = await Vehicle.findById(id);
@@ -873,7 +873,7 @@ app.put('/vehicles/update-advance/:id', async (req, res) => {
             parkingType: vehicle.parkingType,
             advanceRefund: null,
             refundDate: null,
-            receivedBy: vehicle.receivedBy || 'Mani'
+            receivedBy: receivedBy
         });
 
         await newAdvance.save();

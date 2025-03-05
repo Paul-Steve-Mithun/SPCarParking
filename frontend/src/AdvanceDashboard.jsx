@@ -42,6 +42,8 @@ export function AdvanceDashboard() {
     const [isEditingAdvance, setIsEditingAdvance] = useState(false);
     const [newAdvanceAmount, setNewAdvanceAmount] = useState('');
     const [advanceTransactionMode, setAdvanceTransactionMode] = useState('Cash');
+    const [isSavingAdvance, setIsSavingAdvance] = useState(false);
+    const [receivedBy, setReceivedBy] = useState('Balu');
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -66,12 +68,18 @@ export function AdvanceDashboard() {
             const vehiclesData = await vehiclesResponse.json();
             const totalsData = await totalsResponse.json();
 
-            // Filter out zero advance transactions before sorting
+            // Filter out zero advance transactions
             const nonZeroTransactions = vehiclesData.filter(v => 
                 v.advanceAmount > 0 || v.advanceRefund > 0
             );
 
-            const sortedData = sortVehiclesByDate(nonZeroTransactions);
+            // Sort transactions by date (latest first)
+            const sortedData = nonZeroTransactions.sort((a, b) => {
+                const dateA = new Date(a.refundDate || a.startDate);
+                const dateB = new Date(b.refundDate || b.startDate);
+                return dateB - dateA; // Sort in descending order (latest first)
+            });
+
             setVehicles(sortedData);
             setFilteredVehicles(sortedData);
 
@@ -110,9 +118,9 @@ export function AdvanceDashboard() {
         setSortConfig({ key, direction });
 
         const sortedData = [...vehicles].sort((a, b) => {
-            if (key === 'startDate') {
-                const dateA = new Date(a.startDate || a.refundDate);
-                const dateB = new Date(b.startDate || b.refundDate);
+            if (key === 'TransactionDate') {
+                const dateA = new Date(a.refundDate || a.startDate);
+                const dateB = new Date(b.refundDate || b.startDate);
                 return direction === 'asc' ? dateA - dateB : dateB - dateA;
             }
             if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
@@ -120,6 +128,7 @@ export function AdvanceDashboard() {
             return 0;
         });
         setVehicles(sortedData);
+        setFilteredVehicles(sortedData);
     };
 
     const SortIcon = ({ column }) => {
@@ -344,6 +353,8 @@ export function AdvanceDashboard() {
     }, [searchZeroAdvance]);
 
     const handlePayAdvance = async () => {
+        if (isSavingAdvance) return; // Prevent double submission
+        setIsSavingAdvance(true);
         try {
             const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/update-advance/${selectedZeroAdvanceVehicle._id}`, {
                 method: 'PUT',
@@ -352,7 +363,8 @@ export function AdvanceDashboard() {
                 },
                 body: JSON.stringify({
                     advanceAmount: Number(newAdvanceAmount),
-                    transactionMode: advanceTransactionMode
+                    transactionMode: advanceTransactionMode,
+                    receivedBy: receivedBy
                 }),
             });
 
@@ -371,6 +383,8 @@ export function AdvanceDashboard() {
             }
         } catch (error) {
             toast.error(error.message || 'Error updating advance payment');
+        } finally {
+            setIsSavingAdvance(false);
         }
     };
 
@@ -765,27 +779,69 @@ export function AdvanceDashboard() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setAdvanceTransactionMode('Cash')}
-                                                        className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'Cash'
-                                                                ? 'bg-blue-600 text-white'
-                                                                : 'bg-gray-100 text-gray-700'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-5 w-5 mr-2" />
                                                         Cash
+                                                        {advanceTransactionMode === 'Cash' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setAdvanceTransactionMode('UPI')}
-                                                        className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'UPI'
-                                                                ? 'bg-blue-600 text-white'
-                                                                : 'bg-gray-100 text-gray-700'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-5 w-5 mr-2" />
                                                         UPI
+                                                        {advanceTransactionMode === 'UPI' && (
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                        )}
                                                     </button>
+                                                </div>
+
+                                                <div className="mt-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Received By</label>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setReceivedBy('Balu')}
+                                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                receivedBy === 'Balu'
+                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            <User className="h-5 w-5 mr-2" />
+                                                            Balu
+                                                            {receivedBy === 'Balu' && (
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setReceivedBy('Mani')}
+                                                            className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                receivedBy === 'Mani'
+                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                            }`}
+                                                        >
+                                                            <User className="h-5 w-5 mr-2" />
+                                                            Mani
+                                                            {receivedBy === 'Mani' && (
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -803,11 +859,20 @@ export function AdvanceDashboard() {
                                                 </button>
                                                 <button
                                                     onClick={handlePayAdvance}
-                                                    disabled={!isEditingAdvance || !newAdvanceAmount}
+                                                    disabled={!isEditingAdvance || !newAdvanceAmount || isSavingAdvance}
                                                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                                 >
-                                                    <Save className="w-4 h-4" />
-                                                    Pay Advance
+                                                    {isSavingAdvance ? (
+                                                        <>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                            <span>Saving...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Save className="w-4 h-4" />
+                                                            <span>Pay Advance</span>
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>

@@ -782,6 +782,13 @@ export function NewVehicle() {
                                                         {vehicle.transactionMode}
                                                     </p>
                                                 </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-600">Received By</p>
+                                                    <p className="flex items-center gap-1 text-gray-800">
+                                                        <User className="w-4 h-4" />
+                                                        {vehicle.receivedBy}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -797,7 +804,7 @@ export function NewVehicle() {
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="inline-flex justify-center rounded-md border border-transparent bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                                             onClick={handleConfirmedSubmit}
                                             disabled={isRegistering}
                                         >
