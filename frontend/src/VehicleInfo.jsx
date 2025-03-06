@@ -627,6 +627,13 @@ export function VehicleInfo() {
                                         <span className="px-3 py-1.5 bg-white/30 text-white text-sm sm:text-base font-extrabold rounded-lg shadow-lg">
                                             {selectedVehicle.lotNumber || 'Open'}
                                         </span>
+                                        <span className={`px-3 py-1.5 text-sm sm:text-base font-semibold rounded-lg shadow-lg ${
+                                            selectedVehicle.status === 'active' 
+                                                ? 'bg-green-500/80 text-white' 
+                                                : 'bg-red-500/80 text-white'
+                                        }`}>
+                                            {selectedVehicle.status === 'active' ? 'Active' : 'Expired'}
+                                        </span>
                                         <button
                                             onClick={() => selectedVehicle.rentalType === 'monthly' ? handlePrintInvoice(selectedVehicle) : handlePrintDailyInvoice(selectedVehicle)}
                                             className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
@@ -814,6 +821,9 @@ export function VehicleInfo() {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                S.No
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Date
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -831,8 +841,13 @@ export function VehicleInfo() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {transactions.map((transaction) => (
+                                        {transactions
+                                            .filter(transaction => transaction.revenueAmount > 0)
+                                            .map((transaction, index) => (
                                             <tr key={transaction._id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {index + 1}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
                                                 </td>

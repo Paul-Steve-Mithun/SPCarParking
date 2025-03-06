@@ -187,14 +187,14 @@ export function AdvanceDashboard() {
         const leftMargin = (pageWidth - totalTableWidth) / 2;
 
         // Table columns
-        const tableColumn = [
+        const baseColumns = [
             { header: 'S.No', dataKey: 'sno' },
+            { header: 'Date', dataKey: 'date' },
             { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
             { header: 'Description', dataKey: 'description' },
             { header: 'Lot', dataKey: 'lot' },
             { header: 'Mode', dataKey: 'mode' },
             { header: 'Received By', dataKey: 'receivedBy' },
-            { header: 'Date', dataKey: 'date' },
             { header: 'Amount', dataKey: 'amount' }
         ];
 
@@ -224,7 +224,7 @@ export function AdvanceDashboard() {
             });
 
         doc.autoTable({
-            columns: tableColumn,
+            columns: baseColumns,
             body: sortedTableRows,
             startY: 45,
             theme: 'grid',
@@ -253,7 +253,7 @@ export function AdvanceDashboard() {
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
                 receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
                 date: { cellWidth: columnWidths.date, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'center' }
+                amount: { cellWidth: columnWidths.amount, halign: 'left' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
@@ -300,7 +300,7 @@ export function AdvanceDashboard() {
                     doc.setTextColor(0, 0, 0);
 
                     // Calculate positions
-                    const boxWidth = 70;
+                    const boxWidth = 90;
                     const boxHeight = 10;
                     const boxX = pageWidth - leftMargin - boxWidth;
                     const textPadding = 5;
@@ -333,7 +333,7 @@ export function AdvanceDashboard() {
                     // Draw Total Advance
                     drawTotalBox(
                         finalY + lineSpacing,
-                        'Total Advance:', 
+                        'Total Advance (Till Date):', 
                         `INR ${stats.totalAdvance.toFixed(2)}`,
                         true
                     );
@@ -534,115 +534,113 @@ export function AdvanceDashboard() {
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto -mx-6 sm:mx-0">
-                                <div className="max-w-[1400px] mx-auto">
-                                    <div className="inline-block min-w-full align-middle">
-                                        <div className="overflow-hidden">
-                                            {filteredVehicles.length === 0 ? (
-                                                <div className="text-center py-8 text-gray-500">
-                                                    No transactions found matching your search
-                                                </div>
-                                            ) : (
-                                                <table className="min-w-full divide-y divide-gray-200">
-                                                    <thead>
-                                                        <tr className="bg-gray-50">
-                                                            <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                                                S.No
-                                                            </th>
-                                                            {[
-                                                                'vehicleNumber',
-                                                                'vehicleDescription',
-                                                                'lotNumber',
-                                                                'parkingType',
-                                                                'receivedBy',
-                                                                'transactionMode',
-                                                                'TransactionDate',
-                                                                'advanceAmount'
-                                                            ].map((column) => (
-                                                                <th 
-                                                                    key={column}
-                                                                    onClick={() => handleSort(column)}
-                                                                    className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                                                                >
-                                                                    <div className="flex items-center">
-                                                                        <span className="hidden sm:inline">
-                                                                            {column.replace(/([A-Z])/g, ' $1').trim()}
-                                                                        </span>
-                                                                        <span className="sm:hidden">
-                                                                            {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
-                                                                        </span>
-                                                                        <SortIcon column={column} />
-                                                                    </div>
-                                                                </th>
-                                                            ))}
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="bg-white divide-y divide-gray-200">
-                                                        {filteredVehicles.map((vehicle, index) => (
-                                                            <tr 
-                                                                key={vehicle._id} 
-                                                                className={`transition-colors duration-150 ${
-                                                                    vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
-                                                                }`}
+                            <div className="overflow-x-auto">
+                                <div className="inline-block min-w-full align-middle">
+                                    <div className="overflow-hidden">
+                                        {filteredVehicles.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500">
+                                                No transactions found matching your search
+                                            </div>
+                                        ) : (
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead>
+                                                    <tr className="bg-gray-50">
+                                                        <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                                            S.No
+                                                        </th>
+                                                        {[
+                                                            'TransactionDate',
+                                                            'vehicleNumber',
+                                                            'vehicleDescription',
+                                                            'lotNumber',
+                                                            'parkingType',
+                                                            'receivedBy',
+                                                            'transactionMode',
+                                                            'advanceAmount'
+                                                        ].map((column) => (
+                                                            <th 
+                                                                key={column}
+                                                                onClick={() => handleSort(column)}
+                                                                className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                                                             >
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
-                                                                    {index + 1}
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
-                                                                    {vehicle.vehicleNumber}
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
-                                                                    {vehicle.vehicleDescription}
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                    {vehicle.lotNumber || 'Open'}
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                    {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                    <span className="inline-flex items-center gap-1">
-                                                                        <User className="w-4 h-4 text-gray-500" />
-                                                                        {vehicle.receivedBy || 'N/A'}
+                                                                <div className="flex items-center">
+                                                                    <span className="hidden sm:inline">
+                                                                        {column === 'TransactionDate' ? 'Date' : column.replace(/([A-Z])/g, ' $1').trim()}
                                                                     </span>
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4">
-                                                                    <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
-                                                                        vehicle.transactionMode === 'UPI' 
-                                                                            ? 'bg-blue-100 text-blue-800' 
-                                                                            : 'bg-green-100 text-green-800'
-                                                                    }`}>
-                                                                        {vehicle.transactionMode === 'UPI' ? (
-                                                                            <>
-                                                                                <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                                <span>UPI</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                                <span>Cash</span>
-                                                                            </>
-                                                                        )}
+                                                                    <span className="sm:hidden">
+                                                                        {column === 'TransactionDate' ? 'Date' : column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
                                                                     </span>
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
-                                                                    {vehicle.advanceRefund 
-                                                                        ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
-                                                                        : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
-                                                                </td>
-                                                                <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
-                                                                    <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
-                                                                        {vehicle.advanceRefund 
-                                                                            ? `-₹${vehicle.advanceRefund}`
-                                                                            : `₹${vehicle.advanceAmount}`}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
+                                                                    <SortIcon column={column} />
+                                                                </div>
+                                                            </th>
                                                         ))}
-                                                    </tbody>
-                                                </table>
-                                            )}
-                                        </div>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {filteredVehicles.map((vehicle, index) => (
+                                                        <tr 
+                                                            key={vehicle._id} 
+                                                            className={`transition-colors duration-150 ${
+                                                                vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+                                                            }`}
+                                                        >
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                                                {index + 1}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                {vehicle.advanceRefund 
+                                                                    ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
+                                                                    : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                                {vehicle.vehicleNumber}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
+                                                                {vehicle.vehicleDescription}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                {vehicle.lotNumber || 'Open'}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                                <span className="inline-flex items-center gap-1">
+                                                                    <User className="w-4 h-4 text-gray-500" />
+                                                                    {vehicle.receivedBy || 'N/A'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4">
+                                                                <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
+                                                                    vehicle.transactionMode === 'UPI' 
+                                                                        ? 'bg-blue-100 text-blue-800' 
+                                                                        : 'bg-green-100 text-green-800'
+                                                                }`}>
+                                                                    {vehicle.transactionMode === 'UPI' ? (
+                                                                        <>
+                                                                            <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                            <span>UPI</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                            <span>Cash</span>
+                                                                        </>
+                                                                    )}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
+                                                                <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
+                                                                    {vehicle.advanceRefund 
+                                                                        ? `-₹${vehicle.advanceRefund}`
+                                                                        : `₹${vehicle.advanceAmount}`}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
                                     </div>
                                 </div>
                             </div>

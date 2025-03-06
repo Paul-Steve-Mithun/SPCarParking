@@ -12,7 +12,8 @@ import {
     Receipt,
     Settings,
     LogOut,
-    LogIn
+    LogIn,
+    DollarSign
 } from 'lucide-react';
 import HomePage from './HomePage';
 import NewVehicle from './NewVehicle';
@@ -22,13 +23,20 @@ import ManageVehicles from './ManageVehicles';
 import AdvanceDashboard from './AdvanceDashboard';
 import VehicleInfo from './VehicleInfo';
 import ExpensesDashboard from './ExpensesDashboard';
+import BalanceSheet from './BalanceSheet';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
-    const isAuthenticated = localStorage.getItem('spcarparking_auth') === 'true';
-    if (!isAuthenticated) {
+const ProtectedRoute = ({ children, allowedRoles }) => {
+    const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+    
+    if (!auth.isAuthenticated) {
         return <Navigate to="/" replace />;
     }
+
+    if (allowedRoles && !allowedRoles.includes(auth.role)) {
+        return <Navigate to="/" replace />;
+    }
+
     return children;
 };
 
@@ -36,10 +44,12 @@ const ProtectedRoute = ({ children }) => {
 const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
 
     const handleLogout = () => {
         localStorage.removeItem('spcarparking_auth');
         setIsAuthenticated(false);
+        navigate('/');
     };
 
     const scrollToLogin = () => {
@@ -57,11 +67,11 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
         }, 100);
     };
 
-    const NavItem = ({ to, children, requiresAuth }) => {
-        const isAuthenticated = localStorage.getItem('spcarparking_auth') === 'true';
+    const NavItem = ({ to, children, requiredRoles }) => {
+        const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
         
-        // If route requires auth and user is not authenticated, don't show the link
-        if (requiresAuth && !isAuthenticated) {
+        // If route requires specific roles and user doesn't have them, don't show the link
+        if (requiredRoles && (!auth.isAuthenticated || !requiredRoles.includes(auth.role))) {
             return null;
         }
 
@@ -83,41 +93,88 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
         );
     };
 
+    // Only render navigation if user is authenticated
+    if (!isAuthenticated) {
+        return null;
+    }
+
     return (
-        <nav className="bg-gradient-to-r from-blue-600 to-purple-700 shadow-lg sticky top-0 z-50">
+        <nav className="bg-gradient-to-r from-blue-600 to-blue-600 shadow-lg sticky top-0 z-50">
             <div className="relative">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-4">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
-                        <div className="flex items-center">
-                            <NavLink to="/" className="text-white text-xl font-bold tracking-wider hover:opacity-90 transition-opacity">
+                        <div className="flex items-center mr-4">
+                            <NavLink to="/" className="text-white text-lg font-bold tracking-wider hover:opacity-90 transition-opacity whitespace-nowrap">
                                 SP CAR PARKING
                             </NavLink>
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-4">
-                            <NavItem to="/">Home</NavItem>
-                            <NavItem to="/new-vehicle" requiresAuth>New Vehicle</NavItem>
-                            <NavItem to="/vehicle-info">Vehicle Info</NavItem>
-                            <NavItem to="/revenuedashboard">Rent</NavItem>
-                            <NavItem to="/advance">Advance</NavItem>
-                            <NavItem to="/expenses">Expenses</NavItem>
-                            <NavItem to="/managevehicles" requiresAuth>Outstanding</NavItem>
-                            <NavItem to="/admin" requiresAuth>Admin</NavItem>
-                            {isAuthenticated ? (
+                        <div className="hidden md:flex items-center justify-end flex-1 space-x-2">
+                            <div className="flex items-center space-x-2">
+                                <NavItem to="/" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <Home className="w-4 h-4" />
+                                        <span>Home</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/new-vehicle" requiredRoles={['admin']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <PlusCircle className="w-4 h-4" />
+                                        <span>New Vehicle</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/vehicle-info" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <Car className="w-4 h-4" />
+                                        <span>Vehicle Info</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/revenuedashboard" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <IndianRupee className="w-4 h-4" />
+                                        <span>Rent</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/advance" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <Wallet className="w-4 h-4" />
+                                        <span>Advance</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/expenses" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <Receipt className="w-4 h-4" />
+                                        <span>Expenses</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/managevehicles" requiredRoles={['admin']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <AlertCircle className="w-4 h-4" />
+                                        <span>Outstanding</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/admin" requiredRoles={['admin']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <Settings className="w-4 h-4" />
+                                        <span>Admin</span>
+                                    </div>
+                                </NavItem>
+                                <NavItem to="/balancesheet" requiredRoles={['admin', 'user']}>
+                                    <div className="flex items-center space-x-1.5">
+                                        <DollarSign className="w-4 h-4" />
+                                        <span>Balance Sheet</span>
+                                    </div>
+                                </NavItem>
+                            </div>
+                            {isAuthenticated && (
                                 <button
                                     onClick={handleLogout}
-                                    className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
+                                    className="text-white hover:bg-white/10 px-3 py-2 rounded-lg transition-colors flex items-center space-x-1.5 ml-2"
                                 >
-                                    Logout
-                                </button>
-                            ) : (
-                                <button 
-                                    onClick={scrollToLogin}
-                                    className="text-white hover:bg-white/10 px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    Login
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Logout</span>
                                 </button>
                             )}
                         </div>
@@ -142,7 +199,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                             {/* Menu Panel - Sliding from left */}
                             <div className="fixed inset-y-0 left-0 w-[280px] bg-white shadow-xl transform transition-all duration-300">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-600 to-purple-700">
+                                <div className="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-600 to-blue-600">
                                     <span className="text-base font-bold text-white">
                                         Menu
                                     </span>
@@ -165,7 +222,8 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                             { to: "/advance", label: "Advance", icon: <Wallet className="w-[18px] h-[18px]" /> },
                                             { to: "/expenses", label: "Expenses", icon: <Receipt className="w-[18px] h-[18px]" /> },
                                             { to: "/managevehicles", label: "Outstanding", icon: <AlertCircle className="w-[18px] h-[18px]" />, requiresAuth: true },
-                                            { to: "/admin", label: "Admin", icon: <Settings className="w-[18px] h-[18px]" />, requiresAuth: true }
+                                            { to: "/admin", label: "Admin", icon: <Settings className="w-[18px] h-[18px]" />, requiresAuth: true },
+                                            { to: "/balancesheet", label: "Balance Sheet", icon: <DollarSign className="w-[18px] h-[18px]" /> }
                                         ].map((item) => {
                                             if (item.requiresAuth && !isAuthenticated) {
                                                 return null;
@@ -214,7 +272,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                                 scrollToLogin();
                                                 setIsMenuOpen(false);
                                             }}
-                                            className="w-full py-2.5 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-700 text-white font-medium text-sm
+                                            className="w-full py-2.5 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-600 text-white font-medium text-sm
                                             hover:from-blue-700 hover:to-purple-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center"
                                         >
                                             <LogIn className="w-[18px] h-[18px] mr-2" />
@@ -233,7 +291,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(
-        localStorage.getItem('spcarparking_auth') === 'true'
+        localStorage.getItem('spcarparking_auth') ? JSON.parse(localStorage.getItem('spcarparking_auth')).isAuthenticated : false
     );
 
     return (
@@ -244,7 +302,7 @@ function App() {
                     setIsAuthenticated={setIsAuthenticated}
                 />
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-4rem-3.5rem)]">
                     <Routes>
                         <Route path="/" element={
                             <HomePage 
@@ -253,26 +311,63 @@ function App() {
                             />
                         } />
                         <Route path="/new-vehicle" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['admin']}>
                                 <NewVehicle />
                             </ProtectedRoute>
                         } />
                         <Route path="/managevehicles" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['admin']}>
                                 <ManageVehicles />
                             </ProtectedRoute>
                         } />
-                        <Route path="/revenuedashboard" element={<RevenueDashboard />} />
-                        <Route path="/advance" element={<AdvanceDashboard />} />
-                        <Route path="/vehicle-info" element={<VehicleInfo />} />
-                        <Route path="/expenses" element={<ExpensesDashboard />} />
+                        <Route path="/revenuedashboard" element={
+                            <ProtectedRoute allowedRoles={['admin', 'user']}>
+                                <RevenueDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/advance" element={
+                            <ProtectedRoute allowedRoles={['admin', 'user']}>
+                                <AdvanceDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/vehicle-info" element={
+                            <ProtectedRoute allowedRoles={['admin', 'user']}>
+                                <VehicleInfo />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/expenses" element={
+                            <ProtectedRoute allowedRoles={['admin', 'user']}>
+                                <ExpensesDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/balancesheet" element={
+                            <ProtectedRoute allowedRoles={['admin', 'user']}>
+                                <BalanceSheet />
+                            </ProtectedRoute>
+                        } />
                         <Route path="/admin" element={
-                            <ProtectedRoute>
+                            <ProtectedRoute allowedRoles={['admin']}>
                                 <AdminPanel />
                             </ProtectedRoute>
                         } />
                     </Routes>
                 </main>
+
+                {/* Footer - Now outside of Routes */}
+                {isAuthenticated && (
+                    <footer className="border-t border-gray-200">
+                        <div className="text-center py-8 relative">
+                            <div className="flex flex-col-reverse md:flex-row justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 space-y-reverse md:space-y-0">
+                                <p className="text-sm text-gray-500">
+                                    © {new Date().getFullYear()} SP Car Parking. All rights reserved.
+                                </p>
+                                <p className="text-xl md:text-lg font-black text-blue-600 tracking-wide hover:scale-105 transition-transform duration-300">
+                                    STERIX ENTERPRISES
+                                </p>
+                            </div>
+                        </div>
+                    </footer>
+                )}
             </div>
         </Router>
     );
