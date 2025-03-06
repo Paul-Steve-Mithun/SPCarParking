@@ -218,14 +218,12 @@ export function RevenueDashboard() {
         // Calculate total table width based on column widths
         const columnWidths = {
             sno: 15,
-            vehicleNumber: 30,
-            description: 40,
-            lot: 20,
-            rentalType: 25,
-            transaction: 25,
-            mode: 20,
-            receivedBy: 25,
             date: 25,
+            vehicleNumber: 35,
+            description: 45,
+            lot: 20,
+            mode: 25,
+            receivedBy: filterBy ? 0 : 30,
             amount: 35
         };
         
@@ -262,20 +260,22 @@ export function RevenueDashboard() {
         };
 
         // Updated table columns with S.No
-        const tableColumn = [
+        const baseColumns = [
             { header: 'S.No', dataKey: 'sno' },
+            { header: 'Date', dataKey: 'date' },
             { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
             { header: 'Description', dataKey: 'description' },
             { header: 'Lot', dataKey: 'lot' },
-            { header: 'Rental Type', dataKey: 'rentalType' },
-            { header: 'Transaction', dataKey: 'transaction' },
             { header: 'Mode', dataKey: 'mode' },
-            { header: 'Received By', dataKey: 'receivedBy' },
-            { header: 'Date', dataKey: 'date' },
             { header: 'Amount', dataKey: 'amount' }
         ];
 
-        // Modify sortedTableRows to filter out zero/null amounts
+        // Add 'Received By' column only for complete report
+        const tableColumn = filterBy 
+            ? baseColumns 
+            : [...baseColumns.slice(0, 6), { header: 'Received By', dataKey: 'receivedBy' }, baseColumns[6]];
+
+        // Modify sortedTableRows to filter out zero/null amounts and match new column order
         const sortedTableRows = filteredData
             .filter(record => {
                 // Filter out records with zero, null, or 0.00 revenue amounts
@@ -288,18 +288,23 @@ export function RevenueDashboard() {
                 const dateB = new Date(b.transactionDate);
                 return dateA - dateB;
             })
-            .map((record, index) => ({
-                sno: (index + 1).toString(), // Re-number after filtering
-                vehicleNumber: record.vehicleNumber || '',
-                description: record.vehicleDescription || '',
-                lot: record.lotNumber || 'Open',
-                rentalType: capitalizeFirst(record.rentalType),
-                transaction: record.transactionType || 'N/A',
-                receivedBy: record.receivedBy || 'N/A',
-                mode: record.transactionMode,
-                date: formatDateForPDF(record.transactionDate),
-                amount: `INR ${record.revenueAmount.toFixed(2)}`
-            }));
+            .map((record, index) => {
+                const baseRow = {
+                    sno: (index + 1).toString(),
+                    date: formatDateForPDF(record.transactionDate),
+                    vehicleNumber: record.vehicleNumber || '',
+                    description: record.vehicleDescription || '',
+                    lot: record.lotNumber || 'Open',
+                    mode: record.transactionMode,
+                    amount: `INR ${record.revenueAmount.toFixed(2)}`
+                };
+
+                // Add receivedBy only for complete report
+                return filterBy ? baseRow : {
+                    ...baseRow,
+                    receivedBy: record.receivedBy || 'N/A'
+                };
+            });
 
         doc.autoTable({
             columns: tableColumn,
@@ -325,23 +330,20 @@ export function RevenueDashboard() {
             },
             columnStyles: {
                 sno: { cellWidth: columnWidths.sno, halign: 'center' },
+                date: { cellWidth: columnWidths.date, halign: 'center' },
                 vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
                 description: { cellWidth: columnWidths.description, halign: 'left' },
                 lot: { cellWidth: columnWidths.lot, halign: 'center' },
-                rentalType: { cellWidth: columnWidths.rentalType, halign: 'center' },
-                transaction: { cellWidth: columnWidths.transaction, halign: 'center' },
-                receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
-                date: { cellWidth: columnWidths.date, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'center' }
+                receivedBy: filterBy ? undefined : { cellWidth: columnWidths.receivedBy, halign: 'center' },
+                amount: { cellWidth: columnWidths.amount, halign: 'left' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
             },
             margin: { 
                 left: leftMargin,
-                right: leftMargin,
-                bottom: 20
+                right: leftMargin
             },
             styles: {
                 fontSize: 9,
@@ -665,6 +667,7 @@ export function RevenueDashboard() {
                                                                 S.No
                                                             </th>
                                                             {[
+                                                                'transactionDate',
                                                                 'vehicleNumber',
                                                                 'vehicleDescription',
                                                                 'lotNumber',
@@ -672,7 +675,6 @@ export function RevenueDashboard() {
                                                                 'transactionType',
                                                                 'receivedBy',
                                                                 'transactionMode',
-                                                                'transactionDate',
                                                                 'revenueAmount'
                                                             ].map((column) => (
                                                                 <th 
@@ -682,10 +684,28 @@ export function RevenueDashboard() {
                                                                 >
                                                                     <div className="flex items-center">
                                                                         <span className="hidden sm:inline">
-                                                                            {column.replace(/([A-Z])/g, ' $1').trim()}
+                                                                            {column === 'transactionDate' ? 'Date' : 
+                                                                             column === 'vehicleNumber' ? 'Vehicle Number' :
+                                                                             column === 'vehicleDescription' ? 'Description' :
+                                                                             column === 'lotNumber' ? 'Lot' :
+                                                                             column === 'rentalType' ? 'Rental Type' :
+                                                                             column === 'transactionType' ? 'Transaction' :
+                                                                             column === 'receivedBy' ? 'Received By' :
+                                                                             column === 'transactionMode' ? 'Mode' :
+                                                                             column === 'revenueAmount' ? 'Amount' :
+                                                                             column.replace(/([A-Z])/g, ' $1').trim()}
                                                                         </span>
                                                                         <span className="sm:hidden">
-                                                                            {column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
+                                                                            {column === 'transactionDate' ? 'Date' : 
+                                                                             column === 'vehicleNumber' ? 'Vehicle' :
+                                                                             column === 'vehicleDescription' ? 'Desc' :
+                                                                             column === 'lotNumber' ? 'Lot' :
+                                                                             column === 'rentalType' ? 'Type' :
+                                                                             column === 'transactionType' ? 'Trans' :
+                                                                             column === 'receivedBy' ? 'By' :
+                                                                             column === 'transactionMode' ? 'Mode' :
+                                                                             column === 'revenueAmount' ? 'Amt' :
+                                                                             column.slice(0, 3)}
                                                                         </span>
                                                                         <SortIcon column={column} />
                                                                     </div>
@@ -702,6 +722,9 @@ export function RevenueDashboard() {
                                                             >
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     {index + 1}
+                                                                </td>
+                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
+                                                                    {new Date(record.transactionDate).toLocaleDateString('en-GB')}
                                                                 </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     <span title={record.vehicleNumber}>
@@ -747,14 +770,8 @@ export function RevenueDashboard() {
                                                                         )}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
-                                                                    {new Date(record.transactionDate).toLocaleDateString('en-GB')}
-                                                                </td>
                                                                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
                                                                     ₹{record.revenueAmount.toFixed(2)}
-                                                                </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm group-hover:bg-gray-50">
-                                                                    <Edit2 className="w-4 h-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                                                                 </td>
                                                             </tr>
                                                         ))}

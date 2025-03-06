@@ -150,18 +150,24 @@ export function ExpensesDashboard() {
                 .reduce((sum, record) => sum + record.amount, 0)
         };
 
-        // Calculate total table width based on column widths
+        // Calculate total table width based on column widths and included columns
         const columnWidths = {
             sno: 15,
+            date: 25,
             type: 30,
             description: 40,
-            mode: 20,
+            mode: 25,
             spentBy: 25,
-            date: 25,
             amount: 35
         };
         
-        const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+        // Calculate total width based on included columns
+        const includedWidths = { ...columnWidths };
+        if (filterBy) {
+            delete includedWidths.spentBy; // Remove spentBy width for filtered reports
+        }
+        
+        const totalTableWidth = Object.values(includedWidths).reduce((sum, width) => sum + width, 0);
         const leftMargin = (pageWidth - totalTableWidth) / 2;
 
         // Modern header with gradient-like effect
@@ -194,35 +200,49 @@ export function ExpensesDashboard() {
         };
 
         // Table columns
-        const tableColumn = [
+        const baseColumns = [
             { header: 'S.No', dataKey: 'sno' },
+            { header: 'Date', dataKey: 'date' },
             { header: 'Type', dataKey: 'type' },
             { header: 'Description', dataKey: 'description' },
-            { header: 'Mode', dataKey: 'mode' },
-            { header: 'Spent By', dataKey: 'spentBy' },
-            { header: 'Date', dataKey: 'date' },
-            { header: 'Amount', dataKey: 'amount' }
+            { header: 'Mode', dataKey: 'mode' }
         ];
+
+        // Add Spent By column only for complete report
+        if (!filterBy) {
+            baseColumns.push({ header: 'Spent By', dataKey: 'spentBy' });
+        }
+
+        // Add Amount column (always included)
+        baseColumns.push({ header: 'Amount', dataKey: 'amount' });
 
         // Prepare table rows
         const sortedTableRows = filteredData
             .sort((a, b) => {
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
-                return dateA - dateB;
+                return dateA - dateB; // Oldest first
             })
-            .map((record, index) => ({
-                sno: (index + 1).toString(),
-                type: record.expenseType,
-                description: record.description || '-',
-                mode: record.transactionMode,
-                date: formatDateForPDF(record.transactionDate),
-                amount: `INR ${record.amount.toFixed(2)}`,
-                spentBy: record.spentBy
-            }));
+            .map((record, index) => {
+                const rowData = {
+                    sno: (index + 1).toString(),
+                    date: formatDateForPDF(record.transactionDate),
+                    type: record.expenseType,
+                    description: record.description || '-',
+                    mode: record.transactionMode,
+                    amount: `INR ${record.amount.toFixed(2)}`
+                };
+
+                // Add spentBy only for complete report
+                if (!filterBy) {
+                    rowData.spentBy = record.spentBy;
+                }
+
+                return rowData;
+            });
 
         doc.autoTable({
-            columns: tableColumn,
+            columns: baseColumns,
             body: sortedTableRows,
             startY: 45,
             theme: 'grid',
@@ -245,12 +265,12 @@ export function ExpensesDashboard() {
             },
             columnStyles: {
                 sno: { cellWidth: columnWidths.sno, halign: 'center' },
+                date: { cellWidth: columnWidths.date, halign: 'center' },
                 type: { cellWidth: columnWidths.type, halign: 'center' },
                 description: { cellWidth: columnWidths.description, halign: 'left' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
-                date: { cellWidth: columnWidths.date, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'center' },
-                spentBy: { cellWidth: columnWidths.spentBy, halign: 'center' }
+                spentBy: { cellWidth: columnWidths.spentBy, halign: 'center' },
+                amount: { cellWidth: columnWidths.amount, halign: 'left' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
@@ -516,9 +536,11 @@ export function ExpensesDashboard() {
             </div>
 
             {/* Transaction History section */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mt-6">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">Transaction History</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
+                        Transaction History
+                    </h2>
                     
                     <div className="relative w-full mb-6">
                         <input
@@ -531,93 +553,97 @@ export function ExpensesDashboard() {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     </div>
 
-                    <div className="overflow-x-auto -mx-6 sm:mx-0">
-                        <div className="inline-block min-w-full align-middle">
-                            <div className="overflow-hidden">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                S.NO
-                                            </th>
-                                            {[
-                                                { key: 'expenseType', label: 'Type' },
-                                                { key: 'description', label: 'Description' },
-                                                { key: 'transactionMode', label: 'Mode' },
-                                                { key: 'spentBy', label: 'Spent By' },
-                                                { key: 'transactionDate', label: 'Date' },
-                                                { key: 'amount', label: 'Amount' },
-                                                { key: 'actions', label: 'Actions' }
-                                            ].map((column) => (
-                                                <th 
-                                                    key={column.key}
-                                                    onClick={() => column.key !== 'actions' && handleSort(column.key)}
-                                                    className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                                                >
-                                                    <div className="flex items-center">
-                                                        {column.label}
-                                                        {column.key !== 'actions' && <SortIcon column={column.key} />}
-                                                    </div>
+                    <div className="overflow-x-auto">
+                        <div className="max-w-[1400px] mx-auto">
+                            <div className="inline-block min-w-full align-middle">
+                                <div className="overflow-hidden">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    S.NO
                                                 </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredData.map((expense, index) => (
-                                            <tr key={expense._id} className="hover:bg-gray-50">
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {index + 1}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {expense.expenseType}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {expense.description || '-'}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                        expense.transactionMode === 'UPI' 
-                                                            ? 'bg-blue-100 text-blue-800' 
-                                                            : 'bg-green-100 text-green-800'
-                                                    }`}>
-                                                        {expense.transactionMode === 'UPI' ? (
-                                                            <>
-                                                                <CreditCard className="w-3 h-3 mr-1" />
-                                                                <span>UPI</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <DollarSign className="w-3 h-3 mr-1" />
-                                                                <span>Cash</span>
-                                                            </>
-                                                        )}
-                                                    </span>
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <div className="flex items-center gap-1">
-                                                        <User className="w-4 h-4 text-gray-400" />
-                                                        {expense.spentBy}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    ₹{expense.amount.toFixed(2)}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <button
-                                                        onClick={() => handleDeleteExpense(expense._id, expense)}
-                                                        className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
-                                                        title="Delete expense"
+                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Date
+                                                </th>
+                                                {[
+                                                    { key: 'expenseType', label: 'Type' },
+                                                    { key: 'description', label: 'Description' },
+                                                    { key: 'transactionMode', label: 'Mode' },
+                                                    { key: 'spentBy', label: 'Spent By' },
+                                                    { key: 'amount', label: 'Amount' },
+                                                    { key: 'actions', label: 'Actions' }
+                                                ].map((column) => (
+                                                    <th 
+                                                        key={column.key}
+                                                        onClick={() => column.key !== 'actions' && handleSort(column.key)}
+                                                        className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                                                     >
-                                                        <TrashIcon className="w-5 h-5" />
-                                                    </button>
-                                                </td>
+                                                        <div className="flex items-center">
+                                                            {column.label}
+                                                            {column.key !== 'actions' && <SortIcon column={column.key} />}
+                                                        </div>
+                                                    </th>
+                                                ))}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {filteredData.map((expense, index) => (
+                                                <tr key={expense._id} className="hover:bg-gray-50">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {index + 1}
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {expense.expenseType}
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {expense.description || '-'}
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                            expense.transactionMode === 'UPI' 
+                                                                ? 'bg-blue-100 text-blue-800' 
+                                                                : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                            {expense.transactionMode === 'UPI' ? (
+                                                                <>
+                                                                    <CreditCard className="w-3 h-3 mr-1" />
+                                                                    <span>UPI</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <DollarSign className="w-3 h-3 mr-1" />
+                                                                    <span>Cash</span>
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <div className="flex items-center gap-1">
+                                                            <User className="w-4 h-4 text-gray-400" />
+                                                            {expense.spentBy}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        ₹{expense.amount.toFixed(2)}
+                                                    </td>
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <button
+                                                            onClick={() => handleDeleteExpense(expense._id, expense)}
+                                                            className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
+                                                            title="Delete expense"
+                                                        >
+                                                            <TrashIcon className="w-5 h-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

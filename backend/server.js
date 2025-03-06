@@ -152,9 +152,35 @@ const ExpenseSchema = new mongoose.Schema({
     year: { type: Number, required: true }
 });
 
+// Add Balancesheet Schema
+const BalancesheetSchema = new mongoose.Schema({
+    userName: { 
+        type: String, 
+        enum: ['Balu', 'Mani'], 
+        required: true 
+    },
+    amount: { 
+        type: Number, 
+        required: true 
+    },
+    date: { 
+        type: Date, 
+        default: Date.now 
+    },
+    month: { 
+        type: Number, 
+        required: true 
+    },
+    year: { 
+        type: Number, 
+        required: true 
+    }
+});
+
 const Revenue = mongoose.model('Revenue', RevenueSchema);
 const Advance = mongoose.model('Advance', AdvanceSchema);
 const Expense = mongoose.model('Expense', ExpenseSchema);
+const Balancesheet = mongoose.model('Balancesheet', BalancesheetSchema);
 
 // Update VehicleSchema pre-save middleware
 VehicleSchema.pre('save', function(next) {
@@ -983,6 +1009,55 @@ app.delete('/expenses/:id', async (req, res) => {
             message: 'Expense deleted successfully',
             expense: deletedExpense 
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add Balancesheet endpoints
+app.post('/balancesheet', async (req, res) => {
+    try {
+        const balanceData = req.body;
+        const newBalance = new Balancesheet(balanceData);
+        await newBalance.save();
+        res.json({ success: true, balance: newBalance });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add PUT endpoint for updating balance sheet records
+app.put('/balancesheet/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+        
+        const updatedBalance = await Balancesheet.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedBalance) {
+            return res.status(404).json({ error: 'Balance sheet record not found' });
+        }
+
+        res.json({ success: true, balance: updatedBalance });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/balancesheet', async (req, res) => {
+    try {
+        const { month, year } = req.query;
+        const query = {};
+        
+        if (month !== undefined) query.month = parseInt(month);
+        if (year !== undefined) query.year = parseInt(year);
+
+        const balancesheet = await Balancesheet.find(query).sort({ date: -1 });
+        res.json(balancesheet);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
