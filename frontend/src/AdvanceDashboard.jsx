@@ -145,15 +145,17 @@ export function AdvanceDashboard() {
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         
-        // Header section
+        // Modern header with gradient-like effect
         doc.setFillColor(79, 70, 229);
         doc.rect(0, 0, pageWidth, 35, 'F');
         
+        // Company name
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
         doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
         
+        // Statement title with generation date
         doc.setFontSize(14);
         const today = new Date();
         const formattedDate = today.toLocaleDateString('en-gb', {
@@ -163,119 +165,103 @@ export function AdvanceDashboard() {
         });
         doc.text(`${monthNames[selectedMonth]} ${selectedYear} Advance Payment Statement (Generated: ${formattedDate})`, pageWidth / 2, 28, { align: 'center' });
 
-        // Summary cards section - 2 cards centered
-        const summaryY = 45;
-        const cardWidth = (pageWidth - 100) / 2; // 2 cards with margins
-        const cardHeight = 35;
-        const centerOffset = 50; // Margin from left to center the cards
-
-        // Card 1 - Monthly Advance (Net)
-        doc.setFillColor(246, 246, 252);
-        doc.roundedRect(centerOffset, summaryY, cardWidth, cardHeight, 2, 2, 'F');
-        doc.setTextColor(79, 70, 229);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Monthly Advance (Net)', centerOffset + 6, summaryY + 12);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        if (stats.monthlyAdvance < 0) {
-            doc.setTextColor(239, 68, 68);
-            doc.text(`-INR ${Math.abs(stats.monthlyAdvance).toFixed(2)}`, centerOffset + 6, summaryY + 28);
-        } else {
-            doc.text(`INR ${stats.monthlyAdvance.toFixed(2)}`, centerOffset + 6, summaryY + 28);
-        }
-
-        // Card 2 - Total Advance Till Date
-        doc.setFillColor(246, 246, 252);
-        doc.roundedRect(centerOffset + cardWidth + 10, summaryY, cardWidth, cardHeight, 2, 2, 'F');
-        doc.setTextColor(79, 70, 229);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Total Advance (Till Date)', centerOffset + cardWidth + 16, summaryY + 12);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`INR ${stats.totalAdvance.toFixed(2)}`, centerOffset + cardWidth + 16, summaryY + 28);
-
         // Format date function
         const formatDateForPDF = (date) => {
             const d = new Date(date);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
 
-        // Updated table columns with better spacing
+        // Calculate total table width based on column widths
+        const columnWidths = {
+            sno: 15,
+            vehicleNumber: 30,
+            description: 40,
+            lot: 20,
+            mode: 25,
+            receivedBy: 25,
+            date: 25,
+            amount: 35
+        };
+
+        const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+        const leftMargin = (pageWidth - totalTableWidth) / 2;
+
+        // Table columns
         const tableColumn = [
             { header: 'S.No', dataKey: 'sno' },
             { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
             { header: 'Description', dataKey: 'description' },
             { header: 'Lot', dataKey: 'lot' },
             { header: 'Mode', dataKey: 'mode' },
+            { header: 'Received By', dataKey: 'receivedBy' },
             { header: 'Date', dataKey: 'date' },
             { header: 'Amount', dataKey: 'amount' }
         ];
 
-        // First, calculate the total table width and margins
-        const totalTableWidth = 20 + 35 + 50 + 20 + 35 + 30 + 35; // Sum of column widths including S.No
-        const leftMargin = (pageWidth - totalTableWidth) / 2;
+        // Prepare table rows with oldest first
+        const sortedTableRows = vehicles
+            .sort((a, b) => {
+                const dateA = new Date(a.refundDate || a.startDate);
+                const dateB = new Date(b.refundDate || b.startDate);
+                return dateA - dateB; // Oldest first
+            })
+            .map((vehicle, index) => {
+                const isRefund = !!vehicle.advanceRefund;
+                const amount = isRefund ? vehicle.advanceRefund : (vehicle.advanceAmount || 0);
 
-        // Update the tableRows to include S.No
-        const tableRows = vehicles.map((vehicle, index) => {
-            const isRefund = !!vehicle.advanceRefund;
-            const amount = isRefund 
-                ? vehicle.advanceRefund 
-                : (vehicle.advanceAmount || 0);
+                return {
+                    sno: (index + 1).toString(),
+                    vehicleNumber: vehicle.vehicleNumber || '',
+                    description: vehicle.vehicleDescription || '',
+                    lot: vehicle.lotNumber || 'Open',
+                    mode: vehicle.transactionMode || 'Cash',
+                    receivedBy: vehicle.receivedBy || 'N/A',
+                    date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
+                    amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
+                    isRefund: isRefund,
+                    rawAmount: isRefund ? -amount : amount
+                };
+            });
 
-            return {
-                sno: (index + 1).toString(),
-                vehicleNumber: vehicle.vehicleNumber || '',
-                description: vehicle.vehicleDescription || '',
-                lot: vehicle.lotNumber || 'Open',
-                mode: vehicle.transactionMode || 'Cash',
-                date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
-                amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
-                isRefund: isRefund,
-                rawAmount: isRefund ? -amount : amount
-            };
-        });
-
-        // Update the autoTable configuration
         doc.autoTable({
             columns: tableColumn,
-            body: tableRows,
-            startY: summaryY + cardHeight + 20,
+            body: sortedTableRows,
+            startY: 45,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
-                fontSize: 10,
+                fontSize: 11,
                 fontStyle: 'bold',
-                cellPadding: 6,
+                cellPadding: 3,
                 halign: 'center',
                 valign: 'middle',
                 lineWidth: 0.1,
                 minCellHeight: 14
             },
             bodyStyles: {
-                fontSize: 9,
-                cellPadding: 4,
+                fontSize: 10,
+                cellPadding: 2,
                 lineColor: [237, 237, 237],
                 valign: 'middle'
             },
             columnStyles: {
-                sno: { cellWidth: 20, halign: 'center' },
-                vehicleNumber: { cellWidth: 35, halign: 'center' },
-                description: { cellWidth: 50, halign: 'left' },
-                lot: { cellWidth: 20, halign: 'center' },
-                mode: { cellWidth: 35, halign: 'center' },
-                date: { cellWidth: 30, halign: 'center' },
-                amount: { cellWidth: 35, halign: 'center' }
+                sno: { cellWidth: columnWidths.sno, halign: 'center' },
+                vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
+                description: { cellWidth: columnWidths.description, halign: 'left' },
+                lot: { cellWidth: columnWidths.lot, halign: 'center' },
+                mode: { cellWidth: columnWidths.mode, halign: 'center' },
+                receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
+                date: { cellWidth: columnWidths.date, halign: 'center' },
+                amount: { cellWidth: columnWidths.amount, halign: 'center' }
+            },
+            alternateRowStyles: {
+                fillColor: [250, 250, 255]
             },
             margin: { 
                 left: leftMargin,
                 right: leftMargin,
-                top: 10,
-                bottom: 10
+                bottom: 20
             },
             styles: {
                 fontSize: 9,
@@ -287,25 +273,71 @@ export function AdvanceDashboard() {
             willDrawCell: function(data) {
                 if (data.section === 'body') {
                     const row = data.row.raw;
-                    const isNegativeAmount = row.rawAmount < 0;
-                    
-                    if (isNegativeAmount || row.isRefund) {
+                    if (row.isRefund) {
                         data.cell.styles.fillColor = [255, 235, 235];
                         data.cell.styles.textColor = [220, 50, 50];
-                    } else {
-                        data.cell.styles.fillColor = data.row.index % 2 === 0 ? [255, 255, 255] : [250, 250, 255];
-                        data.cell.styles.textColor = [0, 0, 0];
                     }
                 }
             },
             didDrawPage: function(data) {
-                doc.setFontSize(10);
+                // Add page number at the bottom center
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
                 doc.text(
                     `Page ${data.pageNumber}`, 
                     pageWidth / 2, 
-                    pageHeight - 10, 
+                    pageHeight - 15, 
                     { align: 'center' }
                 );
+            },
+            didDrawCell: function(data) {
+                if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
+                    const finalY = data.cell.y + data.cell.height + 10;
+                    
+                    // Set bold font for totals
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+
+                    // Calculate positions
+                    const boxWidth = 70;
+                    const boxHeight = 10;
+                    const boxX = pageWidth - leftMargin - boxWidth;
+                    const textPadding = 5;
+                    const lineSpacing = 10;
+
+                    // Function to draw a box with text
+                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
+                        doc.setLineWidth(0.1);
+                        doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+
+                        doc.setFontSize(isGrandTotal ? 11 : 10);
+                        
+                        const labelX = boxX + textPadding;
+                        const amountX = boxX + boxWidth - textPadding;
+                        
+                        doc.text(label, labelX, y);
+                        doc.text(amount, amountX, y, { align: 'right' });
+                    };
+
+                    // Draw Monthly Advance (Net)
+                    drawTotalBox(
+                        finalY,
+                        'Monthly Advance (Net):', 
+                        `INR ${stats.monthlyAdvance < 0 ? '-' : ''}${Math.abs(stats.monthlyAdvance).toFixed(2)}`,
+                        stats.monthlyAdvance < 0
+                    );
+
+                    // Draw Total Advance
+                    drawTotalBox(
+                        finalY + lineSpacing,
+                        'Total Advance:', 
+                        `INR ${stats.totalAdvance.toFixed(2)}`,
+                        true
+                    );
+                }
             }
         });
 

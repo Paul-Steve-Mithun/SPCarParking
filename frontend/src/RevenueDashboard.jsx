@@ -196,27 +196,37 @@ export function RevenueDashboard() {
 
         // Calculate totals for filtered data
         const filteredStats = {
-            totalRevenue: filteredData.reduce((sum, record) => sum + record.revenueAmount, 0),
             monthlyRevenue: filteredData
-                .filter(record => record.rentalType === 'monthly')
+                .filter(record => record.rentalType === 'monthly' && 
+                                 record.revenueAmount && 
+                                 record.revenueAmount !== 0 && 
+                                 record.revenueAmount !== 0.00)
                 .reduce((sum, record) => sum + record.revenueAmount, 0),
             dailyRevenue: filteredData
-                .filter(record => record.rentalType === 'daily')
+                .filter(record => record.rentalType === 'daily' && 
+                                 record.revenueAmount && 
+                                 record.revenueAmount !== 0 && 
+                                 record.revenueAmount !== 0.00)
+                .reduce((sum, record) => sum + record.revenueAmount, 0),
+            totalRevenue: filteredData
+                .filter(record => record.revenueAmount && 
+                                 record.revenueAmount !== 0 && 
+                                 record.revenueAmount !== 0.00)
                 .reduce((sum, record) => sum + record.revenueAmount, 0)
         };
 
         // Calculate total table width based on column widths
         const columnWidths = {
             sno: 15,
-            vehicleNumber: 25,
-            description: 35,
-            lot: 15,
+            vehicleNumber: 30,
+            description: 40,
+            lot: 20,
             rentalType: 25,
             transaction: 25,
-            receivedBy: 25,
             mode: 20,
+            receivedBy: 25,
             date: 25,
-            amount: 25
+            amount: 35
         };
         
         const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
@@ -244,37 +254,13 @@ export function RevenueDashboard() {
             ? `${monthNames[selectedMonth]} ${selectedYear} Revenue Statement - ${filterBy}'s Collection (Generated: ${formattedDate})`
             : `${monthNames[selectedMonth]} ${selectedYear} Revenue Statement (Generated: ${formattedDate})`;
         doc.text(titleText, pageWidth / 2, 28, { align: 'center' });
-    
-        // Summary cards section
-        const summaryY = 45;
-        const cardWidth = (pageWidth - 80) / 3;
-        const cardHeight = 25;
-        const cardGap = 8;
-        
-        const createCard = (x, y, label, value, color) => {
-            doc.setFillColor(...color);
-            doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'F');
-            doc.setTextColor(79, 70, 229);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(label, x + 5, y + 10);
-            doc.setTextColor(0, 0, 0);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.text(value, x + 5, y + 20);
-        };
-
-        // Create summary cards with filtered totals
-        createCard(30, summaryY, 'Total Revenue', `INR ${filteredStats.totalRevenue.toFixed(2)}`, [246, 246, 252]);
-        createCard(30 + cardWidth + cardGap, summaryY, 'Monthly Revenue', `INR ${filteredStats.monthlyRevenue.toFixed(2)}`, [239, 246, 255]);
-        createCard(30 + (cardWidth + cardGap) * 2, summaryY, 'Daily Revenue', `INR ${filteredStats.dailyRevenue.toFixed(2)}`, [236, 254, 255]);
 
         // Format date function
         const formatDateForPDF = (date) => {
             const d = new Date(date);
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
-    
+
         // Updated table columns with S.No
         const tableColumn = [
             { header: 'S.No', dataKey: 'sno' },
@@ -283,21 +269,27 @@ export function RevenueDashboard() {
             { header: 'Lot', dataKey: 'lot' },
             { header: 'Rental Type', dataKey: 'rentalType' },
             { header: 'Transaction', dataKey: 'transaction' },
-            { header: 'Received By', dataKey: 'receivedBy' },
             { header: 'Mode', dataKey: 'mode' },
+            { header: 'Received By', dataKey: 'receivedBy' },
             { header: 'Date', dataKey: 'date' },
             { header: 'Amount', dataKey: 'amount' }
         ];
-    
-        // Sort and prepare the filtered table rows
+
+        // Modify sortedTableRows to filter out zero/null amounts
         const sortedTableRows = filteredData
+            .filter(record => {
+                // Filter out records with zero, null, or 0.00 revenue amounts
+                return record.revenueAmount && 
+                       record.revenueAmount !== 0 && 
+                       record.revenueAmount !== 0.00;
+            })
             .sort((a, b) => {
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
                 return dateA - dateB;
             })
             .map((record, index) => ({
-                sno: (index + 1).toString(),
+                sno: (index + 1).toString(), // Re-number after filtering
                 vehicleNumber: record.vehicleNumber || '',
                 description: record.vehicleDescription || '',
                 lot: record.lotNumber || 'Open',
@@ -308,25 +300,25 @@ export function RevenueDashboard() {
                 date: formatDateForPDF(record.transactionDate),
                 amount: `INR ${record.revenueAmount.toFixed(2)}`
             }));
-    
+
         doc.autoTable({
             columns: tableColumn,
             body: sortedTableRows,
-            startY: summaryY + cardHeight + 15,
+            startY: 45,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
-                fontSize: 9,
+                fontSize: 11,
                 fontStyle: 'bold',
                 cellPadding: 3,
                 halign: 'center',
                 valign: 'middle',
                 lineWidth: 0.1,
-                minCellHeight: 12
+                minCellHeight: 14
             },
             bodyStyles: {
-                fontSize: 8,
+                fontSize: 9,
                 cellPadding: 2,
                 lineColor: [237, 237, 237],
                 valign: 'middle'
@@ -348,7 +340,8 @@ export function RevenueDashboard() {
             },
             margin: { 
                 left: leftMargin,
-                right: leftMargin
+                right: leftMargin,
+                bottom: 20
             },
             styles: {
                 fontSize: 9,
@@ -359,16 +352,121 @@ export function RevenueDashboard() {
             },
             didDrawPage: function(data) {
                 // Add page number at the bottom center
-                doc.setFontSize(10);
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
                 doc.text(
                     `Page ${data.pageNumber}`, 
                     pageWidth / 2, 
-                    pageHeight - 10, 
+                    pageHeight - 15, 
                     { align: 'center' }
                 );
+            },
+            didDrawCell: function(data) {
+                // Add totals after the last row
+                if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
+                    const finalY = data.cell.y + data.cell.height + 10;
+                    
+                    // Set bold font for totals
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+
+                    // Calculate positions
+                    const boxWidth = 70; // Width of the box
+                    const boxHeight = 10; // Height of each box
+                    const boxX = pageWidth - leftMargin - boxWidth; // Box starting from right
+                    const textPadding = 5; // Padding inside the box
+                    const lineSpacing = 10; // Spacing between lines
+
+                    // Function to draw a box with text
+                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
+                        // Draw box
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
+                        doc.setLineWidth(0.1);
+                        doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+
+                        // Draw text
+                        doc.setFontSize(isGrandTotal ? 11 : 10);
+                        
+                        // Calculate text positions for better alignment
+                        const labelX = boxX + textPadding;
+                        const amountX = boxX + boxWidth - textPadding;
+                        
+                        // Draw label and amount with reduced space between them
+                        doc.text(label, labelX, y);
+                        doc.text(amount, amountX, y, { align: 'right' });
+                    };
+
+                    // Draw Monthly Revenue box
+                    drawTotalBox(
+                        finalY, 
+                        'Monthly Revenue:', 
+                        `INR ${filteredStats.monthlyRevenue.toFixed(2)}`
+                    );
+
+                    // Draw Daily Revenue box
+                    drawTotalBox(
+                        finalY + lineSpacing, 
+                        'Daily Revenue:', 
+                        `INR ${filteredStats.dailyRevenue.toFixed(2)}`
+                    );
+
+                    // Only show Balu's and Mani's collection in the complete report
+                    if (!filterBy) {
+                        // Calculate collections by receiver with zero amount filtering
+                        const baluCollection = filteredData
+                            .filter(record => 
+                                record.receivedBy === 'Balu' && 
+                                record.revenueAmount && 
+                                record.revenueAmount !== 0 && 
+                                record.revenueAmount !== 0.00
+                            )
+                            .reduce((sum, record) => sum + record.revenueAmount, 0);
+
+                        const maniCollection = filteredData
+                            .filter(record => 
+                                record.receivedBy === 'Mani' && 
+                                record.revenueAmount && 
+                                record.revenueAmount !== 0 && 
+                                record.revenueAmount !== 0.00
+                            )
+                            .reduce((sum, record) => sum + record.revenueAmount, 0);
+
+                        // Draw Balu's Collection box
+                        drawTotalBox(
+                            finalY + (lineSpacing * 2), 
+                            'Balu\'s Collection:', 
+                            `INR ${baluCollection.toFixed(2)}`
+                        );
+
+                        // Draw Mani's Collection box
+                        drawTotalBox(
+                            finalY + (lineSpacing * 3), 
+                            'Mani\'s Collection:', 
+                            `INR ${maniCollection.toFixed(2)}`
+                        );
+
+                        // Draw Grand Total box after collections
+                        drawTotalBox(
+                            finalY + (lineSpacing * 4), 
+                            'Grand Total:', 
+                            `INR ${filteredStats.totalRevenue.toFixed(2)}`,
+                            true
+                        );
+                    } else {
+                        // For filtered reports (Balu's or Mani's), show grand total directly after daily revenue
+                        drawTotalBox(
+                            finalY + (lineSpacing * 2), 
+                            'Grand Total:', 
+                            `INR ${filteredStats.totalRevenue.toFixed(2)}`,
+                            true
+                        );
+                    }
+                }
             }
         });
-    
+
         const filename = filterBy 
             ? `SP_Parking_Revenue_${filterBy}_${monthNames[selectedMonth]}_${selectedYear}.pdf`
             : `SP_Parking_Revenue_${monthNames[selectedMonth]}_${selectedYear}.pdf`;
