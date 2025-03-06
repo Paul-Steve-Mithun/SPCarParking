@@ -137,84 +137,225 @@ export function ExpensesDashboard() {
     const generateFilteredPDF = (filterBy = null) => {
         const doc = new jsPDF('landscape');
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
         
         // Filter data based on selection
-        const filteredExpenses = filterBy 
-            ? expenses.filter(expense => expense.spentBy === filterBy)
+        const filteredData = filterBy 
+            ? expenses.filter(record => record.spentBy === filterBy)
             : expenses;
 
-        // Calculate filtered totals
-        const filteredTotals = {
-            totalExpenses: filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
-            baluExpenses: filterBy === 'Balu' ? filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0) : 0,
-            maniExpenses: filterBy === 'Mani' ? filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0) : 0
+        // Calculate totals for filtered data
+        const filteredStats = {
+            totalExpenses: filteredData
+                .reduce((sum, record) => sum + record.amount, 0)
         };
 
-        // Header
+        // Calculate total table width based on column widths
+        const columnWidths = {
+            sno: 15,
+            type: 30,
+            description: 40,
+            mode: 20,
+            spentBy: 25,
+            date: 25,
+            amount: 35
+        };
+        
+        const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+        const leftMargin = (pageWidth - totalTableWidth) / 2;
+
+        // Modern header with gradient-like effect
         doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.rect(0, 0, pageWidth, 35, 'F');
+        
+        // Company name
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
-        doc.text('SP CAR PARKING', pageWidth/2, 20, { align: 'center' });
+        doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
         
-        // Report title with generation date
-        doc.setTextColor(255, 255, 255);
+        // Statement title with generation date
         doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
         const today = new Date();
-        const formattedDate = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const titleText = filterBy 
-            ? `Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} - ${filterBy}'s Expenses (Generated: ${formattedDate})`
-            : `Expenses Report - ${monthNames[selectedMonth]} ${selectedYear} (Generated: ${formattedDate})`;
-        doc.text(titleText, pageWidth/2, 35, { align: 'center' });
-
-        // Summary section with filtered totals
-        const summaryData = filterBy === 'Balu' 
-            ? [['Total Expenses:', `INR ${filteredTotals.baluExpenses.toFixed(2)}`]]
-            : filterBy === 'Mani'
-            ? [['Total Expenses:', `INR ${filteredTotals.maniExpenses.toFixed(2)}`]]
-            : [['Total Expenses:', `INR ${filteredTotals.totalExpenses.toFixed(2)}`]];
-
-        doc.autoTable({
-            startY: 45,
-            head: [['Category', 'Amount']],
-            body: summaryData,
-            theme: 'grid',
-            headStyles: {
-                fillColor: [79, 70, 229],
-                textColor: [255, 255, 255]
-            }
+        const formattedDate = today.toLocaleDateString('en-gb', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         });
+        const titleText = filterBy 
+            ? `${monthNames[selectedMonth]} ${selectedYear} Expenses Statement - ${filterBy}'s Expenses (Generated: ${formattedDate})`
+            : `${monthNames[selectedMonth]} ${selectedYear} Expenses Statement (Generated: ${formattedDate})`;
+        doc.text(titleText, pageWidth / 2, 28, { align: 'center' });
 
-        // Transactions table with filtered data
-        const tableData = filteredExpenses.map((expense, index) => [
-            index + 1,
-            expense.expenseType,
-            expense.description || '-',
-            expense.transactionMode,
-            new Date(expense.transactionDate).toLocaleDateString('en-GB'),
-            `INR ${expense.amount.toFixed(2)}`,
-            expense.spentBy
-        ]);
+        // Format date function
+        const formatDateForPDF = (date) => {
+            const d = new Date(date);
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        };
+
+        // Table columns
+        const tableColumn = [
+            { header: 'S.No', dataKey: 'sno' },
+            { header: 'Type', dataKey: 'type' },
+            { header: 'Description', dataKey: 'description' },
+            { header: 'Mode', dataKey: 'mode' },
+            { header: 'Spent By', dataKey: 'spentBy' },
+            { header: 'Date', dataKey: 'date' },
+            { header: 'Amount', dataKey: 'amount' }
+        ];
+
+        // Prepare table rows
+        const sortedTableRows = filteredData
+            .sort((a, b) => {
+                const dateA = new Date(a.transactionDate);
+                const dateB = new Date(b.transactionDate);
+                return dateA - dateB;
+            })
+            .map((record, index) => ({
+                sno: (index + 1).toString(),
+                type: record.expenseType,
+                description: record.description || '-',
+                mode: record.transactionMode,
+                date: formatDateForPDF(record.transactionDate),
+                amount: `INR ${record.amount.toFixed(2)}`,
+                spentBy: record.spentBy
+            }));
 
         doc.autoTable({
-            startY: doc.previousAutoTable.finalY + 15,
-            head: [['S.NO', 'Type', 'Description', 'Mode', 'Date', 'Amount', 'Spent By']],
-            body: tableData,
+            columns: tableColumn,
+            body: sortedTableRows,
+            startY: 45,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
-                textColor: [255, 255, 255]
+                textColor: [255, 255, 255],
+                fontSize: 11,
+                fontStyle: 'bold',
+                cellPadding: 3,
+                halign: 'center',
+                valign: 'middle',
+                lineWidth: 0.1,
+                minCellHeight: 14
+            },
+            bodyStyles: {
+                fontSize: 10,
+                cellPadding: 2,
+                lineColor: [237, 237, 237],
+                valign: 'middle'
+            },
+            columnStyles: {
+                sno: { cellWidth: columnWidths.sno, halign: 'center' },
+                type: { cellWidth: columnWidths.type, halign: 'center' },
+                description: { cellWidth: columnWidths.description, halign: 'left' },
+                mode: { cellWidth: columnWidths.mode, halign: 'center' },
+                date: { cellWidth: columnWidths.date, halign: 'center' },
+                amount: { cellWidth: columnWidths.amount, halign: 'center' },
+                spentBy: { cellWidth: columnWidths.spentBy, halign: 'center' }
+            },
+            alternateRowStyles: {
+                fillColor: [250, 250, 255]
+            },
+            margin: { 
+                left: leftMargin,
+                right: leftMargin,
+                bottom: 20
+            },
+            styles: {
+                fontSize: 9,
+                font: 'helvetica',
+                lineWidth: 0.1,
+                overflow: 'linebreak',
+                cellWidth: 'auto'
             },
             didDrawPage: function(data) {
-                // Add page number
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
+                // Add page number at the bottom center
+                doc.setFontSize(11);
                 doc.setTextColor(0, 0, 0);
-                const pageCount = doc.internal.getNumberOfPages();
-                const pageHeight = doc.internal.pageSize.height;
-                doc.text(`Page ${data.pageNumber}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+                doc.text(
+                    `Page ${data.pageNumber}`, 
+                    pageWidth / 2, 
+                    pageHeight - 15, 
+                    { align: 'center' }
+                );
+            },
+            didDrawCell: function(data) {
+                // Add totals after the last row
+                if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
+                    const finalY = data.cell.y + data.cell.height + 10;
+                    
+                    // Set bold font for totals
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+
+                    // Calculate positions
+                    const boxWidth = 70; // Width of the box
+                    const boxHeight = 10; // Height of each box
+                    const boxX = pageWidth - leftMargin - boxWidth; // Box starting from right
+                    const textPadding = 5; // Padding inside the box
+                    const lineSpacing = 10; // Spacing between lines
+
+                    // Function to draw a box with text
+                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
+                        // Draw box
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
+                        doc.setLineWidth(0.1);
+                        doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+
+                        // Draw text
+                        doc.setFontSize(isGrandTotal ? 11 : 10);
+                        
+                        // Calculate text positions for better alignment
+                        const labelX = boxX + textPadding;
+                        const amountX = boxX + boxWidth - textPadding;
+                        
+                        // Draw label and amount with reduced space between them
+                        doc.text(label, labelX, y);
+                        doc.text(amount, amountX, y, { align: 'right' });
+                    };
+
+                    if (!filterBy) {
+                        // Calculate individual expenses
+                        const baluExpenses = filteredData
+                            .filter(record => record.spentBy === 'Balu')
+                            .reduce((sum, record) => sum + record.amount, 0);
+
+                        const maniExpenses = filteredData
+                            .filter(record => record.spentBy === 'Mani')
+                            .reduce((sum, record) => sum + record.amount, 0);
+
+                        // Draw Balu's Expenses box
+                        drawTotalBox(
+                            finalY, 
+                            'Balu\'s Expenses:', 
+                            `INR ${baluExpenses.toFixed(2)}`
+                        );
+
+                        // Draw Mani's Expenses box
+                        drawTotalBox(
+                            finalY + lineSpacing, 
+                            'Mani\'s Expenses:', 
+                            `INR ${maniExpenses.toFixed(2)}`
+                        );
+
+                        // Draw Grand Total box
+                        drawTotalBox(
+                            finalY + (lineSpacing * 2), 
+                            'Grand Total:', 
+                            `INR ${filteredStats.totalExpenses.toFixed(2)}`,
+                            true
+                        );
+                    } else {
+                        // For filtered reports (Balu's or Mani's), show only grand total
+                        drawTotalBox(
+                            finalY, 
+                            'Total Expenses:', 
+                            `INR ${filteredStats.totalExpenses.toFixed(2)}`,
+                            true
+                        );
+                    }
+                }
             }
         });
 
@@ -403,9 +544,9 @@ export function ExpensesDashboard() {
                                                 { key: 'expenseType', label: 'Type' },
                                                 { key: 'description', label: 'Description' },
                                                 { key: 'transactionMode', label: 'Mode' },
+                                                { key: 'spentBy', label: 'Spent By' },
                                                 { key: 'transactionDate', label: 'Date' },
                                                 { key: 'amount', label: 'Amount' },
-                                                { key: 'spentBy', label: 'Spent By' },
                                                 { key: 'actions', label: 'Actions' }
                                             ].map((column) => (
                                                 <th 
@@ -453,16 +594,16 @@ export function ExpensesDashboard() {
                                                     </span>
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    ₹{expense.amount.toFixed(2)}
-                                                </td>
-                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <div className="flex items-center gap-1">
                                                         <User className="w-4 h-4 text-gray-400" />
                                                         {expense.spentBy}
                                                     </div>
+                                                </td>
+                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
+                                                </td>
+                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    ₹{expense.amount.toFixed(2)}
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <button
