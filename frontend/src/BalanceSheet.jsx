@@ -378,12 +378,18 @@ export function BalanceSheet() {
                         drawTotalRow(finalY, 'Total:', totalExpense, totalRevenue);
                         drawTotalRow(
                             finalY + lineSpacing,
+                            'Net Income:',
+                            null,
+                            netAmount
+                        );
+                        drawTotalRow(
+                            finalY + (lineSpacing * 2),
                             `${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward:`,
                             null,
                             balanceData[user.toLowerCase()].previousMonthTakeHome
                         );
                         drawTotalRow(
-                            finalY + (lineSpacing * 2),
+                            finalY + (lineSpacing * 3),
                             `${monthNames[selectedMonth]} Take Home:`,
                             null,
                             balanceData[user.toLowerCase()].thisMonthTakeHome,
