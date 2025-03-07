@@ -324,39 +324,69 @@ export function BalanceSheet() {
                     if (data.row.index === tableRows.length - 1 && data.column.index === 0) {
                         const finalY = data.cell.y + data.cell.height + 10;
                         
-                        // Set bold font for totals
+                        // Set styles for totals
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(10);
                         doc.setTextColor(0, 0, 0);
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setLineWidth(0.1);
 
-                        const boxWidth = 70;
-                        const boxHeight = 10;
-                        const boxX = pageWidth - leftMargin - boxWidth;
-                        const textPadding = 5;
                         const lineSpacing = 12;
+                        const textPadding = 5;
+                        const rowHeight = 10;
 
-                        // Function to draw total boxes
-                        const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
-                            doc.setDrawColor(200, 200, 200);
-                            doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
-                            doc.setLineWidth(0.1);
-                            doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+                        // Calculate column positions with right alignment
+                        const totalWidth = columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
+                        const descriptionWidth = totalWidth * 0.4; // Reduced width for description
+                        const rightMargin = leftMargin + columnWidths.sno + columnWidths.date + columnWidths.type + 
+                                          columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
+                        
+                        // Calculate starting positions from right to left
+                        const revenueX = rightMargin - columnWidths.revenue;
+                        const expenseX = revenueX - columnWidths.expense;
+                        const startX = expenseX - descriptionWidth;
 
-                            doc.setFontSize(isGrandTotal ? 11 : 10);
-                            const labelX = boxX + textPadding;
-                            const amountX = boxX + boxWidth - textPadding;
+                        // Function to draw cell borders and content
+                        const drawTotalRow = (y, description, expense = null, revenue = null, isHighlighted = false) => {
+                            // Draw background if highlighted
+                            if (isHighlighted) {
+                                doc.setFillColor(246, 246, 252);
+                                doc.rect(startX, y - 7, descriptionWidth + columnWidths.expense + columnWidths.revenue, rowHeight, 'F');
+                            }
+
+                            // Draw cell borders
+                            // Description cell (reduced width)
+                            doc.rect(startX, y - 7, descriptionWidth, rowHeight);
+                            // Expense cell
+                            doc.rect(expenseX, y - 7, columnWidths.expense, rowHeight);
+                            // Revenue cell
+                            doc.rect(revenueX, y - 7, columnWidths.revenue, rowHeight);
+
+                            // Fill cells with text
+                            doc.text(description, startX + textPadding, y);
                             
-                            doc.text(label, labelX, y);
-                            doc.text(amount, amountX, y, { align: 'right' });
+                            if (expense !== null) {
+                                doc.text(`INR ${expense.toFixed(2)}`, expenseX + 2, y, { align: 'left' });
+                            }
+                            
+                            if (revenue !== null) {
+                                doc.text(`INR ${revenue.toFixed(2)}`, revenueX + 2, y, { align: 'left' });
+                            }
                         };
 
-                        // Draw total boxes
-                        drawTotalBox(finalY, 'Total Revenue:', `INR ${totalRevenue.toFixed(2)}`);
-                        drawTotalBox(finalY + lineSpacing, 'Total Expense:', `INR ${totalExpense.toFixed(2)}`);
-                        drawTotalBox(
+                        // Draw total rows with cell formatting
+                        drawTotalRow(finalY, 'Total:', totalExpense, totalRevenue);
+                        drawTotalRow(
+                            finalY + lineSpacing,
+                            `${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward:`,
+                            null,
+                            balanceData[user.toLowerCase()].previousMonthTakeHome
+                        );
+                        drawTotalRow(
                             finalY + (lineSpacing * 2),
-                            'Net Amount:',
-                            `INR ${netAmount.toFixed(2)}`,
+                            'Net Take Home:',
+                            null,
+                            balanceData[user.toLowerCase()].thisMonthTakeHome,
                             true
                         );
                     }
