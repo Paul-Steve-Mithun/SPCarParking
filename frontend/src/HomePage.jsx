@@ -346,7 +346,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             e.preventDefault();
             const adminUsername = import.meta.env.VITE_ADMIN_USERNAME;
             const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-            const userUsername = 'mani';
+            const userUsername = import.meta.env.VITE_MANI_USERNAME;
             const userPassword = import.meta.env.VITE_USER_PASSWORD;
 
             let authData = {
