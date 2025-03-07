@@ -810,7 +810,7 @@ export function AdminPanel() {
         <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
             <Toaster position="top-right" />
             
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex justify-between items-center">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6 flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-white">Vehicles Database</h1>
                 <div className="flex items-center gap-4">
                     <button 

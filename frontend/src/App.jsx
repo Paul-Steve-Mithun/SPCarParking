@@ -101,17 +101,17 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
     return (
         <nav className="bg-gradient-to-r from-blue-600 to-blue-600 shadow-lg sticky top-0 z-50">
             <div className="relative">
-                <div className="max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-4">
+                <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
-                        <div className="flex items-center mr-4">
+                        <div className="flex-shrink-0">
                             <NavLink to="/" className="text-white text-lg font-bold tracking-wider hover:opacity-90 transition-opacity whitespace-nowrap">
                                 SP CAR PARKING
                             </NavLink>
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center justify-end flex-1 space-x-2">
+                        <div className="hidden md:flex items-center space-x-2">
                             <div className="flex items-center space-x-2">
                                 <NavItem to="/" requiredRoles={['admin', 'user']}>
                                     <div className="flex items-center space-x-1.5">
@@ -199,9 +199,9 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                             {/* Menu Panel - Sliding from left */}
                             <div className="fixed inset-y-0 left-0 w-[280px] bg-white shadow-xl transform transition-all duration-300">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-600 to-blue-600">
+                                <div className="flex items-center justify-between px-6 h-14 bg-gradient-to-r from-blue-600 to-blue-600">
                                     <span className="text-base font-bold text-white">
-                                        Menu
+                                        MENU
                                     </span>
                                     <button
                                         onClick={() => setIsMenuOpen(false)}

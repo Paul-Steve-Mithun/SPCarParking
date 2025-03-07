@@ -205,7 +205,7 @@ export function NewVehicle() {
             <Toaster position="top-right" />
             
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6">
                 <h1 className="text-3xl font-bold text-white flex items-center">
                     <PlusCircleIcon className="mr-3 w-10 h-10" />
                     Add New Vehicle
@@ -644,7 +644,7 @@ export function NewVehicle() {
                 <div className="mt-8">
                     <button 
                         type="submit" 
-                        className="w-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-all"
+                        className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-600 text-white py-3 rounded-lg hover:opacity-90 transition-all"
                     >
                         <SaveIcon className="mr-2" />
                         Register Vehicle
