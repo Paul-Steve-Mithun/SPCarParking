@@ -384,7 +384,7 @@ export function BalanceSheet() {
                         );
                         drawTotalRow(
                             finalY + (lineSpacing * 2),
-                            'Net Take Home:',
+                            `${monthNames[selectedMonth]} Take Home:`,
                             null,
                             balanceData[user.toLowerCase()].thisMonthTakeHome,
                             true
@@ -405,83 +405,158 @@ export function BalanceSheet() {
         }
     };
 
-    const BalanceCard = ({ title, icon, value, bgGradient }) => (
-        <div className={`rounded-2xl p-4 bg-gradient-to-br ${bgGradient} border border-white/50 shadow-md hover:shadow-lg transition-all duration-200`}>
-            <div className="flex flex-col space-y-3">
-                <div className="p-3 rounded-xl bg-white/90 shadow-sm w-fit">
-                    {icon}
+    const UserSection = ({ user, data, onTakeHome, isLoading }) => (
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-4">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">{user}</h2>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => generateDetailedPDF(user)}
+                            disabled={isLoading}
+                            className="bg-indigo-500 text-white px-3 py-2 rounded-lg flex items-center space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50 text-sm"
+                            title="Download Statement"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span>Statement</span>
+                        </button>
+                        <button
+                            onClick={() => onTakeHome(user)}
+                            disabled={isLoading}
+                            className="bg-indigo-500 text-white px-3 py-2 rounded-lg flex items-center space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50 text-sm"
+                            title="Take Home"
+                        >
+                            <Receipt className="w-4 h-4" />
+                            <span>Take Home</span>
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-gray-600 text-sm font-medium mb-1">{title}</p>
-                    <p className="text-xl font-bold text-gray-900">₹{value.toFixed(2)}</p>
+
+                {/* Cards Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                        <div className="flex gap-3">
+                            <div className="flex-1">
+                                <BalanceCard
+                                    title="Revenue"
+                                    icon={<IndianRupee className="w-5 h-5 text-green-600" />}
+                                    value={data.revenue}
+                                    bgGradient="from-green-50 to-green-100"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <BalanceCard
+                                    title="Expenses"
+                                    icon={<Receipt className="w-5 h-5 text-red-600" />}
+                                    value={data.expenses}
+                                    bgGradient="from-red-50 to-red-100"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-span-2">
+                        <BalanceCard
+                            title="Net Profit"
+                            icon={<DollarSign className="w-5 h-5 text-indigo-600" />}
+                            value={data.netProfit}
+                            bgGradient="from-indigo-50 to-indigo-100"
+                        />
+                    </div>
+                    <div className="col-span-2">
+                        <BalanceCard
+                            title={`${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward`}
+                            icon={<Calendar className="w-5 h-5 text-purple-600" />}
+                            value={data.previousMonthTakeHome}
+                            bgGradient="from-purple-50 to-purple-100"
+                        />
+                    </div>
+                    <div className="col-span-2">
+                        <BalanceCard
+                            title={`${monthNames[selectedMonth]} Take Home`}
+                            icon={<ArrowUp className="w-5 h-5 text-emerald-600" />}
+                            value={data.thisMonthTakeHome}
+                            bgGradient="from-emerald-50 to-emerald-100"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
     );
 
-    const UserSection = ({ user, data, onTakeHome, isLoading }) => (
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden h-full">
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">{user}'s Balance Sheet</h2>
-                    <div className="flex items-center space-x-3">
-                        <button
-                            onClick={() => generateDetailedPDF(user)}
-                            disabled={isLoading}
-                            className="bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50"
-                        >
-                            <Receipt className="w-4 h-4" />
-                            <span>Export PDF</span>
-                        </button>
-                        <button
-                            onClick={() => onTakeHome(user)}
-                            disabled={isLoading}
-                            className="bg-indigo-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50"
-                        >
-                            <Download className="w-4 h-4" />
-                            <span>Take Home</span>
-                        </button>
+    const BalanceCard = ({ title, icon, value, bgGradient }) => (
+        <div className={`rounded-xl p-3 bg-gradient-to-br ${bgGradient} border border-white/50 shadow-sm hover:shadow-md transition-all duration-200`}>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-white/90 shadow-sm">
+                        {icon}
                     </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <BalanceCard
-                        title="Revenue Collection"
-                        icon={<IndianRupee className="w-6 h-6 text-green-600" />}
-                        value={data.revenue}
-                        bgGradient="from-green-50 to-green-100"
-                    />
-                    <BalanceCard
-                        title="Expenses"
-                        icon={<Receipt className="w-6 h-6 text-red-600" />}
-                        value={data.expenses}
-                        bgGradient="from-red-50 to-red-100"
-                    />
-                    <BalanceCard
-                        title="Net Profit"
-                        icon={<DollarSign className="w-6 h-6 text-indigo-600" />}
-                        value={data.netProfit}
-                        bgGradient="from-indigo-50 to-indigo-100"
-                    />
-                    <BalanceCard
-                        title="Previous Month Take Home"
-                        icon={<Calendar className="w-6 h-6 text-purple-600" />}
-                        value={data.previousMonthTakeHome}
-                        bgGradient="from-purple-50 to-purple-100"
-                    />
-                    <BalanceCard
-                        title="This Month Take Home"
-                        icon={<ArrowUp className="w-6 h-6 text-emerald-600" />}
-                        value={data.thisMonthTakeHome}
-                        bgGradient="from-emerald-50 to-emerald-100"
-                    />
+                    <div>
+                        <p className="text-xs text-gray-600 font-medium">{title}</p>
+                        <p className="text-base font-bold text-gray-900">₹{value.toFixed(2)}</p>
+                    </div>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6">
+        <div className="max-w-[1920px] mx-auto px-2 py-2">
             <Toaster position="top-right" />
+            
+            {/* Header Section */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6">
+                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
+                            Balance Sheet
+                        </h1>
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                            <div className="relative flex-1 sm:w-48">
+                                <select 
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                    className="w-full appearance-none bg-white bg-opacity-20 text-black px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                >
+                                    {monthNames.map((month, index) => (
+                                        <option key={index} value={index}>{month}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                            </div>
+                            <div className="relative flex-1 sm:w-32">
+                                <select 
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                    className="w-full appearance-none bg-white bg-opacity-20 text-black px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                >
+                                    {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
+                                        <option key={year} value={year}>{year}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Balance Sheets Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <UserSection 
+                    user="Balu"
+                    data={balanceData.balu}
+                    onTakeHome={handleTakeHome}
+                    isLoading={isLoading}
+                />
+                <UserSection 
+                    user="Mani"
+                    data={balanceData.mani}
+                    onTakeHome={handleTakeHome}
+                    isLoading={isLoading}
+                />
+            </div>
+
             {isModalOpen && (
                 <div className="fixed inset-0 z-50">
                     <div 
@@ -573,59 +648,6 @@ export function BalanceSheet() {
                     </div>
                 </div>
             )}
-
-            {/* Header Section */}
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6">
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center sm:text-left">
-                            Balance Sheet
-                        </h1>
-                        <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
-                            <div className="relative w-full sm:w-48">
-                                <select 
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="w-full appearance-none bg-white bg-opacity-20 text-black px-4 py-2.5 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
-                                >
-                                    {monthNames.map((month, index) => (
-                                        <option key={index} value={index}>{month}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
-                            </div>
-                            <div className="relative w-full sm:w-32">
-                                <select 
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-full appearance-none bg-white bg-opacity-20 text-black px-4 py-2.5 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
-                                >
-                                    {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Balance Sheets Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <UserSection 
-                    user="Balu"
-                    data={balanceData.balu}
-                    onTakeHome={handleTakeHome}
-                    isLoading={isLoading}
-                />
-                <UserSection 
-                    user="Mani"
-                    data={balanceData.mani}
-                    onTakeHome={handleTakeHome}
-                    isLoading={isLoading}
-                />
-            </div>
         </div>
     );
 }
