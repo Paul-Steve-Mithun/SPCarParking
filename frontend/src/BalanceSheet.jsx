@@ -158,14 +158,14 @@ export function BalanceSheet() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to record take home amount');
+            if (!response.ok) throw new Error('Failed to record Withdraw amount');
 
-            toast.success(`Successfully updated take home amount for ${selectedUser}`);
+            toast.success(`Successfully updated Withdraw amount for ${selectedUser}`);
             setIsModalOpen(false);
             setTakeHomeAmount('');
             await fetchBalanceData();
         } catch (error) {
-            toast.error(`Failed to update take home amount for ${selectedUser}`);
+            toast.error(`Failed to update Withdraw amount for ${selectedUser}`);
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
@@ -315,9 +315,9 @@ export function BalanceSheet() {
                     doc.setTextColor(0, 0, 0);
                     doc.text(
                         `Page ${data.pageNumber}`,
-                        pageWidth / 2,
+                        leftMargin,
                         pageHeight - 10,
-                        { align: 'center' }
+                        { align: 'left' }
                     );
                 },
                 didDrawCell: function(data) {
@@ -331,7 +331,7 @@ export function BalanceSheet() {
                         doc.setDrawColor(200, 200, 200);
                         doc.setLineWidth(0.1);
 
-                        const lineSpacing = 12;
+                        const lineSpacing = 10;
                         const textPadding = 5;
                         const rowHeight = 10;
 
@@ -384,13 +384,13 @@ export function BalanceSheet() {
                         );
                         drawTotalRow(
                             finalY + (lineSpacing * 2),
-                            `${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward:`,
+                            `${monthNames[(selectedMonth - 1 + 12) % 12]} - Brought Forward:`,
                             null,
                             balanceData[user.toLowerCase()].previousMonthTakeHome
                         );
                         drawTotalRow(
                             finalY + (lineSpacing * 3),
-                            `${monthNames[selectedMonth]} Take Home:`,
+                            `${monthNames[selectedMonth]} - Cash in Hand:`,
                             null,
                             balanceData[user.toLowerCase()].thisMonthTakeHome,
                             true
@@ -450,7 +450,7 @@ export function BalanceSheet() {
                             title="Take Home"
                         >
                             <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span>Take Home</span>
+                            <span>Withdraw</span>
                         </button>
                     </div>
                 </div>
@@ -479,7 +479,7 @@ export function BalanceSheet() {
                     </div>
                     <div className="col-span-2">
                         <BalanceCard
-                            title="Net Profit"
+                            title="Net Income"
                             icon={<DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />}
                             value={data.netProfit}
                             bgGradient="from-indigo-50 to-indigo-100"
@@ -487,7 +487,7 @@ export function BalanceSheet() {
                     </div>
                     <div className="col-span-2">
                         <BalanceCard
-                            title={`${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward`}
+                            title={`${monthNames[(selectedMonth - 1 + 12) % 12]} - Brought Forward`}
                             icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />}
                             value={data.previousMonthTakeHome}
                             bgGradient="from-purple-50 to-purple-100"
@@ -495,7 +495,7 @@ export function BalanceSheet() {
                     </div>
                     <div className="col-span-2">
                         <BalanceCard
-                            title={`${monthNames[selectedMonth]} Take Home`}
+                            title={`${monthNames[selectedMonth]} - Cash in Hand`}
                             icon={<ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />}
                             value={data.thisMonthTakeHome}
                             bgGradient="from-emerald-50 to-emerald-100"
@@ -582,10 +582,10 @@ export function BalanceSheet() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900">
-                                            Take Home Amount
+                                            Withdraw Amount
                                         </h3>
                                         <p className="text-sm text-gray-500">
-                                            {selectedUser}'s Take Home for {monthNames[selectedMonth]} {selectedYear}
+                                            {selectedUser}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}
                                         </p>
                                     </div>
                                 </div>
@@ -645,7 +645,7 @@ export function BalanceSheet() {
                                     ) : (
                                         <>
                                             <Download className="w-4 h-4" />
-                                            Take Home
+                                            Withdraw
                                         </>
                                     )}
                                 </button>
