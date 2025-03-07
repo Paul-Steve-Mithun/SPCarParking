@@ -192,59 +192,59 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                     className="fixed inset-0 bg-black/30 backdrop-blur-sm"
                     onClick={() => setShowModal(false)}
                 />
-                <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden relative">
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex justify-between items-center">
-                        <h2 className="text-xl font-bold text-white">{selectedCategory}</h2>
+                <div className="bg-white rounded-2xl w-full max-w-4xl mx-2 max-h-[90vh] sm:max-h-[80vh] overflow-hidden relative">
+                    <div className="bg-blue-600 p-3 sm:p-4 flex justify-between items-center">
+                        <h2 className="text-base sm:text-xl font-bold text-white">{selectedCategory}</h2>
                         <button 
                             onClick={() => setShowModal(false)}
-                            className="text-white hover:text-gray-200 transition-colors"
+                            className="text-white hover:text-gray-200 transition-colors p-1"
                         >
-                            <X className="w-6 h-6" />
+                            <X className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
                     </div>
 
                     {/* Search Bar */}
-                    <div className="p-4 border-b border-gray-200">
+                    <div className="p-3 sm:p-4 border-b border-gray-200">
                         <div className="relative">
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search by vehicle number, description, lot number, or owner name..."
-                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="Search vehicles..."
+                                className="w-full pl-9 pr-3 py-2 text-sm sm:text-base rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                             />
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-6 overflow-auto max-h-[calc(80vh-140px)]">
+                    <div className="p-3 sm:p-6 overflow-auto max-h-[calc(90vh-120px)] sm:max-h-[calc(80vh-140px)]">
                         {displayedVehicles.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
                                 No vehicles found matching your search.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 {displayedVehicles.map(vehicle => {
                                     const dueAmount = calculateDueAmount(vehicle);
                                     
                                     return (
                                         <div key={vehicle._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                            <div className="p-4 bg-gray-50 border-b border-gray-200">
-                                                <div className="flex flex-col gap-2">
+                                            <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-200">
+                                                <div className="flex flex-col gap-1.5 sm:gap-2">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0 flex-1">
-                                                            <h3 className="font-semibold text-gray-900 truncate">
+                                                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                                                                 {vehicle.vehicleNumber}
                                                             </h3>
-                                                            <p className="text-sm text-gray-500 truncate">
+                                                            <p className="text-xs sm:text-sm text-gray-500 truncate">
                                                                 {vehicle.vehicleDescription || 'No description'}
                                                             </p>
                                                         </div>
-                                                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                                                             vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
                                                                 ? 'bg-red-100 text-red-800 border border-red-200'
                                                                 : vehicle.status === 'active'
@@ -261,16 +261,16 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="p-4 space-y-2">
-                                                <div className="flex items-center justify-between text-sm">
+                                            <div className="p-3 sm:p-4 space-y-2">
+                                                <div className="flex items-center justify-between text-xs sm:text-sm">
                                                     <span className="text-gray-500">Lot Number:</span>
                                                     <span className="font-medium text-gray-900">{vehicle.lotNumber || 'Open'}</span>
                                                 </div>
-                                                <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center justify-between text-xs sm:text-sm">
                                                     <span className="text-gray-500">Type:</span>
                                                     <span className="font-medium text-gray-900 capitalize">{vehicle.rentalType}</span>
                                                 </div>
-                                                <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center justify-between text-xs sm:text-sm">
                                                     <span className="text-gray-500">Rent:</span>
                                                     <span className="font-medium text-gray-900">
                                                         {vehicle.rentalType === 'daily' ? (
@@ -286,7 +286,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                     </span>
                                                 </div>
                                                 {vehicle.endDate && (
-                                                    <div className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center justify-between text-xs sm:text-sm">
                                                         <span className="text-gray-500">End Date:</span>
                                                         <span className="font-medium text-gray-900">
                                                             {formatDate(vehicle.endDate)}
@@ -294,7 +294,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                     </div>
                                                 )}
                                                 {vehicle.ownerName && (
-                                                    <div className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center justify-between text-xs sm:text-sm">
                                                         <span className="text-gray-500">Owner:</span>
                                                         <span className="font-medium text-gray-900 truncate max-w-[60%]">
                                                             MR. {vehicle.ownerName}
@@ -302,13 +302,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                     </div>
                                                 )}
                                                 {vehicle.contactNumber && (
-                                                    <div className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center justify-between text-xs sm:text-sm">
                                                         <span className="text-gray-500">Contact:</span>
                                                         <a 
                                                             href={`tel:${vehicle.contactNumber}`}
                                                             className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
                                                         >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
                                                                     d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" 
                                                                 />

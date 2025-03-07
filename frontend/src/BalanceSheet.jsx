@@ -431,7 +431,7 @@ export function BalanceSheet() {
                         <button
                             onClick={() => generateDetailedPDF(user)}
                             disabled={isLoading}
-                            className="bg-indigo-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+                            className="bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
                             title="Download Statement"
                         >
                             <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -440,7 +440,7 @@ export function BalanceSheet() {
                         <button
                             onClick={() => onTakeHome(user)}
                             disabled={isLoading}
-                            className="bg-indigo-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-indigo-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+                            className="bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
                             title="Take Home"
                         >
                             <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -506,7 +506,7 @@ export function BalanceSheet() {
             
             {/* Header Section */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6">
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4 sm:p-6">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                             Balance Sheet Dashboard
@@ -572,7 +572,7 @@ export function BalanceSheet() {
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-3">
                                     <div className="p-2 bg-indigo-100 rounded-xl">
-                                        <Wallet className="w-6 h-6 text-indigo-600" />
+                                        <Wallet className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900">
@@ -610,7 +610,7 @@ export function BalanceSheet() {
                                                 setTakeHomeAmount(value);
                                             }
                                         }}
-                                        className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-base transition-shadow"
+                                        className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-border-500 outline-none text-base transition-shadow"
                                         placeholder="0.00"
                                         autoFocus
                                     />
@@ -629,7 +629,7 @@ export function BalanceSheet() {
                                 <button
                                     onClick={handleSubmitTakeHome}
                                     disabled={isLoading || !takeHomeAmount}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                                 >
                                     {isLoading ? (
                                         <>
