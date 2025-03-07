@@ -215,19 +215,22 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                 <div className="flex-1 overflow-y-auto">
                                     <div className="p-2">
                                         {[
-                                            { to: "/", label: "Home", icon: <Home className="w-[18px] h-[18px]" /> },
-                                            { to: "/new-vehicle", label: "New Vehicle", icon: <PlusCircle className="w-[18px] h-[18px]" />, requiresAuth: true },
-                                            { to: "/vehicle-info", label: "Vehicle Info", icon: <Car className="w-[18px] h-[18px]" /> },
-                                            { to: "/revenuedashboard", label: "Rent", icon: <IndianRupee className="w-[18px] h-[18px]" /> },
-                                            { to: "/advance", label: "Advance", icon: <Wallet className="w-[18px] h-[18px]" /> },
-                                            { to: "/expenses", label: "Expenses", icon: <Receipt className="w-[18px] h-[18px]" /> },
-                                            { to: "/managevehicles", label: "Outstanding", icon: <AlertCircle className="w-[18px] h-[18px]" />, requiresAuth: true },
-                                            { to: "/admin", label: "Admin", icon: <Settings className="w-[18px] h-[18px]" />, requiresAuth: true },
-                                            { to: "/balancesheet", label: "Balance Sheet", icon: <DollarSign className="w-[18px] h-[18px]" /> }
+                                            { to: "/", label: "Home", icon: <Home className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] },
+                                            { to: "/new-vehicle", label: "New Vehicle", icon: <PlusCircle className="w-[18px] h-[18px]" />, roles: ['admin'] },
+                                            { to: "/vehicle-info", label: "Vehicle Info", icon: <Car className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] },
+                                            { to: "/revenuedashboard", label: "Rent", icon: <IndianRupee className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] },
+                                            { to: "/advance", label: "Advance", icon: <Wallet className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] },
+                                            { to: "/expenses", label: "Expenses", icon: <Receipt className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] },
+                                            { to: "/managevehicles", label: "Outstanding", icon: <AlertCircle className="w-[18px] h-[18px]" />, roles: ['admin'] },
+                                            { to: "/admin", label: "Admin", icon: <Settings className="w-[18px] h-[18px]" />, roles: ['admin'] },
+                                            { to: "/balancesheet", label: "Balance Sheet", icon: <DollarSign className="w-[18px] h-[18px]" />, roles: ['admin', 'user'] }
                                         ].map((item) => {
-                                            if (item.requiresAuth && !isAuthenticated) {
+                                            // Check if user has the required role for this item
+                                            const userRole = auth.role;
+                                            if (!item.roles.includes(userRole)) {
                                                 return null;
                                             }
+
                                             return (
                                                 <NavLink
                                                     key={item.to}
