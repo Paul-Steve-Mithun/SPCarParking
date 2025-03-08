@@ -443,10 +443,10 @@ export function ExpensesDashboard() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Toaster position="top-right" />
-
-            {/* Header Section with margin-bottom */}
+        <div className="relative">
+            <Toaster position="bottom-right" />
+            <div className="min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300">
+                <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
                 <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
@@ -537,22 +537,22 @@ export function ExpensesDashboard() {
 
             {/* Transaction History section */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
-                        Transaction History
-                    </h2>
-                    
-                    <div className="relative w-full mb-6">
-                        <input
-                            type="text"
-                            placeholder="Search expenses..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                        />
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="p-4 sm:p-6">
+                    <div className="flex flex-col space-y-4">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
+                            Transaction History
+                        </h2>
+                        <div className="relative w-full mb-6">
+                            <input
+                                type="text"
+                                placeholder="Search expenses..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                            />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        </div>
                     </div>
-
                     <div className="overflow-x-auto">
                         <div className="max-w-[1400px] mx-auto">
                             <div className="inline-block min-w-full align-middle">
@@ -1029,6 +1029,8 @@ export function ExpensesDashboard() {
                     </div>
                 </Dialog>
             </Transition>
+                </div>
+            </div>
         </div>
     );
 }
