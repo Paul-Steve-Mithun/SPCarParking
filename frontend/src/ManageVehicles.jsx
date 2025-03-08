@@ -270,10 +270,10 @@ export function ManageVehicles() {
             createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
 
             const terms = [
-                ['1.', 'Rent must be paid before 5th of each month'],
+                ['1.', 'Rent must be paid before 5th of each month.'],
                 ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
-                ['3.', 'Parking spot must be kept clean'],
-                ['4.', 'No unauthorized vehicle transfers'],
+                ['3.', 'Parking spot must be kept clean.'],
+                ['4.', 'No unauthorized vehicle transfers.'],
             ];
 
             doc.autoTable({
@@ -518,9 +518,9 @@ export function ManageVehicles() {
             createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
 
             const terms = [
-                ['1.', 'Rent must be paid before 5th of each month'],
-                ['2.', 'Parking spot must be kept clean'],
-                ['3.', 'No unauthorized vehicle transfers'],
+                ['1.', 'Rent must be paid before 5th of each month.'],
+                ['2.', 'Parking spot must be kept clean.'],
+                ['3.', 'No unauthorized vehicle transfers.'],
                 ['4.', 'Save Water and Electricity']
             ];
 
