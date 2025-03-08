@@ -130,8 +130,7 @@ export function AdminPanel() {
                 ['Advance:', `INR ${vehicle.advanceAmount}`],
                 ['Rent:', `INR ${vehicle.rentPrice}`],
                 ['Duration:', vehicle.rentalType === 'daily' ? 
-                    `${vehicle.numberOfDays} days` : 'Every Month'],
-                ['Total:', `INR ${totalAmount}`]            ];
+                    `${vehicle.numberOfDays} days` : 'Every Month']  ];
 
             doc.autoTable({
                 startY: startY + 8,
@@ -236,14 +235,14 @@ export function AdminPanel() {
             });
 
             // Terms and Conditions with reduced spacing
-            const termsY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
+            const termsY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
             createSection('Terms & Conditions', startX2, termsY);
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month'],
-                ['2.', 'Parking spot must be kept clean'],
-                ['3.', 'No unauthorized vehicle transfers'],
-                ['4.', 'Save Water and Electricity']
+                ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
+                ['3.', 'Parking spot must be kept clean'],
+                ['4.', 'No unauthorized vehicle transfers'],
             ];
 
             doc.autoTable({
@@ -265,7 +264,7 @@ export function AdminPanel() {
             });
 
             // Contact Details with reduced spacing
-            const contactY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
+            const contactY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
             createSection('Contact Details', startX2, contactY);
 
             const contacts = [
@@ -322,7 +321,7 @@ export function AdminPanel() {
                 qrDataUrl, 
                 'PNG', 
                 qrX,
-                qrY + 15,  // Changed from 20 to 15
+                qrY + 10,  // Changed from 20 to 15
                 qrWidth,
                 45  // Changed from 50 to 45
             );
