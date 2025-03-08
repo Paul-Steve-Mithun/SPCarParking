@@ -270,7 +270,7 @@ export function ExpensesDashboard() {
                 description: { cellWidth: columnWidths.description, halign: 'left' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
                 spentBy: { cellWidth: columnWidths.spentBy, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'left' }
+                amount: { cellWidth: columnWidths.amount, halign: 'right' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
