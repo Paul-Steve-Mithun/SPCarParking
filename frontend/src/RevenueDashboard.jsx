@@ -336,7 +336,7 @@ export function RevenueDashboard() {
                 lot: { cellWidth: columnWidths.lot, halign: 'center' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
                 receivedBy: filterBy ? undefined : { cellWidth: columnWidths.receivedBy, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'left' }
+                amount: { cellWidth: columnWidths.amount, halign: 'right' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]

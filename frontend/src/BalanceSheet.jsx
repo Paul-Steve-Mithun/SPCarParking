@@ -323,8 +323,8 @@ export function BalanceSheet() {
                     type: { cellWidth: columnWidths.type, halign: 'center' },
                     description: { cellWidth: columnWidths.description, halign: 'center' },
                     mode: { cellWidth: columnWidths.mode, halign: 'center' },
-                    expense: { cellWidth: columnWidths.expense, halign: 'left' },
-                    revenue: { cellWidth: columnWidths.revenue, halign: 'left' }
+                    expense: { cellWidth: columnWidths.expense, halign: 'right' },
+                    revenue: { cellWidth: columnWidths.revenue, halign: 'right' }
                 },
                 margin: { left: leftMargin },
                 didDrawPage: (data) => {
