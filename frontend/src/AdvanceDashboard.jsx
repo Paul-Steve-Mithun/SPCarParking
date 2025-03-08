@@ -171,6 +171,22 @@ export function AdvanceDashboard() {
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
 
+        // Add the formatAmount function after formatDateForPDF
+        const formatAmount = (amount, isRefund = false) => {
+            if (amount === '-') return '-';
+            
+            // Convert amount to string with 2 decimal places
+            const amountStr = Math.abs(amount).toFixed(2);
+            
+            // Calculate spaces needed (for maximum 100000.00)
+            const spaceNeeded = 12 - amountStr.length;
+            const spaces = ' '.repeat(spaceNeeded);
+            
+            // Add refund indicator and format with consistent spacing
+            const prefix = isRefund ? '(-) ' : '(+) ';
+            return `${prefix}INR${spaces}${amountStr}`;
+        };
+
         // Calculate total table width based on column widths
         const columnWidths = {
             sno: 15,
@@ -180,7 +196,7 @@ export function AdvanceDashboard() {
             mode: 25,
             receivedBy: 25,
             date: 25,
-            amount: 35
+            amount: 45
         };
 
         const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
@@ -203,7 +219,7 @@ export function AdvanceDashboard() {
             .sort((a, b) => {
                 const dateA = new Date(a.refundDate || a.startDate);
                 const dateB = new Date(b.refundDate || b.startDate);
-                return dateA - dateB; // Oldest first
+                return dateA - dateB;
             })
             .map((vehicle, index) => {
                 const isRefund = !!vehicle.advanceRefund;
@@ -217,7 +233,7 @@ export function AdvanceDashboard() {
                     mode: vehicle.transactionMode || 'Cash',
                     receivedBy: vehicle.receivedBy || 'N/A',
                     date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
-                    amount: `${isRefund ? '(-) ' : '(+) '}INR ${amount.toFixed(2)}`,
+                    amount: formatAmount(amount, isRefund),
                     isRefund: isRefund,
                     rawAmount: isRefund ? -amount : amount
                 };
@@ -253,7 +269,7 @@ export function AdvanceDashboard() {
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
                 receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
                 date: { cellWidth: columnWidths.date, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'left' }
+                amount: { cellWidth: columnWidths.amount, halign: 'right' }
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
@@ -294,49 +310,65 @@ export function AdvanceDashboard() {
                 if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
                     const finalY = data.cell.y + data.cell.height + 10;
                     
-                    // Set bold font for totals
+                    // Set styles for totals
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(10);
                     doc.setTextColor(0, 0, 0);
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.1);
 
                     // Calculate positions
-                    const boxWidth = 90;
+                    const boxWidth = 110;
                     const boxHeight = 10;
                     const boxX = pageWidth - leftMargin - boxWidth;
-                    const textPadding = 5;
+                    const textPadding = 2;
                     const lineSpacing = 10;
 
                     // Function to draw a box with text
-                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
+                    const drawTotalBox = (y, label, amount, isNegative = false) => {
                         doc.setDrawColor(200, 200, 200);
-                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
+                        doc.setFillColor(isNegative ? 255 : 246, isNegative ? 235 : 246, isNegative ? 235 : 252);
                         doc.setLineWidth(0.1);
                         doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
 
-                        doc.setFontSize(isGrandTotal ? 11 : 10);
-                        
+                        // Set fonts
+                        doc.setFont('helvetica', 'bold');
                         const labelX = boxX + textPadding;
-                        const amountX = boxX + boxWidth - textPadding;
-                        
                         doc.text(label, labelX, y);
-                        doc.text(amount, amountX, y, { align: 'right' });
+
+                        // Set monospace bold for amount
+                        doc.setFont('courier', 'bold');
+                        const amountX = boxX + boxWidth - textPadding;
+                        doc.text(
+                            formatAmount(amount, isNegative),
+                            amountX,
+                            y,
+                            { align: 'right' }
+                        );
                     };
 
                     // Draw Monthly Advance (Net)
                     drawTotalBox(
                         finalY,
-                        'Monthly Advance (Net):', 
-                        `INR ${stats.monthlyAdvance < 0 ? '-' : ''}${Math.abs(stats.monthlyAdvance).toFixed(2)}`,
+                        'Monthly Advance (Net) :', 
+                        stats.monthlyAdvance,
                         stats.monthlyAdvance < 0
                     );
 
                     // Draw Total Advance
                     drawTotalBox(
                         finalY + lineSpacing,
-                        'Total Advance (Till Date):', 
-                        `INR ${stats.totalAdvance.toFixed(2)}`,
-                        true
+                        'Total Advance (Till Date) :', 
+                        stats.totalAdvance,
+                        false
                     );
+                }
+            },
+            didParseCell: function(data) {
+                // For amount column, use monospace font and bold style
+                if (data.column.dataKey === 'amount') {
+                    data.cell.styles.font = 'courier';
+                    data.cell.styles.fontStyle = 'bold';
                 }
             }
         });

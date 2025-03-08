@@ -285,7 +285,7 @@ export function VehicleInfo() {
 
             const contacts = [
                 ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000']
+                ['Rental:', '9842190000 / 9843050753']
             ];
 
             doc.autoTable({
@@ -301,8 +301,8 @@ export function VehicleInfo() {
                     textColor: [44, 62, 80]
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 55 }
+                    0: { fontStyle: 'bold', cellWidth: 30 },
+                    1: { cellWidth: 65 }
                 }
             });
 
@@ -564,7 +564,7 @@ export function VehicleInfo() {
 
             const contacts = [
                 ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000']
+                ['Rental:', '9842190000 / 9843050753']
             ];
 
             doc.autoTable({
@@ -580,8 +580,8 @@ export function VehicleInfo() {
                     textColor: [44, 62, 80]
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },  // Changed from 40 to 35
-                    1: { cellWidth: 55 }
+                    0: { fontStyle: 'bold', cellWidth: 30 },  // Changed from 40 to 35
+                    1: { cellWidth: 65 }
                 }
             });
 

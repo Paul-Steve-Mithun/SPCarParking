@@ -722,7 +722,7 @@ export function ManageVehicles() {
                 parkingType: 25,
                 rentalType: 30,
                 daysOverdue: 25,
-                dueAmount: 30
+                dueAmount: 45  // Increased from 30 to 45 to match other reports
             };
             
             const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
@@ -739,7 +739,22 @@ export function ManageVehicles() {
                 { header: 'Due Amount', dataKey: 'dueAmount' }
             ];
 
-            // Prepare table data
+            // Add the formatAmount function
+            const formatAmount = (amount) => {
+                if (amount === '-') return '-';
+                
+                // Convert amount to string with 2 decimal places
+                const amountStr = amount.toFixed(2);
+                
+                // Calculate spaces needed (for maximum 999999.00 = 9 characters)
+                const spaceNeeded = Math.max(0, 10 - amountStr.length);
+                const spaces = ' '.repeat(spaceNeeded);
+                
+                // Return formatted string with consistent spacing
+                return `INR${spaces}${amountStr}`;
+            };
+
+            // Update table data preparation
             const tableRows = sortByLotNumber(vehicles).map((vehicle, index) => {
                 let dueAmount = vehicle.rentPrice;
                 let daysOverdue = 'Monthly';
@@ -764,9 +779,15 @@ export function ManageVehicles() {
                     parkingType: vehicle.lotNumber || 'Open',
                     rentalType: `${capitalizeFirst(vehicle.rentalType)}${vehicle.rentalType === 'daily' ? ` (${vehicle.numberOfDays} days)` : ''}`,
                     daysOverdue: daysOverdue,
-                    dueAmount: `INR ${dueAmount.toFixed(2)}`
+                    dueAmount: formatAmount(dueAmount)
                 };
             });
+
+            // Add variables to track pages and overflow status
+            let totalPages = 1;
+            let hasStatsOverflow = false;
+            let lastTablePage = 1;
+            let pageNumbers = [];  // Store page numbers for later
 
             // Generate table
             doc.autoTable({
@@ -815,110 +836,109 @@ export function ManageVehicles() {
                     overflow: 'linebreak',
                     cellWidth: 'auto'
                 },
-                didDrawPage: function(data) {
-                    doc.setFontSize(11);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(
-                        `Page ${data.pageNumber}`,
-                        pageWidth / 2,
-                        pageHeight - 15,
-                        { align: 'center' }
-                    );
+                didParseCell: function(data) {
+                    // For amount column, use monospace font and bold style
+                    if (data.column.dataKey === 'dueAmount') {
+                        data.cell.styles.font = 'courier';
+                        data.cell.styles.fontStyle = 'bold';
+                    }
                 },
                 didDrawCell: function(data) {
-                    if (data.row.index === tableRows.length - 1 && data.column.index === 0) {
-                        const finalY = data.cell.y + data.cell.height + 15;
+                    if (data.row.index === tableRows.length - 1 && data.column.index === tableColumn.length - 1) {
+                        let finalY = data.cell.y + data.cell.height + 15;
+                        const requiredHeight = 70;
                         
-                        // Set bold font for totals
+                        if (pageHeight - finalY < requiredHeight) {
+                            hasStatsOverflow = true;
+                            lastTablePage = doc.internal.getCurrentPageInfo().pageNumber;
+                            doc.addPage();
+                            finalY = 40;
+                            totalPages = doc.internal.getNumberOfPages();
+                        }
+
+                        // Set styles for totals
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(11);
                         doc.setTextColor(0, 0, 0);
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setLineWidth(0.1);
 
                         // Calculate positions for right side boxes
                         const boxWidth = 80;
                         const boxHeight = 12;
                         const boxX = pageWidth - leftMargin - boxWidth;
-                        const textPadding = 6;
-                        const lineSpacing = 15;
+                        const textPadding = 2;
+                        const lineSpacing = 10;
 
                         // Function to draw a box with text
                         const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
                             doc.setDrawColor(200, 200, 200);
-                            doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
+                            doc.setFillColor(
+                                isGrandTotal ? 254 : 255,  // Red component
+                                isGrandTotal ? 242 : 255,  // Green component
+                                isGrandTotal ? 242 : 255   // Blue component
+                            );
                             doc.setLineWidth(0.1);
                             doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
 
-                            doc.setFontSize(isGrandTotal ? 12 : 11);
-                            
+                            // Set bold font for label
+                            doc.setFont('helvetica', 'bold');
                             const labelX = boxX + textPadding;
+                            doc.text(label, labelX, y);
+
+                            // Set monospace bold font for amount
+                            doc.setFont('courier', 'bold');
                             const amountX = boxX + boxWidth - textPadding;
-                            
-                            doc.text(label, labelX, y);
-                            doc.text(amount, amountX, y, { align: 'right' });
-                        };
-
-                        // Function to draw left side boxes
-                        const drawLeftBox = (y, label, value, isTotal = false) => {
-                            const leftBoxX = leftMargin;
-                            const leftBoxWidth = 80;
-
-                            doc.setDrawColor(200, 200, 200);
-                            doc.setFillColor(isTotal ? 246 : 255, isTotal ? 246 : 255, isTotal ? 252 : 255);
-                            doc.setLineWidth(0.1);
-                            doc.roundedRect(leftBoxX, y - boxHeight + 5, leftBoxWidth, boxHeight, 1, 1, 'FD');
-
-                            doc.setFontSize(isTotal ? 12 : 11);
-                            
-                            const labelX = leftBoxX + textPadding;
-                            const valueX = leftBoxX + leftBoxWidth - textPadding;
-                            
-                            doc.text(label, labelX, y);
-                            doc.text(value.toString(), valueX, y, { align: 'right' });
+                            doc.text(
+                                formatAmount(amount),
+                                amountX,
+                                y,
+                                { align: 'right' }
+                            );
                         };
 
                         // Draw right side amount boxes
                         drawTotalBox(
                             finalY,
-                            'Monthly Due:', 
-                            `INR ${totalMonthlyDue.toFixed(2)}`
+                            'Monthly Due :', 
+                            totalMonthlyDue
                         );
 
                         drawTotalBox(
                             finalY + lineSpacing,
-                            'Daily Due:', 
-                            `INR ${totalDailyDue.toFixed(2)}`
+                            'Daily Due :', 
+                            totalDailyDue
                         );
 
                         drawTotalBox(
                             finalY + (lineSpacing * 2),
-                            'Total Due:', 
-                            `INR ${(totalMonthlyDue + totalDailyDue).toFixed(2)}`,
-                            true
-                        );
-
-                        // Draw left side count boxes
-                        drawLeftBox(
-                            finalY,
-                            'Monthly Outstanding:', 
-                            expiredMonthly
-                        );
-
-                        drawLeftBox(
-                            finalY + lineSpacing,
-                            'Daily Outstanding:', 
-                            expiredDaily
-                        );
-
-                        drawLeftBox(
-                            finalY + (lineSpacing * 2),
-                            'Total Outstanding:', 
-                            totalVehicles,
+                            'Total Due :', 
+                            totalMonthlyDue + totalDailyDue,
                             true
                         );
                     }
+                },
+                didDrawPage: function(data) {
+                    // Store current page info for later
+                    pageNumbers.push({
+                        pageNumber: doc.internal.getCurrentPageInfo().pageNumber,
+                        y: pageHeight - 15
+                    });
                 }
             });
+
+            // After everything is drawn, add page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                doc.text(
+                    `Page ${i} of ${totalPages}`,
+                    pageWidth / 2,
+                    pageHeight - 15,
+                    { align: 'center' }
+                );
+            }
 
             doc.save(`SP_Outstanding_Vehicles_Report_${currentDate.replace(/\//g, '-')}.pdf`);
             toast.success('Outstanding vehicles report generated successfully');
