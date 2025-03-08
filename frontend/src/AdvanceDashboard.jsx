@@ -517,21 +517,19 @@ export function AdvanceDashboard() {
                     {/* Second Main Div - Transaction History and Table */}
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                         <div className="p-4 sm:p-6">
-                            <div className="flex flex-col space-y-4">
-                                <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
-                                    Transaction History
-                                </h2>
-                                
-                                <div className="relative w-full mb-6">
-                                    <input
-                                        type="text"
-                                        placeholder="Search transactions..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                    />
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
+                                Transaction History
+                            </h2>
+                            
+                            <div className="relative w-full mb-6">
+                                <input
+                                    type="text"
+                                    placeholder="Search transactions..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                             </div>
 
                             <div className="overflow-x-auto">

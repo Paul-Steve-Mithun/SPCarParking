@@ -104,7 +104,6 @@ export function ManageVehicles() {
 
     const handlePrintInvoice = async (vehicle) => {
         try {
-            // Calculate total amount based on rental type
             const totalAmount = vehicle.rentalType === 'daily' ? 
                 vehicle.rentPrice * vehicle.numberOfDays : 
                 vehicle.rentPrice;
@@ -116,7 +115,7 @@ export function ManageVehicles() {
             const startX1 = 15;
             const startX2 = 110;
             
-            // Modern Header with Gradient
+            // Modern Header with Gradient - Reduced top margin
             const gradient = doc.setFillColor(0, 128, 0);
             doc.rect(0, 0, pageWidth, 40, 'F');
             doc.setTextColor(255, 255, 255);
@@ -157,7 +156,6 @@ export function ManageVehicles() {
                 ['Rent:', `INR ${vehicle.rentPrice}`],
                 ['Duration:', vehicle.rentalType === 'daily' ? 
                     `${vehicle.numberOfDays} days` : 'Every Month'],
-                ['Total:', `INR ${totalAmount}`]
             ];
 
             doc.autoTable({
@@ -167,14 +165,14 @@ export function ManageVehicles() {
                 body: vehicleDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,  // Increased from 10
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
                 },
                 columnStyles: {
                     0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 50 }
+                    1: { cellWidth: 55 }  // Increased from 50
                 }
             });
 
@@ -201,7 +199,7 @@ export function ManageVehicles() {
                 body: agreementDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -257,7 +255,7 @@ export function ManageVehicles() {
                 body: ownerDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -273,9 +271,9 @@ export function ManageVehicles() {
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month'],
-                ['2.', 'Parking spot must be kept clean'],
-                ['3.', 'No unauthorized vehicle transfers'],
-                ['4.', 'Save Water and Electricity']
+                ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
+                ['3.', 'Parking spot must be kept clean'],
+                ['4.', 'No unauthorized vehicle transfers'],
             ];
 
             doc.autoTable({
@@ -285,7 +283,7 @@ export function ManageVehicles() {
                 body: terms,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 2,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -319,27 +317,27 @@ export function ManageVehicles() {
             });
 
             // Center QR code
-            const qrWidth = 60;
+            const qrWidth = 60;  // Reduced from 60
             const qrX = startX2 + ((columnWidth - qrWidth) / 2);
 
             doc.addImage(
                 qrDataUrl, 
                 'PNG', 
                 qrX,
-                doc.autoTable.previous.finalY + 25,
+                doc.autoTable.previous.finalY + 25,  // Reduced spacing
                 qrWidth,
-                60
+                60  // Reduced from 60
             );
 
             // Modern Footer
             doc.setDrawColor(0, 128, 0);
             doc.setLineWidth(0.5);
-            doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);  // Moved up from -25
             
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
             const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
+            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });  // Moved up from -15
 
             doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
             toast.success('Receipt generated successfully');
@@ -423,7 +421,7 @@ export function ManageVehicles() {
                 body: vehicleDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -449,7 +447,7 @@ export function ManageVehicles() {
                 body: agreementDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -505,7 +503,7 @@ export function ManageVehicles() {
                 body: ownerDetails,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
@@ -533,7 +531,7 @@ export function ManageVehicles() {
                 body: terms,
                 theme: 'plain',
                 styles: { 
-                    fontSize: 10,
+                    fontSize: 12,
                     cellPadding: 2,
                     font: 'helvetica',
                     textColor: [44, 62, 80]
