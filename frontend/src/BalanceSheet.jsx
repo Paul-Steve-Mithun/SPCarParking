@@ -252,23 +252,40 @@ export function BalanceSheet() {
                 });
             };
 
-            // Updated table data preparation with capitalized description
-            const tableRows = combinedTransactions.map((record, index) => ({
-                sno: (index + 1).toString(),
-                date: formatDateForPDF(record.date),
-                type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : record.expenseType,
-                description: record.type === 'revenue' 
-                    ? (record.vehicleDescription || '-').toUpperCase() 
-                    : (record.description || '-').toUpperCase(),
-                mode: record.transactionMode,
-                expense: record.type === 'expense' ? `INR ${record.amount.toFixed(2)}` : '-',
-                revenue: record.type === 'revenue' ? `INR ${record.revenueAmount.toFixed(2)}` : '-'
-            }));
+            // Updated table data preparation with brought forward as first row
+            const tableRows = [
+                {
+                    sno: "1",
+                    date: `01/${(selectedMonth + 1).toString().padStart(2, '0')}/${selectedYear}`,
+                    type: "-",
+                    description: `${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward`,
+                    mode: "-",
+                    expense: "-",
+                    revenue: { 
+                        content: `INR ${balanceData[user.toLowerCase()].previousMonthTakeHome.toFixed(2)}`,
+                        styles: { fontStyle: 'bold' }
+                    }
+                },
+                ...combinedTransactions.map((record, index) => ({
+                    sno: (index + 2).toString(),
+                    date: formatDateForPDF(record.date),
+                    type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : record.expenseType,
+                    description: record.type === 'revenue' 
+                        ? (record.vehicleDescription || '-').toUpperCase() 
+                        : (record.description || '-').toUpperCase(),
+                    mode: record.transactionMode,
+                    expense: record.type === 'expense' ? `INR ${record.amount.toFixed(2)}` : '-',
+                    revenue: record.type === 'revenue' ? `INR ${record.revenueAmount.toFixed(2)}` : '-'
+                }))
+            ];
 
-            // Calculate totals
+            // Calculate totals including brought forward amount
             const totalExpense = userExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-            const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0);
-            const netAmount = totalRevenue - totalExpense;
+            const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0) + 
+                               balanceData[user.toLowerCase()].previousMonthTakeHome;
+            const cashInHand = totalRevenue - totalExpense;
+
+            let isLastCellProcessed = false;
 
             doc.autoTable({
                 startY: 45,
@@ -314,16 +331,29 @@ export function BalanceSheet() {
                     doc.setFontSize(10);
                     doc.setTextColor(0, 0, 0);
                     doc.text(
-                        `Page ${data.pageNumber}`,
+                        `Page ${data.pageNumber} of ${data.pageCount}`,
                         leftMargin,
                         pageHeight - 10,
                         { align: 'left' }
                     );
                 },
-                didDrawCell: function(data) {
-                    if (data.row.index === tableRows.length - 1 && data.column.index === 0) {
-                        const finalY = data.cell.y + data.cell.height + 10;
+                didParseCell: (data) => {
+                    // Check if this is the last cell of the last row
+                    if (data.row.index === tableRows.length - 1 && data.column.index === 6) {
+                        isLastCellProcessed = true;
+                    }
+                },
+                didDrawCell: (data) => {
+                    // Draw stats after the last cell is processed
+                    if (isLastCellProcessed && data.row.index === tableRows.length - 1 && data.column.index === 6) {
+                        let finalY = data.cell.y + data.cell.height + 10;
+                        const requiredHeight = 50;
                         
+                        if (pageHeight - finalY < requiredHeight) {
+                            doc.addPage();
+                            finalY = 40;
+                        }
+
                         // Set styles for totals
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(10);
@@ -337,32 +367,25 @@ export function BalanceSheet() {
 
                         // Calculate column positions with right alignment
                         const totalWidth = columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
-                        const descriptionWidth = totalWidth * 0.4; // Reduced width for description
+                        const descriptionWidth = totalWidth * 0.4;
                         const rightMargin = leftMargin + columnWidths.sno + columnWidths.date + columnWidths.type + 
                                           columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
                         
-                        // Calculate starting positions from right to left
                         const revenueX = rightMargin - columnWidths.revenue;
                         const expenseX = revenueX - columnWidths.expense;
                         const startX = expenseX - descriptionWidth;
 
                         // Function to draw cell borders and content
                         const drawTotalRow = (y, description, expense = null, revenue = null, isHighlighted = false) => {
-                            // Draw background if highlighted
                             if (isHighlighted) {
                                 doc.setFillColor(246, 246, 252);
                                 doc.rect(startX, y - 7, descriptionWidth + columnWidths.expense + columnWidths.revenue, rowHeight, 'F');
                             }
 
-                            // Draw cell borders
-                            // Description cell (reduced width)
                             doc.rect(startX, y - 7, descriptionWidth, rowHeight);
-                            // Expense cell
                             doc.rect(expenseX, y - 7, columnWidths.expense, rowHeight);
-                            // Revenue cell
                             doc.rect(revenueX, y - 7, columnWidths.revenue, rowHeight);
 
-                            // Fill cells with text
                             doc.text(description, startX + textPadding, y);
                             
                             if (expense !== null) {
@@ -377,37 +400,34 @@ export function BalanceSheet() {
                         // Draw total rows with cell formatting
                         drawTotalRow(finalY, 'Total:', totalExpense, totalRevenue);
                         drawTotalRow(
-                            finalY + lineSpacing,
-                            'Net Income:',
-                            null,
-                            netAmount
-                        );
-                        drawTotalRow(
-                            finalY + (lineSpacing * 2),
-                            `${monthNames[(selectedMonth - 1 + 12) % 12]} - Brought Forward:`,
-                            null,
-                            balanceData[user.toLowerCase()].previousMonthTakeHome
-                        );
-                        drawTotalRow(
-                            finalY + (lineSpacing * 3),
+                            finalY + (lineSpacing * 1),
                             `${monthNames[selectedMonth]} - Cash in Hand:`,
                             null,
-                            balanceData[user.toLowerCase()].thisMonthTakeHome,
+                            cashInHand,
                             true
                         );
                     }
+                },
+                styles: {
+                    overflow: 'linebreak',
+                    cellPadding: 3,
+                    fontSize: 10,
+                    cellWidth: 'auto',
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1
                 }
             });
 
-            // Save the PDF
-            const filename = `SP_Parking_${user}_Statement_${monthNames[selectedMonth]}_${selectedYear}.pdf`;
-            doc.save(filename);
-            toast.success(`PDF generated successfully for ${user}`);
+            // Add a small delay before saving to ensure everything is drawn
+            setTimeout(() => {
+                const filename = `SP_Parking_${user}_Statement_${monthNames[selectedMonth]}_${selectedYear}.pdf`;
+                doc.save(filename);
+                toast.success(`PDF generated successfully for ${user}`);
+                setIsLoading(false);
+            }, 100);
         } catch (error) {
             console.error('Error generating PDF:', error);
             toast.error(`Failed to generate PDF for ${user}`);
-        } finally {
-            setIsLoading(false);
         }
     };
 
