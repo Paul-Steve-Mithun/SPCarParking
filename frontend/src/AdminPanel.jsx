@@ -269,7 +269,7 @@ export function AdminPanel() {
 
             const contacts = [
                 ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000']
+                ['Rental:', '9842190000 / 9843050753']
             ];
 
             doc.autoTable({
@@ -285,8 +285,8 @@ export function AdminPanel() {
                     textColor: [44, 62, 80]
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 55 }
+                    0: { fontStyle: 'bold', cellWidth: 30 },
+                    1: { cellWidth: 65 }
                 }
             });
 
@@ -548,7 +548,7 @@ export function AdminPanel() {
 
             const contacts = [
                 ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000']
+                ['Rental:', '9842190000 / 9843050753']
             ];
 
             doc.autoTable({
@@ -564,8 +564,8 @@ export function AdminPanel() {
                     textColor: [44, 62, 80]
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },  // Changed from 40 to 35
-                    1: { cellWidth: 55 }
+                    0: { fontStyle: 'bold', cellWidth: 30 },
+                    1: { cellWidth: 65 }
                 }
             });
 
@@ -737,9 +737,9 @@ export function AdminPanel() {
             const summaryCards = [
                 { title: 'Total Vehicles', value: totalVehicles },
                 { title: 'Active Monthly', value: activeMonthly },
-                { title: 'Inactive Monthly', value: inactiveMonthly },
+                { title: 'Expired Monthly', value: inactiveMonthly },
                 { title: 'Active Daily', value: activeDaily },
-                { title: 'Inactive Daily', value: inactiveDaily }
+                { title: 'Expired Daily', value: inactiveDaily }
             ];
 
             // Draw cards

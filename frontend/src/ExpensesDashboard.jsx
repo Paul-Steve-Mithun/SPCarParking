@@ -199,6 +199,21 @@ export function ExpensesDashboard() {
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
         };
 
+        // Add the formatAmount function
+        const formatAmount = (amount) => {
+            if (amount === '-') return '-';
+            
+            // Convert amount to string with 2 decimal places
+            const amountStr = amount.toFixed(2);
+            
+            // Calculate spaces needed (for maximum 100000.00)
+            const spaceNeeded = 10 - amountStr.length;
+            const spaces = ' '.repeat(spaceNeeded);
+            
+            // Return formatted string with consistent spacing
+            return `INR${spaces}${amountStr}`;
+        };
+
         // Table columns
         const baseColumns = [
             { header: 'S.No', dataKey: 'sno' },
@@ -230,7 +245,7 @@ export function ExpensesDashboard() {
                     type: record.expenseType,
                     description: record.description || '-',
                     mode: record.transactionMode,
-                    amount: `INR ${record.amount.toFixed(2)}`
+                    amount: formatAmount(record.amount)
                 };
 
                 // Add spentBy only for complete report
@@ -270,7 +285,7 @@ export function ExpensesDashboard() {
                 description: { cellWidth: columnWidths.description, halign: 'left' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
                 spentBy: { cellWidth: columnWidths.spentBy, halign: 'center' },
-                amount: { cellWidth: columnWidths.amount, halign: 'right' }
+                amount: { cellWidth: columnWidths.amount, halign: 'right' }  // Right align amount
             },
             alternateRowStyles: {
                 fillColor: [250, 250, 255]
@@ -298,41 +313,78 @@ export function ExpensesDashboard() {
                     { align: 'center' }
                 );
             },
-            didDrawCell: function(data) {
-                // Add totals after the last row
-                if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
-                    const finalY = data.cell.y + data.cell.height + 10;
+            didParseCell: function(data) {
+                // For amount column, use monospace font and bold style
+                if (data.column.dataKey === 'amount') {
+                    data.cell.styles.font = 'courier';
+                    data.cell.styles.fontStyle = 'bold';
                     
-                    // Set bold font for totals
+                    // Handle different data types
+                    if (data.cell.raw !== '-') {
+                        let amount;
+                        if (typeof data.cell.raw === 'string') {
+                            amount = parseFloat(data.cell.raw.replace('INR', '').trim());
+                        } else if (typeof data.cell.raw === 'number') {
+                            amount = data.cell.raw;
+                        }
+
+                        if (!isNaN(amount)) {
+                            data.cell.text = [formatAmount(amount)];
+                        }
+                    }
+                }
+            },
+            didDrawCell: function(data) {
+                // Draw stats after the last cell is processed
+                if (data.row.index === sortedTableRows.length - 1 && data.column.index === baseColumns.length - 1) {
+                    let finalY = data.cell.y + data.cell.height + 10;
+                    const requiredHeight = !filterBy ? 50 : 30; // Height needed for stats boxes
+                    
+                    if (pageHeight - finalY < requiredHeight) {
+                        doc.addPage();
+                        finalY = 40;
+                    }
+
+                    // Set styles for totals
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(10);
                     doc.setTextColor(0, 0, 0);
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.1);
 
-                    // Calculate positions
-                    const boxWidth = 70; // Width of the box
-                    const boxHeight = 10; // Height of each box
-                    const boxX = pageWidth - leftMargin - boxWidth; // Box starting from right
-                    const textPadding = 5; // Padding inside the box
-                    const lineSpacing = 10; // Spacing between lines
+                    const lineSpacing = 10;
+                    const textPadding = 5;
+                    const rowHeight = 10;
 
-                    // Function to draw a box with text
-                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
-                        // Draw box
-                        doc.setDrawColor(200, 200, 200);
-                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
-                        doc.setLineWidth(0.1);
-                        doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+                    // Calculate positions for total boxes
+                    const totalWidth = columnWidths.description + columnWidths.mode + columnWidths.amount;
+                    const descriptionWidth = totalWidth * 0.4;
+                    const rightMargin = pageWidth - leftMargin;
+                    const amountX = rightMargin - columnWidths.amount;
+                    const startX = amountX - descriptionWidth;
 
-                        // Draw text
-                        doc.setFontSize(isGrandTotal ? 11 : 10);
+                    // Function to draw total row
+                    const drawTotalRow = (y, description, amount, isHighlighted = false) => {
+                        if (isHighlighted) {
+                            doc.setFillColor(246, 246, 252);
+                            doc.rect(startX, y - 7, descriptionWidth + columnWidths.amount, rowHeight, 'F');
+                        }
+
+                        doc.rect(startX, y - 7, descriptionWidth, rowHeight);
+                        doc.rect(amountX, y - 7, columnWidths.amount, rowHeight);
+
+                        // Set bold font for description
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(description, startX + 2, y);
                         
-                        // Calculate text positions for better alignment
-                        const labelX = boxX + textPadding;
-                        const amountX = boxX + boxWidth - textPadding;
-                        
-                        // Draw label and amount with reduced space between them
-                        doc.text(label, labelX, y);
-                        doc.text(amount, amountX, y, { align: 'right' });
+                        // Set monospace bold font for amount
+                        doc.setFont('courier', 'bold');
+                        doc.text(
+                            formatAmount(amount),
+                            amountX + columnWidths.amount - 2,
+                            y, 
+                            { align: 'right' }
+                        );
                     };
 
                     if (!filterBy) {
@@ -345,33 +397,25 @@ export function ExpensesDashboard() {
                             .filter(record => record.spentBy === 'Mani')
                             .reduce((sum, record) => sum + record.amount, 0);
 
-                        // Draw Balu's Expenses box
-                        drawTotalBox(
-                            finalY, 
-                            'Balu\'s Expenses:', 
-                            `INR ${baluExpenses.toFixed(2)}`
-                        );
+                        // Draw Balu's Expenses
+                        drawTotalRow(finalY, 'Balu\'s Expenses:', baluExpenses);
 
-                        // Draw Mani's Expenses box
-                        drawTotalBox(
-                            finalY + lineSpacing, 
-                            'Mani\'s Expenses:', 
-                            `INR ${maniExpenses.toFixed(2)}`
-                        );
+                        // Draw Mani's Expenses
+                        drawTotalRow(finalY + lineSpacing, 'Mani\'s Expenses:', maniExpenses);
 
-                        // Draw Grand Total box
-                        drawTotalBox(
-                            finalY + (lineSpacing * 2), 
-                            'Grand Total:', 
-                            `INR ${filteredStats.totalExpenses.toFixed(2)}`,
+                        // Draw Grand Total
+                        drawTotalRow(
+                            finalY + (lineSpacing * 2),
+                            'Grand Total:',
+                            filteredStats.totalExpenses,
                             true
                         );
                     } else {
-                        // For filtered reports (Balu's or Mani's), show only grand total
-                        drawTotalBox(
-                            finalY, 
-                            'Total Expenses:', 
-                            `INR ${filteredStats.totalExpenses.toFixed(2)}`,
+                        // For filtered reports, show only total
+                        drawTotalRow(
+                            finalY,
+                            'Total Expenses:',
+                            filteredStats.totalExpenses,
                             true
                         );
                     }

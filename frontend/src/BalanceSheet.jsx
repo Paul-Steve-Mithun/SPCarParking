@@ -252,17 +252,32 @@ export function BalanceSheet() {
                 });
             };
 
+            // Update the formatAmount function - remove the font setting
+            const formatAmount = (amount) => {
+                if (amount === '-') return '-';
+                
+                // Convert amount to string with 2 decimal places
+                const amountStr = amount.toFixed(2);
+                
+                // Calculate spaces needed (for maximum 100000.00)
+                const spaceNeeded = 10 - amountStr.length;
+                const spaces = ' '.repeat(spaceNeeded);
+                
+                // Return formatted string with consistent spacing
+                return `INR${spaces}${amountStr}`;
+            };
+
             // Updated table data preparation with brought forward as first row
             const tableRows = [
                 {
                     sno: "1",
                     date: `01/${(selectedMonth + 1).toString().padStart(2, '0')}/${selectedYear}`,
                     type: "-",
-                    description: `${monthNames[(selectedMonth - 1 + 12) % 12]} Brought Forward`,
+                    description: `${monthNames[(selectedMonth - 1 + 12) % 12].toUpperCase()} BROUGHT FORWARD`,
                     mode: "-",
                     expense: "-",
                     revenue: { 
-                        content: `INR ${balanceData[user.toLowerCase()].previousMonthTakeHome.toFixed(2)}`,
+                        content: formatAmount(balanceData[user.toLowerCase()].previousMonthTakeHome),
                         styles: { fontStyle: 'bold' }
                     }
                 },
@@ -274,8 +289,8 @@ export function BalanceSheet() {
                         ? (record.vehicleDescription || '-').toUpperCase() 
                         : (record.description || '-').toUpperCase(),
                     mode: record.transactionMode,
-                    expense: record.type === 'expense' ? `INR ${record.amount.toFixed(2)}` : '-',
-                    revenue: record.type === 'revenue' ? `INR ${record.revenueAmount.toFixed(2)}` : '-'
+                    expense: record.type === 'expense' ? formatAmount(record.amount) : '-',
+                    revenue: record.type === 'revenue' ? formatAmount(record.revenueAmount) : '-'
                 }))
             ];
 
@@ -286,6 +301,12 @@ export function BalanceSheet() {
             const cashInHand = totalRevenue - totalExpense;
 
             let isLastCellProcessed = false;
+
+            // Add variables to track pages and overflow status
+            let totalPages = 1;
+            let hasStatsOverflow = false;
+            let lastTablePage = 1;
+            let pageNumbers = [];  // Store page numbers for later
 
             doc.autoTable({
                 startY: 45,
@@ -321,37 +342,61 @@ export function BalanceSheet() {
                     sno: { cellWidth: columnWidths.sno, halign: 'center' },
                     date: { cellWidth: columnWidths.date, halign: 'center' },
                     type: { cellWidth: columnWidths.type, halign: 'center' },
-                    description: { cellWidth: columnWidths.description, halign: 'center' },
+                    description: { cellWidth: columnWidths.description, halign: 'left' },
                     mode: { cellWidth: columnWidths.mode, halign: 'center' },
                     expense: { cellWidth: columnWidths.expense, halign: 'right' },
                     revenue: { cellWidth: columnWidths.revenue, halign: 'right' }
                 },
                 margin: { left: leftMargin },
-                didDrawPage: (data) => {
-                    doc.setFontSize(10);
-                    doc.setTextColor(0, 0, 0);
-                    doc.text(
-                        `Page ${data.pageNumber} of ${data.pageCount}`,
-                        leftMargin,
-                        pageHeight - 10,
-                        { align: 'left' }
-                    );
+                didDrawPage: function(data) {
+                    // Store current page info for later
+                    pageNumbers.push({
+                        pageNumber: doc.internal.getCurrentPageInfo().pageNumber,
+                        y: pageHeight - 10
+                    });
                 },
-                didParseCell: (data) => {
-                    // Check if this is the last cell of the last row
+                didParseCell: function(data) {
+                    // For amount columns, use monospace font and bold style
+                    if (data.column.dataKey === 'expense' || data.column.dataKey === 'revenue') {
+                        data.cell.styles.font = 'courier';
+                        data.cell.styles.fontStyle = 'bold';  // Make all amounts bold
+                        
+                        // Handle different data types
+                        if (data.cell.raw !== '-') {
+                            let amount;
+                            if (typeof data.cell.raw === 'object' && data.cell.raw.content) {
+                                // Handle object format (like the first row revenue)
+                                amount = parseFloat(data.cell.raw.content.replace('INR', '').trim());
+                            } else if (typeof data.cell.raw === 'string') {
+                                // Handle string format
+                                amount = parseFloat(data.cell.raw.replace('INR', '').trim());
+                            } else if (typeof data.cell.raw === 'number') {
+                                // Handle number format
+                                amount = data.cell.raw;
+                            }
+
+                            if (!isNaN(amount)) {
+                                data.cell.text = [formatAmount(amount)];
+                            }
+                        }
+                    }
+
+                    // Set flag when we reach the last cell
                     if (data.row.index === tableRows.length - 1 && data.column.index === 6) {
                         isLastCellProcessed = true;
                     }
                 },
-                didDrawCell: (data) => {
-                    // Draw stats after the last cell is processed
-                    if (isLastCellProcessed && data.row.index === tableRows.length - 1 && data.column.index === 6) {
+                didDrawCell: function(data) {
+                    if (data.row.index === tableRows.length - 1 && data.column.index === 6) {
                         let finalY = data.cell.y + data.cell.height + 10;
                         const requiredHeight = 50;
                         
                         if (pageHeight - finalY < requiredHeight) {
+                            hasStatsOverflow = true;
+                            lastTablePage = doc.internal.getCurrentPageInfo().pageNumber;
                             doc.addPage();
                             finalY = 40;
+                            totalPages = doc.internal.getNumberOfPages();
                         }
 
                         // Set styles for totals
@@ -375,7 +420,7 @@ export function BalanceSheet() {
                         const expenseX = revenueX - columnWidths.expense;
                         const startX = expenseX - descriptionWidth;
 
-                        // Function to draw cell borders and content
+                        // Update the drawTotalRow function
                         const drawTotalRow = (y, description, expense = null, revenue = null, isHighlighted = false) => {
                             if (isHighlighted) {
                                 doc.setFillColor(246, 246, 252);
@@ -386,14 +431,29 @@ export function BalanceSheet() {
                             doc.rect(expenseX, y - 7, columnWidths.expense, rowHeight);
                             doc.rect(revenueX, y - 7, columnWidths.revenue, rowHeight);
 
-                            doc.text(description, startX + textPadding, y);
+                            // Set bold font for description
+                            doc.setFont('helvetica', 'bold');
+                            doc.text(description, startX + 2, y);
+                            
+                            // Set monospace bold font for amounts
+                            doc.setFont('courier', 'bold');
                             
                             if (expense !== null) {
-                                doc.text(`INR ${expense.toFixed(2)}`, expenseX + 2, y, { align: 'left' });
+                                doc.text(
+                                    formatAmount(expense),
+                                    expenseX + columnWidths.expense - 2,
+                                    y, 
+                                    { align: 'right' }
+                                );
                             }
                             
                             if (revenue !== null) {
-                                doc.text(`INR ${revenue.toFixed(2)}`, revenueX + 2, y, { align: 'left' });
+                                doc.text(
+                                    formatAmount(revenue),
+                                    revenueX + columnWidths.revenue - 2,
+                                    y, 
+                                    { align: 'right' }
+                                );
                             }
                         };
 
@@ -417,6 +477,22 @@ export function BalanceSheet() {
                     lineWidth: 0.1
                 }
             });
+
+            // After autoTable, update totalPages before adding page numbers
+            totalPages = doc.internal.getNumberOfPages();
+
+            // After everything is drawn, add page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(
+                    `Page ${i} of ${totalPages}`,
+                    pageWidth / 2,
+                    pageHeight - 10,
+                    { align: 'center' }
+                );
+            }
 
             // Add a small delay before saving to ensure everything is drawn
             setTimeout(() => {

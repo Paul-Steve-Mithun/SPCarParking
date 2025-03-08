@@ -54,6 +54,12 @@ export function RevenueDashboard() {
     });
     const [isSaving, setIsSaving] = useState(false);
 
+    // Add variables to track pages and overflow status
+    let totalPages = 1;
+    let hasStatsOverflow = false;
+    let lastTablePage = 1;
+    let pageNumbers = [];  // Store page numbers for later
+
     useEffect(() => {
         const filtered = revenueData
             .filter(record => {
@@ -189,10 +195,15 @@ export function RevenueDashboard() {
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
         
-        // Filter data based on selection
-        const filteredData = filterBy 
+        // Filter data based on selection and remove zero/null amounts
+        const filteredData = (filterBy 
             ? revenueData.filter(record => record.receivedBy === filterBy)
-            : revenueData;
+            : revenueData)
+            .filter(record => 
+                record.revenueAmount && 
+                record.revenueAmount !== 0 && 
+                record.revenueAmount !== 0.00
+            );
 
         // Calculate totals for filtered data
         const filteredStats = {
@@ -215,19 +226,28 @@ export function RevenueDashboard() {
                 .reduce((sum, record) => sum + record.revenueAmount, 0)
         };
 
-        // Calculate total table width based on column widths
+        // Calculate column widths and total width
         const columnWidths = {
             sno: 15,
             date: 25,
-            vehicleNumber: 35,
-            description: 45,
+            vehicleNumber: 30,
+            description: 40,
             lot: 20,
             mode: 25,
-            receivedBy: filterBy ? 0 : 30,
+            receivedBy: 25,
             amount: 35
         };
-        
-        const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
+
+        // Calculate total width based on included columns for the current report type
+        const includedColumnWidths = { ...columnWidths };
+        if (filterBy) {
+            delete includedColumnWidths.receivedBy; // Remove receivedBy width for filtered reports
+        }
+
+        // Calculate total width for the current report type
+        const totalTableWidth = Object.values(includedColumnWidths).reduce((sum, width) => sum + width, 0);
+
+        // Calculate left margin to center the table
         const leftMargin = (pageWidth - totalTableWidth) / 2;
 
         // Modern header with gradient-like effect
@@ -271,43 +291,45 @@ export function RevenueDashboard() {
         ];
 
         // Add 'Received By' column only for complete report
-        const tableColumn = filterBy 
+        const tableColumns = filterBy 
             ? baseColumns 
             : [...baseColumns.slice(0, 6), { header: 'Received By', dataKey: 'receivedBy' }, baseColumns[6]];
 
-        // Modify sortedTableRows to filter out zero/null amounts and match new column order
+        // Add the formatAmount function
+        const formatAmount = (amount) => {
+            if (amount === '-') return '-';
+            
+            // Convert amount to string with 2 decimal places
+            const amountStr = amount.toFixed(2);
+            
+            // Calculate spaces needed (for maximum 999999.00 = 9 characters)
+            const spaceNeeded = Math.max(0, 10 - amountStr.length);  // Increased from 7 to 9
+            const spaces = ' '.repeat(spaceNeeded);
+            
+            // Return formatted string with consistent spacing
+            return `INR${spaces}${amountStr}`;
+        };
+
+        // Update table data preparation with filtered data
         const sortedTableRows = filteredData
-            .filter(record => {
-                // Filter out records with zero, null, or 0.00 revenue amounts
-                return record.revenueAmount && 
-                       record.revenueAmount !== 0 && 
-                       record.revenueAmount !== 0.00;
-            })
             .sort((a, b) => {
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
                 return dateA - dateB;
             })
-            .map((record, index) => {
-                const baseRow = {
-                    sno: (index + 1).toString(),
-                    date: formatDateForPDF(record.transactionDate),
-                    vehicleNumber: record.vehicleNumber || '',
-                    description: record.vehicleDescription || '',
-                    lot: record.lotNumber || 'Open',
-                    mode: record.transactionMode,
-                    amount: `INR ${record.revenueAmount.toFixed(2)}`
-                };
-
-                // Add receivedBy only for complete report
-                return filterBy ? baseRow : {
-                    ...baseRow,
-                    receivedBy: record.receivedBy || 'N/A'
-                };
-            });
+            .map((record, index) => ({
+                sno: (index + 1).toString(),  // Maintain sequential numbering
+                date: formatDateForPDF(record.transactionDate),
+                vehicleNumber: record.vehicleNumber || 'N/A',
+                description: (record.vehicleDescription || '-').toUpperCase(),
+                lot: record.lotNumber || 'Open',
+                mode: record.transactionMode,
+                receivedBy: !filterBy ? record.receivedBy : undefined,
+                amount: formatAmount(record.revenueAmount)
+            }));
 
         doc.autoTable({
-            columns: tableColumn,
+            columns: tableColumns,
             body: sortedTableRows,
             startY: 45,
             theme: 'grid',
@@ -335,139 +357,122 @@ export function RevenueDashboard() {
                 description: { cellWidth: columnWidths.description, halign: 'left' },
                 lot: { cellWidth: columnWidths.lot, halign: 'center' },
                 mode: { cellWidth: columnWidths.mode, halign: 'center' },
-                receivedBy: filterBy ? undefined : { cellWidth: columnWidths.receivedBy, halign: 'center' },
+                receivedBy: { cellWidth: columnWidths.receivedBy, halign: 'center' },
                 amount: { cellWidth: columnWidths.amount, halign: 'right' }
             },
-            alternateRowStyles: {
-                fillColor: [250, 250, 255]
-            },
-            margin: { 
-                left: leftMargin,
-                right: leftMargin
-            },
-            styles: {
-                fontSize: 9,
-                font: 'helvetica',
-                lineWidth: 0.1,
-                overflow: 'linebreak',
-                cellWidth: 'auto'
-            },
-            didDrawPage: function(data) {
-                // Add page number at the bottom center
-                doc.setFontSize(11);
-                doc.setTextColor(0, 0, 0);
-                doc.text(
-                    `Page ${data.pageNumber}`, 
-                    pageWidth / 2, 
-                    pageHeight - 15, 
-                    { align: 'center' }
-                );
+            didParseCell: function(data) {
+                // For amount column, use monospace font and bold style
+                if (data.column.dataKey === 'amount') {
+                    data.cell.styles.font = 'courier';
+                    data.cell.styles.fontStyle = 'bold';
+                }
             },
             didDrawCell: function(data) {
-                // Add totals after the last row
-                if (data.row.index === sortedTableRows.length - 1 && data.column.index === 0) {
-                    const finalY = data.cell.y + data.cell.height + 10;
+                if (data.row.index === sortedTableRows.length - 1 && 
+                    ((filterBy && data.column.index === 6) || (!filterBy && data.column.index === 7))) {
+                    let finalY = data.cell.y + data.cell.height + 10;
+                    const requiredHeight = !filterBy ? 70 : 40;
                     
-                    // Set bold font for totals
+                    if (pageHeight - finalY < requiredHeight) {
+                        hasStatsOverflow = true;
+                        lastTablePage = doc.internal.getCurrentPageInfo().pageNumber;
+                        doc.addPage();
+                        finalY = 40;
+                        totalPages = doc.internal.getNumberOfPages();
+                    }
+
+                    // Set styles for totals
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(10);
                     doc.setTextColor(0, 0, 0);
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.1);
 
-                    // Calculate positions
-                    const boxWidth = 70; // Width of the box
-                    const boxHeight = 10; // Height of each box
-                    const boxX = pageWidth - leftMargin - boxWidth; // Box starting from right
-                    const textPadding = 5; // Padding inside the box
-                    const lineSpacing = 10; // Spacing between lines
+                    const lineSpacing = 10;
+                    const textPadding = 2;
+                    const rowHeight = 10;
 
-                    // Function to draw a box with text
-                    const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
-                        // Draw box
-                        doc.setDrawColor(200, 200, 200);
-                        doc.setFillColor(isGrandTotal ? 246 : 255, isGrandTotal ? 246 : 255, isGrandTotal ? 252 : 255);
-                        doc.setLineWidth(0.1);
-                        doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
+                    // Calculate positions for total boxes
+                    const totalWidth = columnWidths.description + columnWidths.mode + columnWidths.amount;
+                    const descriptionWidth = totalWidth * 0.4;
+                    const rightMargin = pageWidth - leftMargin;
+                    const amountX = rightMargin - columnWidths.amount;
+                    const startX = amountX - descriptionWidth;
 
-                        // Draw text
-                        doc.setFontSize(isGrandTotal ? 11 : 10);
+                    // Function to draw total row
+                    const drawTotalRow = (y, description, amount, isHighlighted = false) => {
+                        if (isHighlighted) {
+                            doc.setFillColor(246, 246, 252);
+                            doc.rect(startX, y - 7, descriptionWidth + columnWidths.amount, rowHeight, 'F');
+                        }
+
+                        doc.rect(startX, y - 7, descriptionWidth, rowHeight);
+                        doc.rect(amountX, y - 7, columnWidths.amount, rowHeight);
+
+                        // Set bold font for description
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(description, startX + 2, y);
                         
-                        // Calculate text positions for better alignment
-                        const labelX = boxX + textPadding;
-                        const amountX = boxX + boxWidth - textPadding;
-                        
-                        // Draw label and amount with reduced space between them
-                        doc.text(label, labelX, y);
-                        doc.text(amount, amountX, y, { align: 'right' });
+                        // Set monospace bold font for amount
+                        doc.setFont('courier', 'bold');
+                        doc.text(
+                            formatAmount(amount),
+                            amountX + columnWidths.amount - 2,
+                            y, 
+                            { align: 'right' }
+                        );
                     };
 
-                    // Draw Monthly Revenue box
-                    drawTotalBox(
-                        finalY, 
-                        'Monthly Revenue:', 
-                        `INR ${filteredStats.monthlyRevenue.toFixed(2)}`
-                    );
-
-                    // Draw Daily Revenue box
-                    drawTotalBox(
-                        finalY + lineSpacing, 
-                        'Daily Revenue:', 
-                        `INR ${filteredStats.dailyRevenue.toFixed(2)}`
-                    );
-
-                    // Only show Balu's and Mani's collection in the complete report
                     if (!filterBy) {
-                        // Calculate collections by receiver with zero amount filtering
-                        const baluCollection = filteredData
-                            .filter(record => 
-                                record.receivedBy === 'Balu' && 
-                                record.revenueAmount && 
-                                record.revenueAmount !== 0 && 
-                                record.revenueAmount !== 0.00
-                            )
-                            .reduce((sum, record) => sum + record.revenueAmount, 0);
-
-                        const maniCollection = filteredData
-                            .filter(record => 
-                                record.receivedBy === 'Mani' && 
-                                record.revenueAmount && 
-                                record.revenueAmount !== 0 && 
-                                record.revenueAmount !== 0.00
-                            )
-                            .reduce((sum, record) => sum + record.revenueAmount, 0);
-
-                        // Draw Balu's Collection box
-                        drawTotalBox(
-                            finalY + (lineSpacing * 2), 
-                            'Balu\'s Collection:', 
-                            `INR ${baluCollection.toFixed(2)}`
-                        );
-
-                        // Draw Mani's Collection box
-                        drawTotalBox(
-                            finalY + (lineSpacing * 3), 
-                            'Mani\'s Collection:', 
-                            `INR ${maniCollection.toFixed(2)}`
-                        );
-
-                        // Draw Grand Total box after collections
-                        drawTotalBox(
-                            finalY + (lineSpacing * 4), 
-                            'Grand Total:', 
-                            `INR ${filteredStats.totalRevenue.toFixed(2)}`,
-                            true
-                        );
-                    } else {
-                        // For filtered reports (Balu's or Mani's), show grand total directly after daily revenue
-                        drawTotalBox(
-                            finalY + (lineSpacing * 2), 
-                            'Grand Total:', 
-                            `INR ${filteredStats.totalRevenue.toFixed(2)}`,
-                            true
-                        );
+                        // Draw Balu's and Mani's Collections
+                        drawTotalRow(finalY, 'Balu\'s Collection :', stats.baluCollection);
+                        drawTotalRow(finalY + lineSpacing, 'Mani\'s Collection :', stats.maniCollection);
+                        finalY += lineSpacing * 2;
                     }
+
+                    // Draw Monthly and Daily Revenue
+                    drawTotalRow(finalY, 'Monthly Revenue :', filteredStats.monthlyRevenue);
+                    drawTotalRow(finalY + lineSpacing, 'Daily Revenue :', filteredStats.dailyRevenue);
+
+                    // Draw Grand Total
+                    drawTotalRow(
+                        finalY + (lineSpacing * 2),
+                        'Grand Total :',
+                        filteredStats.totalRevenue,
+                        true
+                    );
                 }
+            },
+            margin: { 
+                left: leftMargin,
+                right: leftMargin,  // Add right margin to match left
+                bottom: 20
+            },
+            
+            didDrawPage: function(data) {
+                // Store current page info for later
+                pageNumbers.push({
+                    pageNumber: doc.internal.getCurrentPageInfo().pageNumber,
+                    y: pageHeight - 15
+                });
             }
         });
+
+        // After autoTable, update totalPages before adding page numbers
+        totalPages = doc.internal.getNumberOfPages();
+
+        // After everything is drawn, add page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(
+                `Page ${i} of ${totalPages}`,
+                pageWidth / 2,
+                pageHeight - 15,
+                { align: 'center' }
+            );
+        }
 
         const filename = filterBy 
             ? `SP_Parking_Revenue_${filterBy}_${monthNames[selectedMonth]}_${selectedYear}.pdf`
