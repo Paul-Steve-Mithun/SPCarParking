@@ -640,38 +640,39 @@ export function VehicleInfo() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-6 px-4">
-            <div className="max-w-7xl mx-auto space-y-6">
-                {/* Search Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="min-h-screen bg-gray-50 p-2 sm:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+                {/* Search Section - Improved mobile padding */}
+                <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="Search by vehicle number, description, owner name, or lot number..."
+                            placeholder="Search vehicles..."
                             value={searchQuery}
                             onChange={handleSearch}
-                            className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2.5 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm sm:text-base"
                         />
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
 
+                    {/* Search Results - Improved mobile view */}
                     {searchQuery && filteredVehicles.length > 0 && !selectedVehicle && (
-                        <div className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
+                        <div className="mt-3 space-y-2 max-h-[300px] overflow-y-auto">
                             {filteredVehicles.map(vehicle => (
                                 <button
                                     key={vehicle._id}
                                     onClick={() => setSelectedVehicle(vehicle)}
-                                    className="w-full text-left p-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-4"
+                                    className="w-full text-left p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3"
                                 >
-                                    <Car className="text-blue-500" />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium">{vehicle.vehicleNumber}</p>
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
+                                    <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="font-medium text-sm sm:text-base">{vehicle.vehicleNumber}</p>
+                                            <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
                                                 {vehicle.lotNumber || 'Open'}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                                        <p className="text-xs sm:text-sm text-gray-500 truncate">{vehicle.vehicleDescription}</p>
                                     </div>
                                 </button>
                             ))}
@@ -681,17 +682,17 @@ export function VehicleInfo() {
 
                 {/* Vehicle Details Section */}
                 {selectedVehicle && (
-                    <div className="space-y-6">
-                        {/* Basic Info Card */}
+                    <div className="space-y-4 sm:space-y-6">
+                        {/* Basic Info Card - Improved header for mobile */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <h2 className="text-lg sm:text-2xl font-bold text-white">Vehicle Details</h2>
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-3 py-1.5 bg-white/30 text-white text-sm sm:text-base font-extrabold rounded-lg shadow-lg">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="px-2.5 py-1 bg-white/30 text-white text-sm font-bold rounded-lg shadow-lg">
                                             {selectedVehicle.lotNumber || 'Open'}
                                         </span>
-                                        <span className={`px-3 py-1.5 text-sm sm:text-base font-semibold rounded-lg shadow-lg ${
+                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-lg ${
                                             selectedVehicle.status === 'active' 
                                                 ? 'bg-green-500/80 text-white' 
                                                 : 'bg-red-500/80 text-white'
@@ -703,96 +704,94 @@ export function VehicleInfo() {
                                             className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
                                             title="Print Receipt"
                                         >
-                                            <PrinterIcon className="w-5 h-5" />
+                                            <PrinterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div className="p-6 space-y-6">
-                                {/* Row 1: Vehicle Number - Vehicle Description - Vehicle Type */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <div className="flex items-center space-x-3">
-                                        <Car className="text-blue-500 flex-shrink-0" />
+
+                            {/* Details Grid - Full information with mobile responsiveness */}
+                            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                                {/* Row 1: Vehicle Details */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Vehicle Number</p>
-                                            <p className="font-medium truncate">{selectedVehicle.vehicleNumber}</p>
+                                            <p className="text-xs text-gray-500">Vehicle Number</p>
+                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.vehicleNumber}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <Car className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Vehicle Description</p>
-                                            <p className="font-medium truncate">{selectedVehicle.vehicleDescription}</p>
+                                            <p className="text-xs text-gray-500">Description</p>
+                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.vehicleDescription}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <Car className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <MapPin className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Vehicle Type</p>
-                                            <p className="font-medium truncate">
-                                                {selectedVehicle.vehicleType === 'own' ? 'Own Board' : 'T Board'}
-                                            </p>
+                                            <p className="text-xs text-gray-500">Lot Number</p>
+                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.lotNumber || 'Open'}</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Row 2: Owner Name - Contact - Start Date */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <div className="flex items-center space-x-3">
-                                        <User className="text-blue-500 flex-shrink-0" />
+                                {/* Row 2: Owner Details */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <User className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Owner Name</p>
-                                            <p className="font-medium truncate">{selectedVehicle.ownerName}</p>
+                                            <p className="text-xs text-gray-500">Owner Name</p>
+                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.ownerName}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <Phone className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <Phone className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Contact Number</p>
+                                            <p className="text-xs text-gray-500">Contact</p>
                                             <a 
                                                 href={`tel:${selectedVehicle.contactNumber}`}
-                                                className="font-medium truncate text-blue-600 hover:text-blue-800 hover:underline"
-                                                onClick={(e) => e.stopPropagation()}
+                                                className="font-medium text-sm sm:text-base text-blue-600 hover:text-blue-800 hover:underline"
                                             >
                                                 {selectedVehicle.contactNumber}
                                             </a>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <Calendar className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <Calendar className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Start Date</p>
-                                            <p className="font-medium truncate">
+                                            <p className="text-xs text-gray-500">Start Date</p>
+                                            <p className="font-medium text-sm sm:text-base">
                                                 {new Date(selectedVehicle.startDate).toLocaleDateString('en-GB')}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Row 3: Rental Type - Rent Price - Total Rental Price/Advance */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <div className="flex items-center space-x-3">
-                                        <Calendar className="text-blue-500 flex-shrink-0" />
+                                {/* Row 3: Rental Details */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <Calendar className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Rental Type</p>
-                                            <p className="font-medium capitalize truncate">{selectedVehicle.rentalType}</p>
+                                            <p className="text-xs text-gray-500">Rental Type</p>
+                                            <p className="font-medium text-sm sm:text-base capitalize">{selectedVehicle.rentalType}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <IndianRupee className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <IndianRupee className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">Rent Price</p>
-                                            <p className="font-medium truncate">₹{selectedVehicle.rentPrice}</p>
+                                            <p className="text-xs text-gray-500">Rent Price</p>
+                                            <p className="font-medium text-sm sm:text-base">₹{selectedVehicle.rentPrice}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <IndianRupee className="text-blue-500 flex-shrink-0" />
+                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+                                        <IndianRupee className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                         <div className="min-w-0">
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-xs text-gray-500">
                                                 {selectedVehicle.rentalType === 'monthly' ? 'Advance Amount' : 'Total Rental Price'}
                                             </p>
-                                            <p className="font-medium truncate">
+                                            <p className="font-medium text-sm sm:text-base">
                                                 ₹{selectedVehicle.rentalType === 'monthly' 
                                                     ? selectedVehicle.advanceAmount 
                                                     : selectedVehicle.rentPrice * selectedVehicle.numberOfDays}
@@ -808,10 +807,10 @@ export function VehicleInfo() {
                             </div>
                         </div>
 
-                        {/* Images Section */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
+                        {/* Images Section - Improved grid for mobile */}
+                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
                             <h3 className="text-lg font-semibold mb-4">Documents & Images</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {selectedVehicle.vehicleImage?.url && (
                                     <div 
                                         onClick={() => handleImageClick(selectedVehicle.vehicleImage.url, 'Vehicle Image', selectedVehicle)}
@@ -875,81 +874,83 @@ export function VehicleInfo() {
                             </div>
                         </div>
 
-                        {/* Transaction History */}
+                        {/* Transaction History - Improved mobile table */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
-                                <h3 className="text-xl font-bold text-white">Transaction History</h3>
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white">Transaction History</h3>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                S.No
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Date
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Mode
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Received By
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Amount
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {transactions
-                                            .filter(transaction => transaction.revenueAmount > 0)
-                                            .map((transaction, index) => (
-                                            <tr key={transaction._id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {index + 1}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {transaction.transactionType}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        transaction.transactionMode === 'UPI' 
-                                                            ? 'bg-blue-100 text-blue-800' 
-                                                            : 'bg-green-100 text-green-800'
-                                                    }`}>
-                                                        {transaction.transactionMode === 'UPI' ? (
-                                                            <>
-                                                                <CreditCard className="w-3 h-3 mr-1" />
-                                                                <span>UPI</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <DollarSign className="w-3 h-3 mr-1" />
-                                                                <span>Cash</span>
-                                                            </>
-                                                        )}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <div className="flex items-center space-x-2">
-                                                        <User className="w-4 h-4 text-gray-500" />
-                                                        <span>{transaction.receivedBy || '-'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    ₹{transaction.revenueAmount}
-                                                </td>
+                                <div className="inline-block min-w-full align-middle">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    S.No
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Date
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Type
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Mode
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Received By
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Amount
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {transactions
+                                                .filter(transaction => transaction.revenueAmount > 0)
+                                                .map((transaction, index) => (
+                                                <tr key={transaction._id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {index + 1}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {transaction.transactionType}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                            transaction.transactionMode === 'UPI' 
+                                                                ? 'bg-blue-100 text-blue-800' 
+                                                                : 'bg-green-100 text-green-800'
+                                                        }`}>
+                                                            {transaction.transactionMode === 'UPI' ? (
+                                                                <>
+                                                                    <CreditCard className="w-3 h-3 mr-1" />
+                                                                    <span>UPI</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <DollarSign className="w-3 h-3 mr-1" />
+                                                                    <span>Cash</span>
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="flex items-center space-x-2">
+                                                            <User className="w-4 h-4 text-gray-500" />
+                                                            <span>{transaction.receivedBy || '-'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        ₹{transaction.revenueAmount}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
