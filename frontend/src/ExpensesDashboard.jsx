@@ -652,7 +652,7 @@ export function ExpensesDashboard() {
                                                             ) : '-'}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                                             expense.transactionMode === 'UPI' 
                                                                 ? 'bg-blue-100 text-blue-800' 
@@ -671,7 +671,7 @@ export function ExpensesDashboard() {
                                                             )}
                                                         </span>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                         <div className="flex items-center gap-1">
                                                             <User className="w-4 h-4 text-gray-400" />
                                                             {expense.spentBy}
@@ -680,7 +680,7 @@ export function ExpensesDashboard() {
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         ₹{expense.amount.toFixed(2)}
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                         <button
                                                             onClick={() => handleDeleteExpense(expense._id, expense)}
                                                             className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"

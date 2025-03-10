@@ -725,38 +725,38 @@ export function RevenueDashboard() {
                                                                 onClick={() => handleEditClick(record)}
                                                                 className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
                                                             >
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                     {index + 1}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                     {new Date(record.transactionDate).toLocaleDateString('en-GB')}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                     <span title={record.vehicleNumber}>
                                                                         {record.vehicleNumber.length > 10 
                                                                             ? `${record.vehicleNumber.slice(0, 10)}...` 
                                                                             : record.vehicleNumber}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.vehicleDescription}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.lotNumber || 'Open'}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {capitalizeFirst(record.rentalType)}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     {record.transactionType}
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     <span className="inline-flex items-center gap-1">
                                                                         <User className="w-4 h-4 text-gray-500" />
                                                                         {record.receivedBy || 'N/A'}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 group-hover:bg-gray-50">
                                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                                         record.transactionMode === 'UPI' 
                                                                             ? 'bg-blue-100 text-blue-800' 
@@ -775,7 +775,7 @@ export function RevenueDashboard() {
                                                                         )}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium group-hover:bg-gray-50">
+                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                     ₹{record.revenueAmount.toFixed(2)}
                                                                 </td>
                                                             </tr>
