@@ -634,17 +634,23 @@ export function ExpensesDashboard() {
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {filteredData.map((expense, index) => (
                                                 <tr key={expense._id} className="hover:bg-gray-50">
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {index + 1}
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {expense.expenseType}
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {expense.description || '-'}
+                                                        <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-'}>
+                                                            {expense.description ? (
+                                                                expense.description.length > 25 
+                                                                    ? `${expense.description.substring(0, 25)}...` 
+                                                                    : expense.description
+                                                            ) : '-'}
+                                                        </div>
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
