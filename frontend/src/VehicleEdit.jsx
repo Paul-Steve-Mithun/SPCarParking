@@ -296,39 +296,39 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-hidden">
             <div className="relative w-full max-w-7xl max-h-[95vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
-                    <div className="flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-white">Edit Vehicle Details</h1>
+                <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+                        <h1 className="text-xl sm:text-3xl font-bold text-white text-center sm:text-left">Edit Vehicle Details</h1>
                         <div className="flex items-center gap-2">
                             <button 
                                 onClick={() => setIsEditMode(!isEditMode)}
-                                className="text-white hover:bg-white/20 px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                                className="text-white hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm sm:text-base"
                             >
-                                <PencilIcon className="w-5 h-5" />
+                                <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 <span>{isEditMode ? 'Cancel Edit' : 'Edit Details'}</span>
                             </button>
                             <button 
                                 onClick={onClose}
                                 className="text-white hover:bg-white/20 p-2 rounded-lg transition-all"
                             >
-                                <XIcon className="w-5 h-5" />
+                                <XIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Form Content */}
-                <div className="flex-grow overflow-y-auto p-6">
+                <div className="flex-grow overflow-y-auto p-4 sm:p-6">
                     {/* Extend Rental Section */}
                     {updatedVehicle.rentalType === 'daily' && (
                         <div className="bg-blue-50 p-4 rounded-lg mb-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                                <h3 className="text-lg font-semibold text-blue-800">Rental Extension</h3>
+                                <h3 className="text-base sm:text-lg font-semibold text-blue-800">Rental Extension</h3>
                                 <button
                                     onClick={() => setShowExtendForm(!showExtendForm)}
-                                    className="text-green-600 hover:text-green-800 flex items-center gap-2"
+                                    className="text-green-600 hover:text-green-800 flex items-center gap-2 text-sm sm:text-base"
                                 >
-                                    <PlusCircleIcon className="w-5 h-5" />
+                                    <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                     {showExtendForm ? 'Cancel Extension' : 'Extend Rental'}
                                 </button>
                             </div>
@@ -346,7 +346,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         />
                                         <button
                                             onClick={handleExtendRental}
-                                            className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                                            className="w-full sm:w-auto bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
                                         >
                                             Pay & Extend
                                         </button>
@@ -357,25 +357,25 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <button
                                             type="button"
                                             onClick={() => setExtensionTransactionMode('Cash')}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center text-sm sm:text-base ${
                                                 extensionTransactionMode === 'Cash'
                                                     ? 'bg-blue-600 text-white'
                                                     : 'bg-gray-100 text-gray-700'
                                             }`}
                                         >
-                                            <Wallet className="h-5 w-5 mr-2" />
+                                            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                             Cash
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setExtensionTransactionMode('UPI')}
-                                            className={`px-4 py-2 rounded-lg flex items-center justify-center ${
+                                            className={`px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center text-sm sm:text-base ${
                                                 extensionTransactionMode === 'UPI'
                                                     ? 'bg-blue-600 text-white'
                                                     : 'bg-gray-100 text-gray-700'
                                             }`}
                                         >
-                                            <CreditCard className="h-5 w-5 mr-2" />
+                                            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                             UPI
                                         </button>
                                     </div>
@@ -385,11 +385,11 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     )}
 
                     {/* Main Form Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Vehicle Information Column */}
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h2>
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h2>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Vehicle Number</label>
@@ -526,7 +526,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         {/* Owner Details Column */}
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h2>
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h2>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Owner Name</label>
@@ -657,7 +657,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         {/* Rental Details Column */}
                         <div className="space-y-4">
                             <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h2>
+                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h2>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Parking Type</label>
@@ -739,29 +739,29 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="sticky bottom-0 p-6 bg-white border-t">
-                    <div className="flex gap-4">
+                <div className="sticky bottom-0 p-4 sm:p-6 bg-white border-t">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <button 
                             onClick={handleSubmit}
-                            className="flex-1 flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2.5 sm:py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm sm:text-base"
                             disabled={!isEditMode || isLoading}
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                             ) : (
-                                <Save className="w-5 h-5 mr-2" />
+                                <Save className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             )}
                             {isLoading ? 'Saving...' : 'Save Changes'}
                         </button>
                         <button 
                             onClick={handleEndContract}
-                            className="flex-1 flex items-center justify-center bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50"
+                            className="flex-1 flex items-center justify-center bg-red-500 text-white py-2.5 sm:py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50 text-sm sm:text-base"
                             disabled={!isEditMode || isLoading}
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                             ) : (
-                                <Trash2Icon className="w-5 h-5 mr-2" />
+                                <Trash2Icon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             )}
                             {isLoading ? 'Processing...' : 'End Contract'}
                         </button>
