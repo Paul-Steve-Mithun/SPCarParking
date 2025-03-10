@@ -614,15 +614,15 @@ export function AdvanceDashboard() {
                                                                 vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
                                                             }`}
                                                         >
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                 {index + 1}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                 {vehicle.advanceRefund 
                                                                     ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
                                                                     : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                 {vehicle.vehicleNumber}
                                                             </td>
                                                             <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
@@ -659,7 +659,7 @@ export function AdvanceDashboard() {
                                                                     )}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                                 <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
                                                                     {vehicle.advanceRefund 
                                                                         ? `-₹${vehicle.advanceRefund}`
