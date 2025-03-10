@@ -28,8 +28,8 @@ export function AdvanceDashboard() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [sortConfig, setSortConfig] = useState({ 
-        key: 'startDate', 
-        direction: 'asc' 
+        key: 'TransactionDate', 
+        direction: 'desc' 
     });
     const [stats, setStats] = useState({
         totalAdvance: 0,
@@ -578,32 +578,92 @@ export function AdvanceDashboard() {
                                                         <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
                                                             S.No
                                                         </th>
-                                                        {[
-                                                            'TransactionDate',
-                                                            'vehicleNumber',
-                                                            'vehicleDescription',
-                                                            'lotNumber',
-                                                            'parkingType',
-                                                            'receivedBy',
-                                                            'transactionMode',
-                                                            'advanceAmount'
-                                                        ].map((column) => (
-                                                            <th 
-                                                                key={column}
-                                                                onClick={() => handleSort(column)}
-                                                                className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                                                            >
-                                                                <div className="flex items-center">
-                                                                    <span className="hidden sm:inline">
-                                                                        {column === 'TransactionDate' ? 'Date' : column.replace(/([A-Z])/g, ' $1').trim()}
-                                                                    </span>
-                                                                    <span className="sm:hidden">
-                                                                        {column === 'TransactionDate' ? 'Date' : column.replace(/([A-Z])/g, ' $1').trim().slice(0, 3)}
-                                                                    </span>
-                                                                    <SortIcon column={column} />
-                                                                </div>
-                                                            </th>
-                                                        ))}
+                                                        <th 
+                                                            onClick={() => handleSort('TransactionDate')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Date</span>
+                                                                <span className="sm:hidden">Date</span>
+                                                                {sortConfig.key === 'TransactionDate' ? (
+                                                                    sortConfig.direction === 'asc' ? 
+                                                                        <ArrowUp className="w-4 h-4 ml-1" /> : 
+                                                                        <ArrowDown className="w-4 h-4 ml-1" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-4 h-4 ml-1" />
+                                                                )}
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('vehicleNumber')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Vehicle</span>
+                                                                <span className="sm:hidden">Vehicle</span>
+                                                                <SortIcon column="vehicleNumber" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('Description')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Description</span>
+                                                                <span className="sm:hidden">Desc</span>
+                                                                <SortIcon column="Description" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('lot')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Lot</span>
+                                                                <span className="sm:hidden">Lot</span>
+                                                                <SortIcon column="lot" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('parkingType')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Parking Type</span>
+                                                                <span className="sm:hidden">Type</span>
+                                                                <SortIcon column="parkingType" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('receivedBy')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Received By</span>
+                                                                <span className="sm:hidden">By</span>
+                                                                <SortIcon column="receivedBy" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('mode')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Mode</span>
+                                                                <span className="sm:hidden">Mode</span>
+                                                                <SortIcon column="mode" />
+                                                            </div>
+                                                        </th>
+                                                        <th 
+                                                            onClick={() => handleSort('Amount')}
+                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <span className="hidden sm:inline">Amount</span>
+                                                                <span className="sm:hidden">Amt</span>
+                                                                <SortIcon column="Amount" />
+                                                            </div>
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -614,27 +674,27 @@ export function AdvanceDashboard() {
                                                                 vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
                                                             }`}
                                                         >
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
                                                                 {index + 1}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
                                                                 {vehicle.advanceRefund 
                                                                     ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
                                                                     : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
                                                                 {vehicle.vehicleNumber}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 max-w-[150px] truncate">
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
                                                                 {vehicle.vehicleDescription}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
                                                                 {vehicle.lotNumber || 'Open'}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
                                                                 {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600">
+                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
                                                                 <span className="inline-flex items-center gap-1">
                                                                     <User className="w-4 h-4 text-gray-500" />
                                                                     {vehicle.receivedBy || 'N/A'}
@@ -659,7 +719,7 @@ export function AdvanceDashboard() {
                                                                     )}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
                                                                 <span className={vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}>
                                                                     {vehicle.advanceRefund 
                                                                         ? `-₹${vehicle.advanceRefund}`

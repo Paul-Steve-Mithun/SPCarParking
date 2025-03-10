@@ -50,7 +50,7 @@ export function ExpensesDashboard() {
     });
     const [sortConfig, setSortConfig] = useState({ 
         key: 'transactionDate', 
-        direction: 'asc' 
+        direction: 'desc' 
     });
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
@@ -602,30 +602,41 @@ export function ExpensesDashboard() {
                             <div className="inline-block min-w-full align-middle">
                                 <div className="overflow-hidden">
                                     <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
                                                     S.NO
                                                 </th>
-                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
-                                                </th>
                                                 {[
-                                                    { key: 'expenseType', label: 'Type' },
-                                                    { key: 'description', label: 'Description' },
-                                                    { key: 'transactionMode', label: 'Mode' },
-                                                    { key: 'spentBy', label: 'Spent By' },
-                                                    { key: 'amount', label: 'Amount' },
-                                                    { key: 'actions', label: 'Actions' }
+                                                    { key: 'transactionDate', label: 'Date', shortLabel: 'Date' },
+                                                    { key: 'expenseType', label: 'Type', shortLabel: 'Type' },
+                                                    { key: 'description', label: 'Description', shortLabel: 'Desc' },
+                                                    { key: 'transactionMode', label: 'Mode', shortLabel: 'Mode' },
+                                                    { key: 'spentBy', label: 'Spent By', shortLabel: 'By' },
+                                                    { key: 'amount', label: 'Amount', shortLabel: 'Amt' },
+                                                    { key: 'actions', label: 'Actions', shortLabel: 'Act' }
                                                 ].map((column) => (
                                                     <th 
                                                         key={column.key}
                                                         onClick={() => column.key !== 'actions' && handleSort(column.key)}
-                                                        className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                                                        className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                                                     >
                                                         <div className="flex items-center">
-                                                            {column.label}
-                                                            {column.key !== 'actions' && <SortIcon column={column.key} />}
+                                                            <span className="hidden sm:inline">
+                                                                {column.label}
+                                                            </span>
+                                                            <span className="sm:hidden">
+                                                                {column.shortLabel}
+                                                            </span>
+                                                            {column.key !== 'actions' && (
+                                                                sortConfig.key === column.key ? (
+                                                                    sortConfig.direction === 'asc' ? 
+                                                                        <ArrowUp className="w-4 h-4 ml-1" /> : 
+                                                                        <ArrowDown className="w-4 h-4 ml-1" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-4 h-4 ml-1" />
+                                                                )
+                                                            )}
                                                         </div>
                                                     </th>
                                                 ))}
@@ -643,7 +654,7 @@ export function ExpensesDashboard() {
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {expense.expenseType}
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                         <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-'}>
                                                             {expense.description ? (
                                                                 expense.description.length > 25 
