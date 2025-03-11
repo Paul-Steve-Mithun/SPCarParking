@@ -60,32 +60,48 @@ export function AdvanceDashboard() {
 
     const fetchData = async () => {
         try {
-            const [vehiclesResponse, totalsResponse] = await Promise.all([
-                fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`),
-                fetch(`https://spcarparkingbknd.onrender.com/advances/total?month=${selectedMonth}&year=${selectedYear}`)
-            ]);
+            // Get monthly data (for the selected month only)
+            const monthlyResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`);
+            const monthlyData = await monthlyResponse.json();
 
-            const vehiclesData = await vehiclesResponse.json();
-            const totalsData = await totalsResponse.json();
+            // Get all advances data up to the selected month (for total calculation)
+            const endDate = new Date(selectedYear, selectedMonth + 1, 0); // Last day of selected month
+            const allAdvancesResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${endDate.toISOString()}`);
+            const allAdvancesData = await allAdvancesResponse.json();
 
-            // Filter out zero advance transactions
-            const nonZeroTransactions = vehiclesData.filter(v => 
+            // Filter and sort transactions for display
+            const nonZeroTransactions = monthlyData.filter(v => 
                 v.advanceAmount > 0 || v.advanceRefund > 0
             );
 
-            // Sort transactions by date (latest first)
             const sortedData = nonZeroTransactions.sort((a, b) => {
                 const dateA = new Date(a.refundDate || a.startDate);
                 const dateB = new Date(b.refundDate || b.startDate);
-                return dateB - dateA; // Sort in descending order (latest first)
+                return dateB - dateA;
             });
 
             setVehicles(sortedData);
             setFilteredVehicles(sortedData);
 
+            // Calculate monthly net (only for selected month)
+            const monthlyNet = monthlyData.reduce((total, vehicle) => {
+                if (vehicle.advanceRefund) {
+                    return total - vehicle.advanceRefund;
+                }
+                return total + (vehicle.advanceAmount || 0);
+            }, 0);
+
+            // Calculate total advance (cumulative up to selected month)
+            const totalAdvance = allAdvancesData.reduce((total, vehicle) => {
+                if (vehicle.advanceRefund) {
+                    return total - vehicle.advanceRefund;
+                }
+                return total + (vehicle.advanceAmount || 0);
+            }, 0);
+
             setStats({
-                totalAdvance: totalsData.totalAmount || 0,
-                monthlyAdvance: calculateMonthlyAdvance(vehiclesData)
+                totalAdvance: totalAdvance || 0,
+                monthlyAdvance: monthlyNet || 0
             });
 
         } catch (error) {
@@ -417,7 +433,7 @@ export function AdvanceDashboard() {
     }, [searchZeroAdvance]);
 
     const handlePayAdvance = async () => {
-        if (isSavingAdvance) return; // Prevent double submission
+        if (isSavingAdvance) return;
         setIsSavingAdvance(true);
         try {
             const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/update-advance/${selectedZeroAdvanceVehicle._id}`, {

@@ -698,84 +698,42 @@ app.delete('/revenue/:id', async (req, res) => {
 app.get('/advances/total', async (req, res) => {
     try {
         const { month, year } = req.query;
-        const endDate = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
+        const totalAmount = await calculateTotalAdvance(month, year);
+        res.json({ totalAmount });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
-        const result = await Advance.aggregate([
-            {
-                $match: {
-                    $or: [
-                        {
-                            startDate: { $lte: endDate }
-                        },
-                        {
-                            refundDate: { $lte: endDate }
-                        }
-                    ]
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalAdvance: { $sum: '$advanceAmount' },
-                    totalRefund: { 
-                        $sum: { 
-                            $cond: [
-                                { $ne: ['$advanceRefund', null] },
-                                '$advanceRefund',
-                                0
-                            ]
-                        } 
-                    },
-                    incomingCount: {
-                        $sum: {
-                            $cond: [
-                                {
-                                    $and: [
-                                        { $eq: [{ $month: '$startDate' }, parseInt(month) + 1] },
-                                        { $eq: [{ $year: '$startDate' }, parseInt(year)] },
-                                        { $eq: ['$advanceRefund', null] },  // Only count records without refund
-                                        { $gt: ['$advanceAmount', 0] }      // Only count records with advance amount
-                                    ]
-                                },
-                                1,
-                                0
-                            ]
-                        }
-                    },
-                    outgoingCount: {
-                        $sum: {
-                            $cond: [
-                                {
-                                    $and: [
-                                        { $eq: [{ $month: '$refundDate' }, parseInt(month) + 1] },
-                                        { $eq: [{ $year: '$refundDate' }, parseInt(year)] },
-                                        { $ne: ['$advanceRefund', null] }   // Only count records with refund
-                                    ]
-                                },
-                                1,
-                                0
-                            ]
-                        }
-                    }
-                }
-            }
-        ]);
-        
-        const totals = result.length > 0 ? {
-            totalAmount: result[0].totalAdvance - result[0].totalRefund,
-            totalAdvance: result[0].totalAdvance,
-            totalRefund: result[0].totalRefund,
-            incomingCount: result[0].incomingCount,
-            outgoingCount: result[0].outgoingCount
-        } : {
-            totalAmount: 0,
-            totalAdvance: 0,
-            totalRefund: 0,
-            incomingCount: 0,
-            outgoingCount: 0
-        };
-        
-        res.json(totals);
+// New endpoint for getting all advances up to a specific date
+app.get('/advances/allUpToDate', async (req, res) => {
+    try {
+        const { date } = req.query;
+        const queryDate = new Date(date);
+
+        // First, get all advance payments made up to the query date
+        const advances = await Advance.find({
+            startDate: { $lte: queryDate },
+            advanceAmount: { $gt: 0 }  // Only get positive advance amounts
+        });
+
+        // Then, get all refunds made up to the query date
+        const refunds = await Advance.find({
+            refundDate: { $lte: queryDate },
+            advanceRefund: { $gt: 0 }  // Only get refunds
+        });
+
+        // Combine both sets of records
+        const allRecords = [...advances, ...refunds];
+
+        // Sort by date for consistency
+        allRecords.sort((a, b) => {
+            const dateA = a.refundDate || a.startDate;
+            const dateB = b.refundDate || b.startDate;
+            return dateB - dateA;
+        });
+
+        res.json(allRecords);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
