@@ -245,7 +245,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     };
 
     const generateAllLots = () => {
-        const aLots = Array.from({ length: 11 }, (_, i) => `A${i + 1}`);
+        const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 21 }, (_, i) => `C${i + 1}`);
         return [...aLots, ...bLots, ...cLots];
