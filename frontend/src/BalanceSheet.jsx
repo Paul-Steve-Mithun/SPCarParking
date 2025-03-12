@@ -708,7 +708,7 @@ export function BalanceSheet() {
                                         value={takeHomeAmount}
                                         onChange={(e) => {
                                             const value = e.target.value;
-                                            if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                            if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
                                                 setTakeHomeAmount(value);
                                             }
                                         }}
