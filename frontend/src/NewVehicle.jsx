@@ -302,7 +302,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            A Wing (1A-11A)
+                            A Wing (1A-20A)
                         </button>
                         <button
                             type="button"
