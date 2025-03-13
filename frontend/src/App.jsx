@@ -13,7 +13,8 @@ import {
     Settings,
     LogOut,
     LogIn,
-    DollarSign
+    DollarSign,
+    User
 } from 'lucide-react';
 import HomePage from './HomePage';
 import NewVehicle from './NewVehicle';
@@ -45,6 +46,12 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
     const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+    
+    // Get user name based on role/username
+    const getUserName = () => {
+        if (!auth.isAuthenticated) return '';
+        return auth.role === 'admin' ? 'Balu' : 'Mani';
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('spcarparking_auth');
@@ -199,16 +206,35 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                             {/* Menu Panel - Sliding from left */}
                             <div className="fixed inset-y-0 left-0 w-[280px] bg-white shadow-xl transform transition-all duration-300">
                                 {/* Header */}
-                                <div className="flex items-center justify-between px-6 h-14 bg-gradient-to-r from-blue-600 to-blue-600">
-                                    <span className="text-base font-bold text-white">
-                                        MENU
-                                    </span>
-                                    <button
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="p-1.5 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
+                                <div className="flex flex-col px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-600">
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-base font-bold text-white">
+                                            MENU
+                                        </span>
+                                        <button
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className="p-1.5 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Enhanced Welcome message for mobile */}
+                                    <div className="mt-3 flex items-center space-x-2">
+                                        <div className="bg-white/20 p-1.5 rounded-full">
+                                            <User className="h-4 w-4 text-white" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-white font-medium text-base">Welcome {getUserName()}</span>
+                                            <span className="text-white/80 text-xs">
+                                                {new Date().toLocaleDateString('en-US', { 
+                                                    weekday: 'short', 
+                                                    month: 'short', 
+                                                    day: 'numeric' 
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Navigation Links */}
@@ -282,6 +308,17 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                             Login
                                         </button>
                                     )}
+                                    
+                                    {/* Copyright and Company Name */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col items-center space-y-2">
+                                        <p className="text-xl font-black text-blue-600 tracking-wide hover:scale-105 transition-transform duration-300">
+                                            STERIX ENTERPRISES
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            © {new Date().getFullYear()} SP Car Parking. All rights reserved.
+                                        </p>
+                                        <p className="text-xs text-gray-500">JESUS LEADS YOU</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -297,6 +334,13 @@ function App() {
         localStorage.getItem('spcarparking_auth') ? JSON.parse(localStorage.getItem('spcarparking_auth')).isAuthenticated : false
     );
 
+    // Get user name based on role
+    const getUserName = () => {
+        const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+        if (!auth.isAuthenticated) return '';
+        return auth.role === 'admin' ? 'Balu' : 'Mani';
+    };
+
     return (
         <Router>
             <div className="w-full mx-auto min-h-screen bg-gray-50">
@@ -304,6 +348,26 @@ function App() {
                     isAuthenticated={isAuthenticated} 
                     setIsAuthenticated={setIsAuthenticated}
                 />
+
+                {/* Welcome Banner - Only visible on desktop */}
+                {isAuthenticated && (
+                    <div className="hidden md:block bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-blue-600 text-white p-2 rounded-full">
+                                    <User className="h-5 w-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-blue-800 font-bold text-lg">Welcome {getUserName()}</span>
+                                    <span className="text-blue-600 text-sm">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                </div>
+                            </div>
+                            <div className="text-blue-700 font-medium text-base">
+                                SP Car Parking Management System
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-4rem-3.5rem)]">
                     <Routes>

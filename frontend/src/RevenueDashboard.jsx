@@ -483,34 +483,34 @@ export function RevenueDashboard() {
 
     const revenueStats = [
         {
-            icon: <DollarSign className="w-8 h-8 text-indigo-600" />, 
+            icon: <DollarSign className="w-8 h-8 text-emerald-600" />, 
             label: "Total Revenue", 
             value: `₹${stats.totalRevenue.toFixed(2)}`,
-            bgGradient: "from-indigo-50 to-indigo-100"
-        },
-        {
-            icon: <Calendar className="w-8 h-8 text-blue-600" />, 
-            label: "Monthly Revenue", 
-            value: `₹${stats.monthlyRentalRevenue.toFixed(2)}`,
-            bgGradient: "from-blue-50 to-blue-100"
-        },
-        {
-            icon: <Clock className="w-8 h-8 text-cyan-600" />, 
-            label: "Daily Revenue", 
-            value: `₹${stats.dailyRentalRevenue.toFixed(2)}`,
-            bgGradient: "from-cyan-50 to-cyan-100"
-        },
-        {
-            icon: <User className="w-8 h-8 text-emerald-600" />,
-            label: "Balu's Collection",
-            value: `₹${stats.baluCollection.toFixed(2)}`,
             bgGradient: "from-emerald-50 to-emerald-100"
         },
         {
-            icon: <User className="w-8 h-8 text-teal-600" />,
+            icon: <Calendar className="w-8 h-8 text-green-600" />, 
+            label: "Monthly Revenue", 
+            value: `₹${stats.monthlyRentalRevenue.toFixed(2)}`,
+            bgGradient: "from-green-50 to-green-100"
+        },
+        {
+            icon: <Clock className="w-8 h-8 text-teal-600" />, 
+            label: "Daily Revenue", 
+            value: `₹${stats.dailyRentalRevenue.toFixed(2)}`,
+            bgGradient: "from-teal-50 to-teal-100"
+        },
+        {
+            icon: <User className="w-8 h-8 text-lime-600" />,
+            label: "Balu's Collection",
+            value: `₹${stats.baluCollection.toFixed(2)}`,
+            bgGradient: "from-lime-50 to-lime-100"
+        },
+        {
+            icon: <User className="w-8 h-8 text-green-600" />,
             label: "Mani's Collection",
             value: `₹${stats.maniCollection.toFixed(2)}`,
-            bgGradient: "from-teal-50 to-teal-100"
+            bgGradient: "from-green-100 to-green-200"
         }
     ];
 
@@ -621,21 +621,76 @@ export function RevenueDashboard() {
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {revenueStats.map((stat, index) => (
-                                <div 
-                                    key={index} 
-                                    className={`rounded-2xl p-4 sm:p-6 bg-gradient-to-br ${stat.bgGradient} border border-white shadow-md hover:shadow-lg transition-all duration-200`}
-                                >
-                                    <div className="flex items-center space-x-4">
-                                        <div className="p-3 rounded-xl bg-white shadow-sm">{stat.icon}</div>
+                        <div className="p-4 sm:p-8">
+                            {/* Desktop View - Original Layout (hidden on mobile) */}
+                            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {revenueStats.map((stat, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`rounded-2xl p-4 sm:p-6 bg-gradient-to-br ${stat.bgGradient} border border-white shadow-md hover:shadow-lg transition-all duration-200`}
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <div className="p-3 rounded-xl bg-white shadow-sm">{stat.icon}</div>
+                                            <div>
+                                                <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
+                                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Mobile View - Custom Layout (hidden on desktop) */}
+                            <div className="sm:hidden space-y-4">
+                                {/* Total Revenue - Full Width with centered content */}
+                                <div className={`rounded-2xl p-4 bg-gradient-to-br ${revenueStats[0].bgGradient} border border-white shadow-md`}>
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="p-3 rounded-xl bg-white shadow-sm mb-2">{revenueStats[0].icon}</div>
                                         <div>
-                                            <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                                            <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                                            <p className="text-gray-600 text-sm font-medium">{revenueStats[0].label}</p>
+                                            <p className="text-xl font-bold text-gray-900">{revenueStats[0].value}</p>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                
+                                {/* Monthly and Daily Revenue - Two Columns */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[1].bgGradient} border border-white shadow-md`}>
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[1].icon}</div>
+                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[1].label}</p>
+                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[1].value}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[2].bgGradient} border border-white shadow-md`}>
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[2].icon}</div>
+                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[2].label}</p>
+                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[2].value}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Balu's and Mani's Collection - Two Columns */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[3].bgGradient} border border-white shadow-md`}>
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[3].icon}</div>
+                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[3].label}</p>
+                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[3].value}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[4].bgGradient} border border-white shadow-md`}>
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[4].icon}</div>
+                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[4].label}</p>
+                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[4].value}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

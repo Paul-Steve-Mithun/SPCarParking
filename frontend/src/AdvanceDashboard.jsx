@@ -476,14 +476,14 @@ export function AdvanceDashboard() {
                 <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                     {/* First Main Div - Header, Filters and Stats */}
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
-                        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 sm:p-6">
+                        <div className="bg-gradient-to-r from-teal-500 to-teal-600 p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                                     Advance Payment Dashboard
                                 </h1>
                                 <button 
                                     onClick={generatePDF} 
-                                    className="w-full sm:w-auto bg-white text-orange-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
                                 >
                                     <Printer className="w-5 h-5" />
                                     <span className="font-semibold">Export PDF</span>
@@ -495,7 +495,7 @@ export function AdvanceDashboard() {
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-indigo-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white bg-opacity-20 text-teal-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
                                     >
                                         {monthNames.map((month, index) => (
                                             <option key={index} value={index}>{month}</option>
@@ -507,7 +507,7 @@ export function AdvanceDashboard() {
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-indigo-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white bg-opacity-20 text-teal-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
                                     >
                                         {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
                                             <option key={year} value={year}>{year}</option>
@@ -521,7 +521,7 @@ export function AdvanceDashboard() {
                                             setShowPayAdvanceModal(true);
                                             fetchVehicles();
                                         }}
-                                        className="w-full px-4 py-3 bg-white text-orange-600 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 font-medium shadow-md transition-colors duration-200"
+                                        className="w-full px-4 py-3 bg-white text-teal-600 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 font-medium shadow-md transition-colors duration-200"
                                     >
                                         <IndianRupee className="w-5 h-5" />
                                         Pay Advance
@@ -533,10 +533,10 @@ export function AdvanceDashboard() {
                         {/* Stats Cards */}
                         <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Monthly Advance Card */}
-                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <Calendar className="w-6 h-6 text-indigo-600" />
+                                        <Calendar className="w-6 h-6 text-teal-600" />
                                     </div>
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Monthly Advance (Net)</p>
@@ -548,10 +548,10 @@ export function AdvanceDashboard() {
                             </div>
 
                             {/* Total Advance Card */}
-                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
                                 <div className="flex items-center space-x-4">
                                     <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <DollarSign className="w-6 h-6 text-indigo-600" />
+                                        <DollarSign className="w-6 h-6 text-cyan-600" />
                                     </div>
                                     <div>
                                         <p className="text-gray-600 text-sm font-medium">Total Advance (Till Date)</p>
@@ -917,14 +917,14 @@ export function AdvanceDashboard() {
                                                         onClick={() => setAdvanceTransactionMode('Cash')}
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'Cash'
-                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
                                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-5 w-5 mr-2" />
                                                         Cash
                                                         {advanceTransactionMode === 'Cash' && (
-                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
                                                         )}
                                                     </button>
                                                     <button
@@ -932,14 +932,14 @@ export function AdvanceDashboard() {
                                                         onClick={() => setAdvanceTransactionMode('UPI')}
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'UPI'
-                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
                                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-5 w-5 mr-2" />
                                                         UPI
                                                         {advanceTransactionMode === 'UPI' && (
-                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
                                                         )}
                                                     </button>
                                                 </div>
@@ -952,14 +952,14 @@ export function AdvanceDashboard() {
                                                             onClick={() => setReceivedBy('Balu')}
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Balu'
-                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
                                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
                                                             Balu
                                                             {receivedBy === 'Balu' && (
-                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
                                                             )}
                                                         </button>
                                                         <button
@@ -967,14 +967,14 @@ export function AdvanceDashboard() {
                                                             onClick={() => setReceivedBy('Mani')}
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Mani'
-                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
                                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
                                                             Mani
                                                             {receivedBy === 'Mani' && (
-                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
                                                             )}
                                                         </button>
                                                     </div>
@@ -996,7 +996,7 @@ export function AdvanceDashboard() {
                                                 <button
                                                     onClick={handlePayAdvance}
                                                     disabled={!isEditingAdvance || !newAdvanceAmount || isSavingAdvance}
-                                                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                                    className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                                 >
                                                     {isSavingAdvance ? (
                                                         <>
