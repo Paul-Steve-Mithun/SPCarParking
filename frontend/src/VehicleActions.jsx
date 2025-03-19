@@ -13,6 +13,14 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmationType, setConfirmationType] = useState('');
     const [receivedBy, setReceivedBy] = useState('Balu');
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 200);
+    };
 
     const handlePaidRent = async () => {
         setConfirmationType('monthly');
@@ -89,8 +97,8 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
 
     return (
         <>
-            <Transition appear show={true} as={Fragment}>
-                <Dialog as="div" className="relative z-[60]" onClose={onClose}>
+            <Transition appear show={!isClosing} as={Fragment}>
+                <Dialog as="div" className="relative z-[60]" onClose={handleClose}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -125,7 +133,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     </span>
                                                 </div>
                                                 <button 
-                                                    onClick={onClose}
+                                                    onClick={handleClose}
                                                     disabled={loading}
                                                     className="text-white hover:text-gray-200 disabled:opacity-50"
                                                 >
@@ -331,7 +339,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
             </Transition>
 
             {/* Confirmation Modal */}
-            <Transition appear show={showConfirmModal} as={Fragment}>
+            <Transition appear show={showConfirmModal && !isClosing} as={Fragment}>
                 <Dialog 
                     as="div" 
                     className="relative z-[70]" 
