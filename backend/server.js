@@ -8,6 +8,7 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import { NotificationService } from './services/notificationService.js';
 // Load environment variables
 dotenv.config();
 
@@ -1018,6 +1019,34 @@ app.get('/balancesheet', async (req, res) => {
         res.json(balancesheet);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// New endpoint to send payment reminder to individual vehicle owner
+app.post('/notifications/send-payment-reminder', async (req, res) => {
+    try {
+        const { vehicleNumber, ownerName, contactNumber, amount, dueDate } = req.body;
+
+        // Format the phone number to include country code if not present
+        const formattedNumber = contactNumber.startsWith('+') 
+            ? contactNumber 
+            : `+919842190000`; // Adding India's country code
+
+        const result = await NotificationService.sendPaymentReminder(
+            vehicleNumber,
+            ownerName,
+            formattedNumber,
+            amount,
+            dueDate
+        );
+
+        res.json({ success: result });
+    } catch (error) {
+        console.error('Notification Error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            details: 'Failed to send notification. Please check Twilio credentials and phone number format.'
+        });
     }
 });
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RefreshCwIcon, SearchIcon, PrinterIcon, Printer } from 'lucide-react';
+import { RefreshCwIcon, SearchIcon, PrinterIcon, Printer, Bell, X, Send, Loader2 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import VehicleActions from './VehicleActions';
 import jsPDF from 'jspdf';
@@ -16,6 +16,9 @@ export function ManageVehicles() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [activeTab, setActiveTab] = useState('monthly'); // For mobile view
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [selectedNotificationVehicle, setSelectedNotificationVehicle] = useState(null);
+    const [isSendingNotification, setIsSendingNotification] = useState(false);
 
     const fetchExpiredVehicles = async () => {
         setLoading(true);
@@ -595,6 +598,38 @@ export function ManageVehicles() {
         }
     };
 
+    const sendNotificationToOwner = async (vehicle) => {
+        setIsSendingNotification(true);
+        try {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/notifications/send-payment-reminder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    vehicleNumber: vehicle.vehicleNumber,
+                    ownerName: vehicle.ownerName,
+                    contactNumber: vehicle.contactNumber,
+                    amount: vehicle.rentPrice,
+                    dueDate: '5th of this month'
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success(`Payment reminder sent to ${vehicle.ownerName}`);
+                setShowNotificationModal(false);
+            } else {
+                toast.error('Failed to send reminder');
+            }
+        } catch (error) {
+            console.error('Error sending notification:', error);
+            toast.error('Failed to send notification');
+        } finally {
+            setIsSendingNotification(false);
+        }
+    };
+
     const renderVehicleCard = (vehicle) => {
         // Calculate due amount and days for daily rentals
         let dueAmount = 0;
@@ -615,22 +650,35 @@ export function ManageVehicles() {
         return (
             <div 
                 key={vehicle._id} 
-                className="p-4 hover:bg-gray-50 cursor-pointer relative"
+                className="p-4 hover:bg-gray-50 cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
                 onClick={() => setSelectedVehicle(vehicle)}
             >
-                {/* Printer Button - Absolute positioned */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        vehicle.rentalType === 'monthly' 
-                            ? handlePrintInvoice(vehicle) 
-                            : handlePrintDailyInvoice(vehicle);
-                    }}
-                    className="absolute right-4 top-4 p-2 text-gray-600 hover:text-blue-600 transition-colors"
-                    title="Print Receipt"
-                >
-                    <Printer className="w-5 h-5" />
-                </button>
+                {/* Printer and Bell Buttons - Absolute positioned */}
+                <div className="absolute right-4 top-4 flex items-center gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNotificationVehicle(vehicle);
+                            setShowNotificationModal(true);
+                        }}
+                        className="p-2 text-gray-600 hover:text-red-600 transition-colors duration-200"
+                        title="Send Payment Reminder"
+                    >
+                        <Bell className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            vehicle.rentalType === 'monthly' 
+                                ? handlePrintInvoice(vehicle) 
+                                : handlePrintDailyInvoice(vehicle);
+                        }}
+                        className="p-2 text-gray-600 hover:text-red-600 transition-colors duration-200"
+                        title="Print Receipt"
+                    >
+                        <Printer className="w-5 h-5" />
+                    </button>
+                </div>
 
                 {/* Card Content */}
                 <div className="flex-grow space-y-2 sm:space-y-1">
@@ -666,6 +714,143 @@ export function ManageVehicles() {
                     <p className="text-xs text-red-500">
                         Rental Period Ended: {new Date(vehicle.endDate).toLocaleDateString('en-GB')}
                     </p>
+                </div>
+            </div>
+        );
+    };
+
+    const NotificationModal = ({ vehicle, onClose }) => {
+        const [isClosing, setIsClosing] = useState(false);
+
+        if (!vehicle) return null;
+
+        const handleClose = () => {
+            setIsClosing(true);
+            setTimeout(() => {
+                onClose();
+            }, 200);
+        };
+
+        const previewMessage = `Dear ${vehicle.ownerName}, your monthly parking rent of Rs.${vehicle.rentPrice} for vehicle ${vehicle.vehicleNumber} is due on 5th of this month. Please make the payment before the due date to avoid any inconvenience. -SP Car Parking`;
+
+        return (
+            <div 
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200 ${
+                    isClosing ? 'bg-black/0 backdrop-blur-none' : 'bg-black/50 backdrop-blur-sm'
+                }`}
+                onClick={handleClose}
+            >
+                <div 
+                    className={`bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ${
+                        isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                    }`}
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        animation: isClosing ? 'none' : 'modal-popup 0.2s ease-out'
+                    }}
+                >
+                    <style>
+                        {`
+                            @keyframes modal-popup {
+                                from {
+                                    transform: scale(0.95);
+                                    opacity: 0;
+                                }
+                                to {
+                                    transform: scale(1);
+                                    opacity: 1;
+                                }
+                            }
+                        `}
+                    </style>
+                    {/* Gradient Header */}
+                    <div className="bg-gradient-to-r bg-red-600 p-4 rounded-t-xl">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-white/20 p-2 rounded-full">
+                                    <Bell className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">Payment Reminder</h3>
+                                    <p className="text-sm text-white/80">Send SMS notification</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleClose}
+                                className="text-white/80 hover:text-white transition-colors duration-200"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Vehicle Details */}
+                    <div className="p-4 border-b">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h4 className="font-medium text-gray-900">{vehicle.vehicleNumber}</h4>
+                                <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-medium text-gray-900">Monthly Rent</p>
+                                <p className="text-lg font-semibold text-red-600">₹{vehicle.rentPrice}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Message Preview */}
+                    <div className="p-4 space-y-4">
+                        <div>
+                            <p className="text-sm font-medium text-gray-700 mb-2">Message Preview</p>
+                            <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 border border-gray-200">
+                                {previewMessage}
+                            </div>
+                        </div>
+
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-3">
+                            <div className="text-red-500 mt-0.5">
+                                <Bell className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm text-red-800">
+                                    SMS will be sent to <span className="font-medium">{vehicle.contactNumber}</span>
+                                </p>
+                                <p className="text-xs text-red-600 mt-1">
+                                    Standard SMS charges may apply
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-end gap-3 p-4 bg-gray-50 rounded-b-xl">
+                        <button
+                            onClick={handleClose}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                sendNotificationToOwner(vehicle);
+                                handleClose();
+                            }}
+                            disabled={isSendingNotification}
+                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                        >
+                            {isSendingNotification ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Sending...
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Send Reminder
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -1065,6 +1250,16 @@ export function ManageVehicles() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {showNotificationModal && (
+                <NotificationModal
+                    vehicle={selectedNotificationVehicle}
+                    onClose={() => {
+                        setShowNotificationModal(false);
+                        setSelectedNotificationVehicle(null);
+                    }}
+                />
             )}
 
             {selectedVehicle && (
