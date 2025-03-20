@@ -583,7 +583,7 @@ export function RevenueDashboard() {
         }
         
         try {
-            const response = await fetch(`http://localhost:5000/vehicles/search?query=${query}`);
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/search?query=${query}`);
             const data = await response.json();
             setSearchResults(data);
         } catch (error) {
@@ -623,7 +623,7 @@ export function RevenueDashboard() {
                 transactionDate: selectedDate
             };
 
-            const response = await fetch('http://localhost:5000/revenue', {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/revenue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(revenueData)
