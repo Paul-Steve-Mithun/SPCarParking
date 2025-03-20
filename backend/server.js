@@ -640,12 +640,13 @@ app.get('/revenueStats', async (req, res) => {
 app.put('/revenue/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { transactionDate, transactionMode, receivedBy } = req.body;
+        const { transactionDate, transactionMode, receivedBy, revenueAmount } = req.body;
 
         const updateData = {
             transactionDate: new Date(transactionDate),
             transactionMode,
             receivedBy,
+            revenueAmount: parseFloat(revenueAmount),
             month: new Date(transactionDate).getMonth(),
             year: new Date(transactionDate).getFullYear()
         };
@@ -1047,6 +1048,19 @@ app.post('/notifications/send-payment-reminder', async (req, res) => {
             error: error.message,
             details: 'Failed to send notification. Please check Twilio credentials and phone number format.'
         });
+    }
+});
+
+// Add this endpoint after the other revenue endpoints
+app.post('/revenue', async (req, res) => {
+    try {
+        const revenueData = req.body;
+        const newRevenue = new Revenue(revenueData);
+        await newRevenue.save();
+        res.json({ success: true, revenue: newRevenue });
+    } catch (error) {
+        console.error('Error adding revenue:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 

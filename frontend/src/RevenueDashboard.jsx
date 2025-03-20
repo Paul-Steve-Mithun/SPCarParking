@@ -15,7 +15,9 @@ import {
     User,
     Edit2,
     Wallet,
-    MapPin
+    MapPin,
+    Plus,
+    IndianRupee
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -50,9 +52,18 @@ export function RevenueDashboard() {
     const [editForm, setEditForm] = useState({
         transactionDate: '',
         transactionMode: 'Cash',
-        receivedBy: 'Balu'
+        receivedBy: 'Balu',
+        revenueAmount: ''
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [showAddRentModal, setShowAddRentModal] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedVehicle, setSelectedVehicle] = useState(null);
+    const [rentAmount, setRentAmount] = useState('');
+    const [transactionMode, setTransactionMode] = useState('Cash');
+    const [receivedBy, setReceivedBy] = useState('Balu');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Add variables to track pages and overflow status
     let totalPages = 1;
@@ -530,7 +541,8 @@ export function RevenueDashboard() {
         setEditForm({
             transactionDate: new Date(transaction.transactionDate).toISOString().split('T')[0],
             transactionMode: transaction.transactionMode,
-            receivedBy: transaction.receivedBy
+            receivedBy: transaction.receivedBy,
+            revenueAmount: transaction.revenueAmount.toString()
         });
         setIsEditModalOpen(true);
     };
@@ -563,9 +575,78 @@ export function RevenueDashboard() {
         }
     };
 
+    const handleSearch = async (query) => {
+        setSearchQuery(query);
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+        
+        try {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/search?query=${query}`);
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Error searching vehicles:', error);
+            toast.error('Failed to search vehicles');
+        }
+    };
+
+    const handleVehicleSelect = (vehicle) => {
+        setSelectedVehicle(vehicle);
+        setRentAmount(vehicle.rentPrice.toString());
+        setSearchResults([]);
+        setSearchQuery('');
+    };
+
+    const handleAddRent = async () => {
+        if (!selectedVehicle || !rentAmount) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const revenueData = {
+                vehicleNumber: selectedVehicle.vehicleNumber,
+                vehicleDescription: selectedVehicle.vehicleDescription,
+                lotNumber: selectedVehicle.lotNumber,
+                rentalType: selectedVehicle.rentalType,
+                rentPrice: selectedVehicle.rentPrice,
+                numberOfDays: selectedVehicle.rentalType === 'daily' ? 1 : null,
+                month: new Date(selectedDate).getMonth(),
+                year: new Date(selectedDate).getFullYear(),
+                revenueAmount: parseFloat(rentAmount),
+                transactionType: 'Extension',
+                transactionMode: transactionMode,
+                receivedBy: receivedBy,
+                transactionDate: selectedDate
+            };
+
+            const response = await fetch('https://spcarparkingbknd.onrender.com/revenue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(revenueData)
+            });
+
+            if (!response.ok) throw new Error('Failed to add rent');
+
+            toast.success('Payment added successfully');
+            setShowAddRentModal(false);
+            setSelectedVehicle(null);
+            setRentAmount('');
+            fetchRevenueData();
+        } catch (error) {
+            console.error('Error adding rent:', error);
+            toast.error('Failed to add payment');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="relative">
-            <Toaster position="bottom-right" />
+            <Toaster position="top-right" />
             
             <div className={`min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300 ${
                 isDeleteDialogOpen ? 'blur-sm' : ''
@@ -584,13 +665,24 @@ export function RevenueDashboard() {
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                                     Rent Payment Dashboard
                                 </h1>
-                                <button 
-                                    onClick={() => setIsPdfModalOpen(true)}
-                                    className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
-                                >
-                                    <Printer className="w-5 h-5" />
-                                    <span className="font-semibold">Export PDF</span>
-                                </button>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    {/* Add Rent Button */}
+                                    <button 
+                                        onClick={() => setShowAddRentModal(true)}
+                                        className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                        <span className="font-semibold">Add Rent</span>
+                                    </button>
+                                    {/* Export PDF Button */}
+                                    <button 
+                                        onClick={() => setIsPdfModalOpen(true)}
+                                        className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    >
+                                        <Printer className="w-5 h-5" />
+                                        <span className="font-semibold">Export PDF</span>
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="mt-6 flex flex-col sm:flex-row gap-4">
@@ -749,8 +841,8 @@ export function RevenueDashboard() {
                                                                              column === 'vehicleDescription' ? 'Description' :
                                                                              column === 'lotNumber' ? 'Lot' :
                                                                              column === 'rentalType' ? 'Rental Type' :
-                                                                             column === 'transactionType' ? 'Transaction Type' :
-                                                                             column === 'receivedBy' ? 'Received By' :
+                                                                             column === 'transactionType' ? 'Trans Type' :
+                                                                             column === 'receivedBy' ? 'Rec By' :
                                                                              column === 'transactionMode' ? 'Mode' :
                                                                              column === 'revenueAmount' ? 'Amount' :
                                                                              column.replace(/([A-Z])/g, ' $1').trim()}
@@ -1047,7 +1139,7 @@ export function RevenueDashboard() {
                                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold leading-6 text-gray-900 mb-4"
+                                        className="text-lg font-bold text-white mb-4 -mx-6 -mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600"
                                     >
                                         Edit Transaction
                                     </Dialog.Title>
@@ -1093,6 +1185,30 @@ export function RevenueDashboard() {
 
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Rent Amount
+                                                </label>
+                                                <div className="relative">
+                                                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={editForm.revenueAmount}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                                                setEditForm({
+                                                                    ...editForm,
+                                                                    revenueAmount: value
+                                                                });
+                                                            }
+                                                        }}
+                                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                        placeholder="Enter amount"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                                     Transaction Date
                                                 </label>
                                                 <input
@@ -1102,7 +1218,7 @@ export function RevenueDashboard() {
                                                         ...editForm,
                                                         transactionDate: e.target.value
                                                     })}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                                                 />
                                             </div>
 
@@ -1218,6 +1334,290 @@ export function RevenueDashboard() {
                                                 'Save Changes'
                                             )}
                                         </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* Add Rent Modal */}
+            <Transition appear show={showAddRentModal} as={Fragment}>
+                <Dialog as="div" className="relative z-[60]" onClose={() => setShowAddRentModal(false)}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                                    <div className="bg-gradient-to-r from-green-500 to-green-600 p-6">
+                                        <Dialog.Title className="text-lg font-bold text-white">
+                                            Add Rent Payment
+                                        </Dialog.Title>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <div className="space-y-4">
+                                            {!selectedVehicle ? (
+                                                <div className="space-y-3">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                        <input
+                                                            type="text"
+                                                            value={searchQuery}
+                                                            onChange={(e) => handleSearch(e.target.value)}
+                                                            placeholder="Search vehicle number, description, lot..."
+                                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                        />
+                                                    </div>
+
+                                                    {searchResults.length > 0 && (
+                                                        <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y">
+                                                            {searchResults.map((vehicle) => (
+                                                                <button
+                                                                    key={vehicle._id}
+                                                                    onClick={() => handleVehicleSelect(vehicle)}
+                                                                    className="w-full p-3 text-left hover:bg-gray-50 transition-colors flex flex-col gap-1"
+                                                                >
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="font-medium text-gray-900">
+                                                                            {vehicle.vehicleNumber}
+                                                                        </span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                                                                                {vehicle.lotNumber || 'Open'}
+                                                                            </span>
+                                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                                vehicle.status === 'active' 
+                                                                                    ? 'bg-green-100 text-green-800'
+                                                                                    : 'bg-red-100 text-red-800'
+                                                                            }`}>
+                                                                                {vehicle.status}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-sm text-gray-600">
+                                                                        {vehicle.vehicleDescription}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                        <span>{vehicle.ownerName}</span>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200 shadow-sm">
+                                                        <div className="flex items-center gap-3 mb-4">
+                                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                                <Car className="w-6 h-6 text-blue-600" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-sm font-semibold text-gray-400">Vehicle Number</h4>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-lg font-bold text-gray-900">
+                                                                        {selectedVehicle.vehicleNumber}
+                                                                    </p>
+                                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                                                        selectedVehicle.status === 'active' 
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : 'bg-red-100 text-red-800'
+                                                                    }`}>
+                                                                        {capitalizeFirst(selectedVehicle.status || 'expired')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <AlertCircle className="w-4 h-4 text-purple-600" />
+                                                                    <span className="text-xs font-medium text-gray-500">Description</span>
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                                                                    {selectedVehicle.vehicleDescription || 'No description'}
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <MapPin className="w-4 h-4 text-red-600" />
+                                                                    <span className="text-xs font-medium text-gray-500">Lot Number</span>
+                                                                </div>
+                                                                <p className="text-sm font-semibold text-gray-900">
+                                                                    {selectedVehicle.lotNumber || 'Open'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Rent Amount
+                                                        </label>
+                                                        <div className="relative">
+                                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                value={rentAmount}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                                                        setRentAmount(value);
+                                                                    }
+                                                                }}
+                                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                                placeholder="Enter amount"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Transaction Date
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            value={selectedDate}
+                                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Transaction Mode
+                                                        </label>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setTransactionMode('Cash')}
+                                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                    transactionMode === 'Cash'
+                                                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                }`}
+                                                            >
+                                                                <Wallet className="h-5 w-5 mr-2" />
+                                                                Cash
+                                                                {transactionMode === 'Cash' && (
+                                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setTransactionMode('UPI')}
+                                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                    transactionMode === 'UPI'
+                                                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                }`}
+                                                            >
+                                                                <CreditCard className="h-5 w-5 mr-2" />
+                                                                UPI
+                                                                {transactionMode === 'UPI' && (
+                                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Received By
+                                                        </label>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setReceivedBy('Balu')}
+                                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                    receivedBy === 'Balu'
+                                                                        ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                }`}
+                                                            >
+                                                                <User className="h-5 w-5 mr-2" />
+                                                                Balu
+                                                                {receivedBy === 'Balu' && (
+                                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setReceivedBy('Mani')}
+                                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                                                    receivedBy === 'Mani'
+                                                                        ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                }`}
+                                                            >
+                                                                <User className="h-5 w-5 mr-2" />
+                                                                Mani
+                                                                {receivedBy === 'Mani' && (
+                                                                    <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        setShowAddRentModal(false);
+                                                        setSelectedVehicle(null);
+                                                        setRentAmount('');
+                                                        setSearchQuery('');
+                                                        setSearchResults([]);
+                                                    }}
+                                                    className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                {selectedVehicle && (
+                                                    <button
+                                                        onClick={handleAddRent}
+                                                        disabled={isSubmitting || !rentAmount}
+                                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                                                    >
+                                                        {isSubmitting ? (
+                                                            <>
+                                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                                <span>Processing...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Plus className="w-4 h-4" />
+                                                                <span>Add Payment</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </Dialog.Panel>
                             </Transition.Child>
