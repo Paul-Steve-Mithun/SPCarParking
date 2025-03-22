@@ -578,7 +578,7 @@ export function NewVehicle() {
                                             <Wallet className="h-5 w-5 mr-2" />
                                             Cash
                                             {vehicle.transactionMode === 'Cash' && (
-                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full"></span>
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                             )}
                                         </button>
                                         <button
@@ -593,7 +593,7 @@ export function NewVehicle() {
                                             <CreditCard className="h-5 w-5 mr-2" />
                                             UPI
                                             {vehicle.transactionMode === 'UPI' && (
-                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full"></span>
+                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                             )}
                                         </button>
                                     </div>
