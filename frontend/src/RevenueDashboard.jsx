@@ -671,8 +671,8 @@ export function RevenueDashboard() {
                                         onClick={() => setShowAddRentModal(true)}
                                         className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
                                     >
-                                        <Plus className="w-5 h-5" />
-                                        <span className="font-semibold">Add Rent</span>
+                                        <IndianRupee className="w-5 h-5" />
+                                        <span className="font-semibold">Pay Rent</span>
                                     </button>
                                     {/* Export PDF Button */}
                                     <button 

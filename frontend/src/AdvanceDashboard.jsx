@@ -481,13 +481,25 @@ export function AdvanceDashboard() {
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                                     Advance Payment Dashboard
                                 </h1>
-                                <button 
-                                    onClick={generatePDF} 
-                                    className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
-                                >
-                                    <Printer className="w-5 h-5" />
-                                    <span className="font-semibold">Export PDF</span>
-                                </button>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <button 
+                                        onClick={() => {
+                                            setShowPayAdvanceModal(true);
+                                            fetchVehicles();
+                                        }}
+                                        className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    >
+                                        <IndianRupee className="w-5 h-5" />
+                                        <span className="font-semibold">Pay Advance</span>
+                                    </button>
+                                    <button 
+                                        onClick={generatePDF} 
+                                        className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                    >
+                                        <Printer className="w-5 h-5" />
+                                        <span className="font-semibold">Export PDF</span>
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="mt-6 flex flex-col sm:flex-row gap-4">
@@ -514,18 +526,6 @@ export function AdvanceDashboard() {
                                         ))}
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
-                                </div>
-                                <div className="w-full sm:w-auto">
-                                    <button
-                                        onClick={() => {
-                                            setShowPayAdvanceModal(true);
-                                            fetchVehicles();
-                                        }}
-                                        className="w-full px-4 py-3 bg-white text-teal-600 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 font-medium shadow-md transition-colors duration-200"
-                                    >
-                                        <IndianRupee className="w-5 h-5" />
-                                        Pay Advance
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -917,14 +917,14 @@ export function AdvanceDashboard() {
                                                         onClick={() => setAdvanceTransactionMode('Cash')}
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'Cash'
-                                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-5 w-5 mr-2" />
                                                         Cash
                                                         {advanceTransactionMode === 'Cash' && (
-                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                                         )}
                                                     </button>
                                                     <button
@@ -932,14 +932,14 @@ export function AdvanceDashboard() {
                                                         onClick={() => setAdvanceTransactionMode('UPI')}
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'UPI'
-                                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
+                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-5 w-5 mr-2" />
                                                         UPI
                                                         {advanceTransactionMode === 'UPI' && (
-                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
+                                                            <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                                         )}
                                                     </button>
                                                 </div>
@@ -952,14 +952,14 @@ export function AdvanceDashboard() {
                                                             onClick={() => setReceivedBy('Balu')}
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Balu'
-                                                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
+                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
                                                             Balu
                                                             {receivedBy === 'Balu' && (
-                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                                             )}
                                                         </button>
                                                         <button
@@ -967,14 +967,14 @@ export function AdvanceDashboard() {
                                                             onClick={() => setReceivedBy('Mani')}
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Mani'
-                                                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/50 transform scale-[1.02]'
+                                                                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
                                                             Mani
                                                             {receivedBy === 'Mani' && (
-                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-teal-500 rounded-full"></span>
+                                                                <span className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full"></span>
                                                             )}
                                                         </button>
                                                     </div>
