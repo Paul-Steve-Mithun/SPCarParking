@@ -497,7 +497,7 @@ export function ExpensesDashboard() {
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                             Expenses Dashboard
                         </h1>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                             <button
                                 onClick={() => setIsAddExpenseOpen(true)}
                                 className="w-full sm:w-auto bg-white text-yellow-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
