@@ -1030,8 +1030,8 @@ app.post('/notifications/send-payment-reminder', async (req, res) => {
 
         // Format the phone number to include country code if not present
         const formattedNumber = contactNumber.startsWith('+') 
-            ? '9842190000' 
-            : `+919842190000`; // Adding India's country code
+            ? '9842138883'
+            : `+919842138883`; // Adding India's country code
 
         const result = await NotificationService.sendPaymentReminder(
             vehicleNumber,
