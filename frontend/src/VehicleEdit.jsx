@@ -17,8 +17,6 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         ...vehicle,
         vehicleType: vehicle.vehicleType || 'own'
     });
-    const [additionalDays, setAdditionalDays] = useState('');
-    const [showExtendForm, setShowExtendForm] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [files, setFiles] = useState({
         vehicleImage: null,
@@ -30,7 +28,6 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         document1Image: vehicle?.document1Image?.url || null,
         document2Image: vehicle?.document2Image?.url || null
     });
-    const [extensionTransactionMode, setExtensionTransactionMode] = useState('Cash');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showEndContractModal, setShowEndContractModal] = useState(false);
@@ -153,37 +150,6 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         } finally {
             setIsLoading(false);
             setShowSaveModal(false);
-        }
-    };
-
-    const handleExtendRental = async () => {
-        if (!additionalDays || additionalDays <= 0) {
-            toast.error("Please enter a valid number of days");
-            return;
-        }
-
-        try {
-            const response = await fetch(`https://spcarparkingbknd.onrender.com/extendRental/${vehicle._id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    additionalDays: Number(additionalDays),
-                    currentEndDate: updatedVehicle.endDate,
-                    transactionMode: extensionTransactionMode
-                }),
-            });
-
-            if (!response.ok) throw new Error('Failed to extend rental');
-
-            const data = await response.json();
-            setUpdatedVehicle(data.vehicle);
-            toast.success(`Rental extended by ${additionalDays} days`);
-            setShowExtendForm(false);
-            setAdditionalDays('');
-            setExtensionTransactionMode('Cash');
-            onUpdate();
-        } catch (error) {
-            toast.error("Failed to extend rental");
         }
     };
 
@@ -319,71 +285,6 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                 {/* Form Content */}
                 <div className="flex-grow overflow-y-auto p-4 sm:p-6">
-                    {/* Extend Rental Section */}
-                    {updatedVehicle.rentalType === 'daily' && (
-                        <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                                <h3 className="text-base sm:text-lg font-semibold text-blue-800">Rental Extension</h3>
-                                <button
-                                    onClick={() => setShowExtendForm(!showExtendForm)}
-                                    className="text-green-600 hover:text-green-800 flex items-center gap-2 text-sm sm:text-base"
-                                >
-                                    <PlusCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                    {showExtendForm ? 'Cancel Extension' : 'Extend Rental'}
-                                </button>
-                            </div>
-                            
-                            {showExtendForm && (
-                                <div className="mt-4 space-y-4">
-                                    <div className="flex flex-col sm:flex-row gap-4">
-                                        <input
-                                            type="number"
-                                            value={additionalDays}
-                                            onChange={(e) => setAdditionalDays(e.target.value)}
-                                            className="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Enter days to extend"
-                                            min="1"
-                                        />
-                                        <button
-                                            onClick={handleExtendRental}
-                                            className="w-full sm:w-auto bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                                        >
-                                            Pay & Extend
-                                        </button>
-                                    </div>
-
-                                    {/* Transaction Mode Selection */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setExtensionTransactionMode('Cash')}
-                                            className={`px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center text-sm sm:text-base ${
-                                                extensionTransactionMode === 'Cash'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
-                                            }`}
-                                        >
-                                            <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                            Cash
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setExtensionTransactionMode('UPI')}
-                                            className={`px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center text-sm sm:text-base ${
-                                                extensionTransactionMode === 'UPI'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700'
-                                            }`}
-                                        >
-                                            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                            UPI
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
                     {/* Main Form Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Vehicle Information Column */}
