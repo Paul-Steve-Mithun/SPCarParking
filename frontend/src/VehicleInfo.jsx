@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon } from 'lucide-react';
+import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon, ArrowLeft, Receipt } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function VehicleInfo() {
     const [vehicles, setVehicles] = useState([]);
@@ -11,10 +12,19 @@ export function VehicleInfo() {
     const [transactions, setTransactions] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchVehicles();
-    }, []);
+        
+        // Check if a vehicle was passed in the location state
+        if (location.state?.selectedVehicle) {
+            setSelectedVehicle(location.state.selectedVehicle);
+            // Clear the location state to avoid reusing the same vehicle on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
 
     useEffect(() => {
         if (selectedVehicle) {
@@ -642,6 +652,15 @@ export function VehicleInfo() {
     return (
         <div className="min-h-screen bg-gray-50 p-2 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+                {/* Back Button */}
+                <button 
+                    onClick={() => navigate('/')}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-600 transition-colors font-medium py-2"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Dashboard</span>
+                </button>
+                
                 {/* Search Section - Improved mobile padding */}
                 <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
                     <div className="relative">
@@ -683,25 +702,28 @@ export function VehicleInfo() {
                 {/* Vehicle Details Section */}
                 {selectedVehicle && (
                     <div className="space-y-4 sm:space-y-6">
-                        {/* Basic Info Card - Improved header for mobile */}
+                        {/* Basic Info Card - Redesigned with modern UI */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <h2 className="text-lg sm:text-2xl font-bold text-white">Vehicle Details</h2>
+                                    <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+                                        <Car className="w-6 h-6" />
+                                        Vehicle Details
+                                    </h2>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <span className="px-2.5 py-1 bg-white/30 text-white text-sm font-bold rounded-lg shadow-lg">
+                                        <span className="px-2.5 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-bold rounded-lg shadow-sm border border-white/20">
                                             {selectedVehicle.lotNumber || 'Open'}
                                         </span>
-                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-lg ${
+                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${
                                             selectedVehicle.status === 'active' 
-                                                ? 'bg-green-500/80 text-white' 
-                                                : 'bg-red-500/80 text-white'
+                                                ? 'bg-emerald-500/80 text-white border-emerald-400/50' 
+                                                : 'bg-red-500/80 text-white border-red-400/50'
                                         }`}>
                                             {selectedVehicle.status === 'active' ? 'Active' : 'Expired'}
                                         </span>
                                         <button
                                             onClick={() => selectedVehicle.rentalType === 'monthly' ? handlePrintInvoice(selectedVehicle) : handlePrintDailyInvoice(selectedVehicle)}
-                                            className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
+                                            className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors border border-white/20 backdrop-blur-sm"
                                             title="Print Receipt"
                                         >
                                             <PrinterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -710,219 +732,375 @@ export function VehicleInfo() {
                                 </div>
                             </div>
 
-                            {/* Details Grid - Full information with mobile responsiveness */}
+                            {/* Details Grid - Modern cards with better visual hierarchy */}
                             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                                {/* Row 1: Vehicle Details */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Vehicle Number</p>
-                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.vehicleNumber}</p>
+                                {/* Vehicle Details Section */}
+                                <div>
+                                    <h3 className="text-gray-700 font-semibold mb-3 flex items-center gap-1.5">
+                                        <Car className="w-4 h-4 text-blue-600" />
+                                        <span>Vehicle Information</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                                            <div className="bg-blue-100 p-2 rounded-full">
+                                                <Car className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Vehicle Number</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.vehicleNumber}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Description</p>
-                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.vehicleDescription}</p>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                                            <div className="bg-blue-100 p-2 rounded-full">
+                                                <Car className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Description</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.vehicleDescription}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <MapPin className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Lot Number</p>
-                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.lotNumber || 'Open'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Row 2: Owner Details */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <User className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Owner Name</p>
-                                            <p className="font-medium text-sm sm:text-base">{selectedVehicle.ownerName}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <Phone className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Contact</p>
-                                            <a 
-                                                href={`tel:${selectedVehicle.contactNumber}`}
-                                                className="font-medium text-sm sm:text-base text-blue-600 hover:text-blue-800 hover:underline"
-                                            >
-                                                {selectedVehicle.contactNumber}
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <Calendar className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Start Date</p>
-                                            <p className="font-medium text-sm sm:text-base">
-                                                {new Date(selectedVehicle.startDate).toLocaleDateString('en-GB')}
-                                            </p>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                                            <div className="bg-blue-100 p-2 rounded-full">
+                                                <MapPin className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Lot Number</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.lotNumber || 'Open'}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Row 3: Rental Details */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <Calendar className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Rental Type</p>
-                                            <p className="font-medium text-sm sm:text-base capitalize">{selectedVehicle.rentalType}</p>
+                                {/* Owner Details Section */}
+                                <div>
+                                    <h3 className="text-gray-700 font-semibold mb-3 flex items-center gap-1.5">
+                                        <User className="w-4 h-4 text-indigo-600" />
+                                        <span>Owner Information</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div className="bg-indigo-100 p-2 rounded-full">
+                                                <User className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Owner Name</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.ownerName}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div className="bg-indigo-100 p-2 rounded-full">
+                                                <Phone className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Contact</p>
+                                                <a 
+                                                    href={`tel:${selectedVehicle.contactNumber}`}
+                                                    className="font-semibold text-sm sm:text-base text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                >
+                                                    {selectedVehicle.contactNumber}
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div className="bg-indigo-100 p-2 rounded-full">
+                                                <Calendar className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Start Date</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">
+                                                    {new Date(selectedVehicle.startDate).toLocaleDateString('en-GB')}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <IndianRupee className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">Rent Price</p>
-                                            <p className="font-medium text-sm sm:text-base">₹{selectedVehicle.rentPrice}</p>
+                                </div>
+
+                                {/* Rental Details Section */}
+                                <div>
+                                    <h3 className="text-gray-700 font-semibold mb-3 flex items-center gap-1.5">
+                                        <IndianRupee className="w-4 h-4 text-emerald-600" />
+                                        <span>Rental Information</span>
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                            <div className="bg-emerald-100 p-2 rounded-full">
+                                                <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Rental Type</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900 capitalize">{selectedVehicle.rentalType}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
-                                        <IndianRupee className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                            <p className="text-xs text-gray-500">
-                                                {selectedVehicle.rentalType === 'monthly' ? 'Advance Amount' : 'Total Rental Price'}
-                                            </p>
-                                            <p className="font-medium text-sm sm:text-base">
-                                                ₹{selectedVehicle.rentalType === 'monthly' 
-                                                    ? selectedVehicle.advanceAmount 
-                                                    : selectedVehicle.rentPrice * selectedVehicle.numberOfDays}
-                                                {selectedVehicle.rentalType === 'daily' && (
-                                                    <span className="text-xs text-gray-500 ml-1">
-                                                        ({selectedVehicle.numberOfDays} days)
-                                                    </span>
-                                                )}
-                                            </p>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                            <div className="bg-emerald-100 p-2 rounded-full">
+                                                <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">Rent Price</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">₹{selectedVehicle.rentPrice.toLocaleString('en-IN')}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                            <div className="bg-emerald-100 p-2 rounded-full">
+                                                <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-gray-500">
+                                                    {selectedVehicle.rentalType === 'monthly' ? 'Advance Amount' : 'Total Rental Price'}
+                                                </p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">
+                                                    ₹{selectedVehicle.rentalType === 'monthly' 
+                                                        ? (selectedVehicle.advanceAmount || 0).toLocaleString('en-IN')
+                                                        : (selectedVehicle.rentPrice * selectedVehicle.numberOfDays).toLocaleString('en-IN')}
+                                                    {selectedVehicle.rentalType === 'daily' && (
+                                                        <span className="text-xs text-gray-500 ml-1">
+                                                            ({selectedVehicle.numberOfDays} days)
+                                                        </span>
+                                                    )}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Images Section - Improved grid for mobile */}
+                        {/* Images Section - Modern gallery style */}
                         <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
-                            <h3 className="text-lg font-semibold mb-4">Documents & Images</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {selectedVehicle.vehicleImage?.url && (
-                                    <div 
-                                        onClick={() => handleImageClick(selectedVehicle.vehicleImage.url, 'Vehicle Image', selectedVehicle)}
-                                        className="cursor-pointer group"
-                                    >
-                                        <p className="text-sm text-gray-500 mb-2">Vehicle Image</p>
-                                        <div className="relative overflow-hidden rounded-lg">
-                                            <img 
-                                                src={selectedVehicle.vehicleImage.url} 
-                                                alt="Vehicle" 
-                                                className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                                                <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 px-3 py-1 rounded-full text-sm">
-                                                    Click to expand
-                                                </span>
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Documents & Images
+                            </h3>
+                            
+                            {(!selectedVehicle.vehicleImage?.url && !selectedVehicle.document1Image?.url && !selectedVehicle.document2Image?.url) ? (
+                                <div className="text-center py-8 text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <p className="text-lg font-medium">No images available</p>
+                                    <p className="text-sm mt-1">No vehicle images or documents have been uploaded.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {selectedVehicle.vehicleImage?.url && (
+                                        <div 
+                                            onClick={() => handleImageClick(selectedVehicle.vehicleImage.url, 'Vehicle Image', selectedVehicle)}
+                                            className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                        >
+                                            <p className="text-sm text-gray-500 mb-2 flex items-center gap-1.5">
+                                                <Car className="w-3.5 h-3.5 text-blue-500" />
+                                                Vehicle Image
+                                            </p>
+                                            <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="aspect-w-16 aspect-h-10 bg-gray-100">
+                                                    <img 
+                                                        src={selectedVehicle.vehicleImage.url} 
+                                                        alt="Vehicle" 
+                                                        className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                </div>
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                                                    <span className="px-4 py-2 bg-white/90 backdrop-blur-sm shadow-lg rounded-full text-sm font-medium text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                                        View Image
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                                {selectedVehicle.document1Image?.url && (
-                                    <div 
-                                        onClick={() => handleImageClick(selectedVehicle.document1Image.url, 'Aadhaar Card', selectedVehicle)}
-                                        className="cursor-pointer group"
-                                    >
-                                        <p className="text-sm text-gray-500 mb-2">Aadhaar Card</p>
-                                        <div className="relative overflow-hidden rounded-lg">
-                                            <img 
-                                                src={selectedVehicle.document1Image.url} 
-                                                alt="Document 1" 
-                                                className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                                                <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 px-3 py-1 rounded-full text-sm">
-                                                    Click to expand
-                                                </span>
+                                    )}
+                                    {selectedVehicle.document1Image?.url && (
+                                        <div 
+                                            onClick={() => handleImageClick(selectedVehicle.document1Image.url, 'Aadhaar Card', selectedVehicle)}
+                                            className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                        >
+                                            <p className="text-sm text-gray-500 mb-2 flex items-center gap-1.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                                </svg>
+                                                Aadhaar Card
+                                            </p>
+                                            <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="aspect-w-16 aspect-h-10 bg-gray-100">
+                                                    <img 
+                                                        src={selectedVehicle.document1Image.url} 
+                                                        alt="Document 1" 
+                                                        className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                </div>
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                                                    <span className="px-4 py-2 bg-white/90 backdrop-blur-sm shadow-lg rounded-full text-sm font-medium text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                                        View Document
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                                {selectedVehicle.document2Image?.url && (
-                                    <div 
-                                        onClick={() => handleImageClick(selectedVehicle.document2Image.url, 'RC/License', selectedVehicle)}
-                                        className="cursor-pointer group"
-                                    >
-                                        <p className="text-sm text-gray-500 mb-2">RC/License</p>
-                                        <div className="relative overflow-hidden rounded-lg">
-                                            <img 
-                                                src={selectedVehicle.document2Image.url} 
-                                                alt="Document 2" 
-                                                className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                                                <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/50 px-3 py-1 rounded-full text-sm">
-                                                    Click to expand
-                                                </span>
+                                    )}
+                                    {selectedVehicle.document2Image?.url && (
+                                        <div 
+                                            onClick={() => handleImageClick(selectedVehicle.document2Image.url, 'RC/License', selectedVehicle)}
+                                            className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                        >
+                                            <p className="text-sm text-gray-500 mb-2 flex items-center gap-1.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                RC/License
+                                            </p>
+                                            <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="aspect-w-16 aspect-h-10 bg-gray-100">
+                                                    <img 
+                                                        src={selectedVehicle.document2Image.url} 
+                                                        alt="Document 2" 
+                                                        className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                </div>
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                                                    <span className="px-4 py-2 bg-white/90 backdrop-blur-sm shadow-lg rounded-full text-sm font-medium text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                                        View Document
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Transaction History - Improved mobile table */}
+                        {/* Transaction History - Modern redesign */}
                         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
-                                <h3 className="text-lg sm:text-xl font-bold text-white">Transaction History</h3>
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
+                                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                                    <Receipt className="w-5 h-5" />
+                                    Transaction History
+                                </h3>
                             </div>
-                            <div className="overflow-x-auto">
-                                <div className="inline-block min-w-full align-middle">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    S.No
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Date
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Type
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Mode
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Received By
-                                                </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Amount
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
-                                            {transactions
-                                                .filter(transaction => transaction.revenueAmount > 0)
-                                                .map((transaction, index) => (
-                                                <tr key={transaction._id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {transaction.transactionType}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            
+                            {transactions.length === 0 ? (
+                                <div className="p-8 text-center">
+                                    <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                        <Receipt className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-gray-500 text-lg font-medium">No transactions found</h3>
+                                    <p className="text-gray-400 text-sm mt-2">This vehicle doesn't have any recorded transactions.</p>
+                                </div>
+                            ) : (
+                                <div className="p-4">
+                                    {/* Cards instead of table for better mobile */}
+                                    <div className="hidden md:block">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
+                                                <thead>
+                                                    <tr className="bg-gray-50">
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                                            S.No
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Date
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Type
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Mode
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                            Received By
+                                                        </th>
+                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+                                                            Amount
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-100">
+                                                    {transactions
+                                                        .filter(transaction => transaction.revenueAmount > 0)
+                                                        .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))
+                                                        .map((transaction, index) => (
+                                                        <tr 
+                                                            key={transaction._id} 
+                                                            className="hover:bg-blue-50 transition-colors duration-150"
+                                                        >
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                <span className="bg-blue-100 text-blue-800 font-medium px-2.5 py-1 rounded-full text-xs">
+                                                                    {index + 1}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">
+                                                                        {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
+                                                                    </span>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        {new Date(transaction.transactionDate).toLocaleTimeString('en-GB', {
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit'
+                                                                        })}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                                                                {transaction.transactionType}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                                    transaction.transactionMode === 'UPI' 
+                                                                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
+                                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                                }`}>
+                                                                    {transaction.transactionMode === 'UPI' ? (
+                                                                        <>
+                                                                            <CreditCard className="w-3 h-3 mr-1" />
+                                                                            <span>UPI</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <DollarSign className="w-3 h-3 mr-1" />
+                                                                            <span>Cash</span>
+                                                                        </>
+                                                                    )}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <div className="bg-gray-100 p-1 rounded-full">
+                                                                        <User className="w-3 h-3 text-gray-600" />
+                                                                    </div>
+                                                                    <span>{transaction.receivedBy || 'Admin'}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                                                <div className="flex items-center gap-1">
+                                                                    <IndianRupee className="w-3.5 h-3.5" />
+                                                                    {transaction.revenueAmount.toLocaleString('en-IN')}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* Mobile-friendly cards view */}
+                                    <div className="md:hidden space-y-4">
+                                        {transactions
+                                            .filter(transaction => transaction.revenueAmount > 0)
+                                            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))
+                                            .map((transaction, index) => (
+                                            <div 
+                                                key={transaction._id}
+                                                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                                            >
+                                                <div className="p-4 border-b border-gray-100">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="font-semibold">{transaction.transactionType}</div>
+                                                        </div>
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                                                             transaction.transactionMode === 'UPI' 
-                                                                ? 'bg-blue-100 text-blue-800' 
-                                                                : 'bg-green-100 text-green-800'
+                                                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
+                                                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                         }`}>
                                                             {transaction.transactionMode === 'UPI' ? (
                                                                 <>
@@ -936,51 +1114,170 @@ export function VehicleInfo() {
                                                                 </>
                                                             )}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        <div className="flex items-center space-x-2">
-                                                            <User className="w-4 h-4 text-gray-500" />
-                                                            <span>{transaction.receivedBy || '-'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-4 space-y-3">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500 text-sm">Date</span>
+                                                        <span className="text-sm font-medium">
+                                                            {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500 text-sm">Received By</span>
+                                                        <span className="text-sm font-medium flex items-center">
+                                                            <User className="w-3 h-3 text-gray-500 mr-1" />
+                                                            {transaction.receivedBy || 'Admin'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between pt-2 border-t border-gray-100">
+                                                        <span className="text-gray-500 text-sm">Amount</span>
+                                                        <span className="text-green-600 font-semibold flex items-center">
+                                                            <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
+                                                            {transaction.revenueAmount.toLocaleString('en-IN')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Transaction Summary - NEW */}
+                        {transactions.length > 0 && (
+                            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                                <div className="bg-gradient-to-r from-green-600 to-green-600 p-4 sm:p-6">
+                                    <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                                        <IndianRupee className="w-5 h-5" />
+                                        Payment Summary
+                                    </h3>
+                                </div>
+                                <div className="p-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        {/* Total Paid */}
+                                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-100">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-emerald-800 font-medium text-sm">Total Paid</span>
+                                                    <div className="bg-emerald-100 p-2 rounded-full">
+                                                        <IndianRupee className="w-4 h-4 text-emerald-700" />
+                                                    </div>
+                                                </div>
+                                                <div className="text-2xl font-bold text-emerald-800">
+                                                    ₹{transactions
+                                                        .filter(t => t.revenueAmount > 0)
+                                                        .reduce((total, t) => total + t.revenueAmount, 0)
+                                                        .toLocaleString('en-IN')}
+                                                </div>
+                                                <div className="text-xs text-emerald-700 mt-1">
+                                                    {transactions.filter(t => t.revenueAmount > 0).length} payment(s)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Last Payment */}
+                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-blue-800 font-medium text-sm">Last Payment</span>
+                                                    <div className="bg-blue-100 p-2 rounded-full">
+                                                        <Calendar className="w-4 h-4 text-blue-700" />
+                                                    </div>
+                                                </div>
+                                                {transactions.filter(t => t.revenueAmount > 0).length > 0 ? (
+                                                    <>
+                                                        <div className="text-2xl font-bold text-blue-800">
+                                                            ₹{transactions
+                                                                .filter(t => t.revenueAmount > 0)
+                                                                .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0]
+                                                                .revenueAmount.toLocaleString('en-IN')}
                                                         </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        ₹{transaction.revenueAmount}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                        <div className="text-xs text-blue-700 mt-1">
+                                                            {new Date(transactions
+                                                                .filter(t => t.revenueAmount > 0)
+                                                                .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0]
+                                                                .transactionDate).toLocaleDateString('en-GB')}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-gray-500">No payments</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Payment Mode */}
+                                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-purple-800 font-medium text-sm">Payment Methods</span>
+                                                    <div className="bg-purple-100 p-2 rounded-full">
+                                                        <CreditCard className="w-4 h-4 text-purple-700" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex space-x-2 items-center mt-2">
+                                                    {/* UPI Count */}
+                                                    <div className="flex items-center bg-indigo-100 px-3 py-1.5 rounded-lg">
+                                                        <CreditCard className="w-3 h-3 text-indigo-700 mr-1.5" />
+                                                        <span className="text-xs font-medium text-indigo-800">
+                                                            UPI: {transactions.filter(t => t.transactionMode === 'UPI' && t.revenueAmount > 0).length}
+                                                        </span>
+                                                    </div>
+                                                    {/* Cash Count */}
+                                                    <div className="flex items-center bg-emerald-100 px-3 py-1.5 rounded-lg">
+                                                        <DollarSign className="w-3 h-3 text-emerald-700 mr-1.5" />
+                                                        <span className="text-xs font-medium text-emerald-800">
+                                                            Cash: {transactions.filter(t => t.transactionMode === 'Cash' && t.revenueAmount > 0).length}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* Add Image Viewer Modal */}
+            {/* Add enhanced Image Viewer Modal with zoom and better controls */}
             {selectedImage && (
                 <div 
-                    className="fixed inset-0 backdrop-blur-md bg-black/70 z-50 flex items-center justify-center"
+                    className="fixed inset-0 z-50 transition-all duration-300 ease-in-out"
                     onClick={handleCloseViewer}
                 >
-                    <div className="max-w-7xl mx-auto px-4 relative">
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-lg"></div>
+                    
+                    {/* Content */}
+                    <div className="relative h-full w-full flex items-center justify-center p-4">
+                        {/* Close button */}
                         <button 
                             onClick={handleCloseViewer}
-                            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+                            className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 bg-black/30 hover:bg-black/50 transition-colors p-2 rounded-full backdrop-blur-sm"
+                            aria-label="Close viewer"
                         >
-                            <X className="w-8 h-8" />
+                            <X className="w-6 h-6" />
                         </button>
-                        <div className="text-center mb-4 text-white">
+                        
+                        {/* Image info */}
+                        <div className="absolute top-4 left-4 bg-black/30 backdrop-blur-sm text-white p-3 rounded-xl max-w-[80%] md:max-w-sm">
                             <h3 className="text-xl font-semibold">{selectedImage.title}</h3>
-                            <p className="text-sm mt-1">{selectedImage.vehicleNumber}</p>
-                            <p className="text-sm mt-1">{selectedImage.vehicleDescription}</p>
+                            <p className="text-sm mt-1 text-white/80">{selectedImage.vehicleNumber}</p>
+                            <p className="text-sm mt-0.5 text-white/80 truncate">{selectedImage.vehicleDescription}</p>
                         </div>
-                        <img 
-                            src={selectedImage.url} 
-                            alt={selectedImage.title}
-                            className="max-h-[85vh] max-w-full object-contain mx-auto rounded-lg shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
-                        />
+                        
+                        {/* Image container */}
+                        <div className="bg-white/5 backdrop-blur-sm p-1 rounded-2xl shadow-2xl border border-white/10 max-h-[90vh] max-w-5xl overflow-hidden">
+                            <img 
+                                src={selectedImage.url} 
+                                alt={selectedImage.title}
+                                className="max-h-[85vh] max-w-full object-contain rounded-xl"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
