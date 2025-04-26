@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSpring, animated } from 'react-spring';
+import { useNavigate } from 'react-router-dom';
 
 export function HomePage({ isAuthenticated, onAuthentication }) {
     const [vehicles, setVehicles] = useState([]);
@@ -30,6 +31,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
     const [showModal, setShowModal] = useState(false);
     const [filteredVehicles, setFilteredVehicles] = useState([]);
     const [loginError, setLoginError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetch('https://spcarparkingbknd.onrender.com/vehicles')
@@ -168,6 +170,11 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             setDisplayedVehicles(filtered);
         }, [searchTerm, filteredVehicles]);
 
+        // Add function to handle vehicle card click
+        const handleVehicleCardClick = (vehicle) => {
+            navigate('/vehicle-info', { state: { selectedVehicle: vehicle } });
+        };
+
         // Add due amount calculation function
         const calculateDueAmount = (vehicle) => {
             if (vehicle.rentalType === 'daily' && vehicle.status === 'inactive') {
@@ -232,7 +239,11 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     const dueAmount = calculateDueAmount(vehicle);
                                     
                                     return (
-                                        <div key={vehicle._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                        <div 
+                                            key={vehicle._id} 
+                                            className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                                            onClick={() => handleVehicleCardClick(vehicle)}
+                                        >
                                             <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-200">
                                                 <div className="flex flex-col gap-1.5 sm:gap-2">
                                                     <div className="flex items-start justify-between gap-2">
@@ -307,6 +318,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                         <a 
                                                             href={`tel:${vehicle.contactNumber}`}
                                                             className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                                                            onClick={(e) => e.stopPropagation()} // Prevent card click when clicking phone number
                                                         >
                                                             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
