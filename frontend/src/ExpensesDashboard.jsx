@@ -550,7 +550,7 @@ export function ExpensesDashboard() {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm font-medium">Total Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.totalExpenses.toFixed(2)}</p>
+                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
@@ -561,7 +561,7 @@ export function ExpensesDashboard() {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm font-medium">Balu's Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.baluExpenses.toFixed(2)}</p>
+                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.baluExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
@@ -572,7 +572,7 @@ export function ExpensesDashboard() {
                             </div>
                             <div>
                                 <p className="text-gray-600 text-sm font-medium">Mani's Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.maniExpenses.toFixed(2)}</p>
+                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.maniExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
@@ -683,22 +683,28 @@ export function ExpensesDashboard() {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex items-center justify-center gap-1">
                                                             <User className="w-4 h-4 text-gray-400" />
                                                             {expense.spentBy}
                                                         </div>
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        ₹{expense.amount.toFixed(2)}
+                                                        <div className="w-full text-right font-mono">
+                                                            <span className="inline-block w-[70px] text-right text-base">
+                                                                {expense.amount.toFixed(2)}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                                        <button
-                                                            onClick={() => handleDeleteExpense(expense._id, expense)}
-                                                            className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
-                                                            title="Delete expense"
-                                                        >
-                                                            <TrashIcon className="w-5 h-5" />
-                                                        </button>
+                                                        <div className="flex justify-center">
+                                                            <button
+                                                                onClick={() => handleDeleteExpense(expense._id, expense)}
+                                                                className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
+                                                                title="Delete expense"
+                                                            >
+                                                                <TrashIcon className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -794,7 +800,6 @@ export function ExpensesDashboard() {
                                                 Amount
                                             </label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
                                                 <input
                                                     type="number"
                                                     value={newExpense.amount}
@@ -972,7 +977,7 @@ export function ExpensesDashboard() {
                                                 </p>
                                             )}
                                             <p className="text-sm text-gray-600">
-                                                <span className="font-medium">Amount:</span> ₹{expenseToDelete?.amount.toFixed(2)}
+                                                <span className="font-medium">Amount:</span> {expenseToDelete?.amount.toFixed(2)}
                                             </p>
                                             <p className="text-sm text-gray-600">
                                                 <span className="font-medium">Date:</span> {new Date(expenseToDelete?.transactionDate).toLocaleDateString('en-GB')}
