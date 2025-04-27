@@ -296,11 +296,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                         )}
                                                     </span>
                                                 </div>
-                                                {vehicle.endDate && (
+                                                {(vehicle.endDate || vehicle.startDate) && (
                                                     <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                        <span className="text-gray-500">End Date:</span>
+                                                        <span className="text-gray-500">
+                                                            {selectedCategory === 'Daily Rentals' ? 'End Date:' : 'Start Date:'}
+                                                        </span>
                                                         <span className="font-medium text-gray-900">
-                                                            {formatDate(vehicle.endDate)}
+                                                            {formatDate(selectedCategory === 'Daily Rentals' ? vehicle.endDate : vehicle.startDate)}
                                                         </span>
                                                     </div>
                                                 )}
