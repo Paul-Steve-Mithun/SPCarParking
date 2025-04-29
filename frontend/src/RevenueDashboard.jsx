@@ -607,6 +607,18 @@ export function RevenueDashboard() {
 
         setIsSubmitting(true);
         try {
+            // Create a date object that combines the selected date with the current time
+            const currentTime = new Date();
+            const paymentDateTime = new Date(selectedDate);
+            
+            // Set hours, minutes, seconds and milliseconds from current time
+            paymentDateTime.setHours(
+                currentTime.getHours(),
+                currentTime.getMinutes(),
+                currentTime.getSeconds(),
+                currentTime.getMilliseconds()
+            );
+
             const revenueData = {
                 vehicleNumber: selectedVehicle.vehicleNumber,
                 vehicleDescription: selectedVehicle.vehicleDescription,
@@ -614,13 +626,13 @@ export function RevenueDashboard() {
                 rentalType: selectedVehicle.rentalType,
                 rentPrice: selectedVehicle.rentPrice,
                 numberOfDays: selectedVehicle.rentalType === 'daily' ? 1 : null,
-                month: new Date(selectedDate).getMonth(),
-                year: new Date(selectedDate).getFullYear(),
+                month: paymentDateTime.getMonth(),
+                year: paymentDateTime.getFullYear(),
                 revenueAmount: parseFloat(rentAmount),
                 transactionType: 'Extension',
                 transactionMode: transactionMode,
                 receivedBy: receivedBy,
-                transactionDate: selectedDate
+                transactionDate: paymentDateTime
             };
 
             const response = await fetch('https://spcarparkingbknd.onrender.com/revenue', {
