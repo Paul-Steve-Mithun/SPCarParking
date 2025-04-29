@@ -690,7 +690,7 @@ export function ExpensesDashboard() {
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         <div className="w-full text-right font-mono">
-                                                            <span className="inline-block w-[70px] text-right text-base">
+                                                            <span className="inline-block w-[100px] text-right text-base">
                                                                 {expense.amount.toFixed(2)}
                                                             </span>
                                                         </div>
