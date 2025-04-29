@@ -33,7 +33,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const [showEndContractModal, setShowEndContractModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [availableLots, setAvailableLots] = useState([]);
-    const [selectedLotType, setSelectedLotType] = useState('regular');
+    const [selectedLotType, setSelectedLotType] = useState('all');
 
     const handleTextInput = (e, field) => {
         let value = e.target.value;
@@ -231,7 +231,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 const available = allLots.filter(lot => !occupiedLots.includes(lot));
                 
                 // Include current vehicle's lot
-                if (!available.includes(vehicle.lotNumber)) {
+                if (vehicle.lotNumber && !available.includes(vehicle.lotNumber)) {
                     available.push(vehicle.lotNumber);
                 }
                 
@@ -246,15 +246,21 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     }, [vehicle._id, vehicle.lotNumber]);
 
     const getFilteredLots = () => {
+        // Always include exactly one Open button
+        const openButton = ['Open'];
+        
+        // Filter out any "Open" values from availableLots to prevent duplicates
+        const filteredAvailableLots = availableLots.filter(lot => lot && lot !== 'Open');
+        
         switch (selectedLotType) {
             case 'a':
-                return availableLots.filter(lot => lot.startsWith('A'));
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('A'))];
             case 'b':
-                return availableLots.filter(lot => lot.startsWith('B'));
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('B'))];
             case 'c':
-                return availableLots.filter(lot => lot.startsWith('C'));
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('C'))];
             default:
-                return availableLots;
+                return [...openButton, ...filteredAvailableLots]; // Show all non-empty lots
         }
     };
 
@@ -267,7 +273,21 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         <h1 className="text-xl sm:text-3xl font-bold text-white text-center sm:text-left">Edit Vehicle Details</h1>
                         <div className="flex items-center gap-2">
                             <button 
-                                onClick={() => setIsEditMode(!isEditMode)}
+                                onClick={() => {
+                                    if (isEditMode) {
+                                        // Cancel edit - reset to original values
+                                        setUpdatedVehicle({ 
+                                            ...vehicle,
+                                            vehicleType: vehicle.vehicleType || 'own'
+                                        });
+                                        setSelectedLotType('all');
+                                    } else {
+                                        // Enter edit mode
+                                        setIsEditMode(true);
+                                        setSelectedLotType('all');
+                                    }
+                                    setIsEditMode(!isEditMode);
+                                }}
                                 className="text-white hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm sm:text-base"
                             >
                                 <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -351,7 +371,11 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <label className="block text-gray-700 font-medium mb-2">Lot Number</label>
                                         <input 
                                             type="text"
-                                            value={updatedVehicle.lotNumber}
+                                            value={
+                                                updatedVehicle.parkingType === 'open'
+                                                    ? 'Open'
+                                                    : updatedVehicle.lotNumber || ''
+                                            }
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                                             disabled={true}
                                         />
@@ -360,7 +384,18 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             <>
                                                 {/* Lot Type Selector */}
                                                 <div className="mt-2 mb-3">
-                                                    <div className="flex space-x-4">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('all')}
+                                                            className={`px-3 py-1 rounded-md ${
+                                                                selectedLotType === 'all' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            All Wings
+                                                        </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('a')}
@@ -405,11 +440,30 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                             <button
                                                                 key={lot}
                                                                 type="button"
-                                                                onClick={() => setUpdatedVehicle({...updatedVehicle, lotNumber: lot})}
+                                                                onClick={() => {
+                                                                    if (lot === 'Open') {
+                                                                        setUpdatedVehicle({
+                                                                            ...updatedVehicle, 
+                                                                            lotNumber: '', 
+                                                                            parkingType: 'open'
+                                                                        });
+                                                                    } else {
+                                                                        setUpdatedVehicle({
+                                                                            ...updatedVehicle, 
+                                                                            lotNumber: lot,
+                                                                            parkingType: 'private'
+                                                                        });
+                                                                    }
+                                                                }}
                                                                 className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                                    (updatedVehicle.parkingType === 'open' && lot === 'Open') ||
                                                                     updatedVehicle.lotNumber === lot
-                                                                        ? 'bg-blue-600 text-white'
-                                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                                        ? lot === 'Open'
+                                                                            ? 'bg-green-600 text-white'
+                                                                            : 'bg-blue-600 text-white'
+                                                                        : lot === 'Open'
+                                                                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                                                 }`}
                                                             >
                                                                 {lot}
