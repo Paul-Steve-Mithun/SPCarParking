@@ -737,7 +737,7 @@ export function AdvanceDashboard() {
                                                             </td>
                                                             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
                                                                 <div className="w-full text-right font-mono">
-                                                                    <span className={`inline-block w-[70px] text-right text-base ${vehicle.advanceRefund ? 'text-red-600' : ''}`}>
+                                                                    <span className={`inline-block w-[100px] text-right text-base ${vehicle.advanceRefund ? 'text-red-600' : ''}`}>
                                                                         {vehicle.advanceRefund 
                                                                             ? `-${vehicle.advanceRefund.toFixed(2)}`
                                                                             : vehicle.advanceAmount.toFixed(2)}
