@@ -630,6 +630,7 @@ export function AdminPanel() {
                 vehicle.vehicleNumber.toLowerCase().includes(searchTermLower) ||
                 vehicle.ownerName.toLowerCase().includes(searchTermLower) ||
                 vehicle.vehicleDescription.toLowerCase().includes(searchTermLower) ||
+                vehicle.contactNumber.toLowerCase().includes(searchTermLower) ||
                 // Check for both lot number and "open" parking
                 (vehicle.lotNumber 
                     ? vehicle.lotNumber.toLowerCase().includes(searchTermLower)

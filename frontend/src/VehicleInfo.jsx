@@ -69,6 +69,7 @@ export function VehicleInfo() {
             vehicle.vehicleNumber.includes(searchTermUpper) ||
             vehicle.vehicleDescription.toUpperCase().includes(searchTermUpper) ||
             vehicle.ownerName.toUpperCase().includes(searchTermUpper) ||
+            vehicle.contactNumber.toUpperCase().includes(searchTermUpper) ||
             // Check for both lot number and "open" parking
             (vehicle.lotNumber 
                 ? vehicle.lotNumber.toUpperCase().includes(searchTermUpper)
