@@ -96,6 +96,17 @@ export function VehicleInfo() {
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    // Place createSection here so both invoice functions can use it
+    const createSection = (doc, title, x, y, columnWidth) => {
+        doc.setFontSize(16);
+        doc.setTextColor(21, 101, 192);
+        doc.text(title, x, y);
+        doc.setDrawColor(21, 101, 192);
+        doc.setLineWidth(0.5);
+        doc.line(x, y + 2, x + columnWidth, y + 2);
+        doc.setTextColor(44, 62, 80);
+    };
+
     const handlePrintInvoice = async (vehicle) => {
         try {
             const totalAmount = vehicle.rentalType === 'daily' ? 
@@ -109,43 +120,54 @@ export function VehicleInfo() {
             const startX1 = 15;
             const startX2 = 110;
             
-            // Modern Header with Gradient - Reduced top margin
-            const gradient = doc.setFillColor(0, 128, 0);
-            doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced from 40 to 35
+            // Modern Header with Gradient - Reduced height
+            doc.setFillColor(21, 101, 192); // RGB for #1565C0
+            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
+            
+            // Add Logo (placeholder - replace with your logo later)
+            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            try {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+
+                // Add logo to the left with increased top padding
+                doc.addImage(logoBase64, 'PNG', 15, 5, 25, 25);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
+
+            // Title and Text with adjusted positions
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 15, { align: 'center' });  // Moved up from 20 to 15
+            doc.setFontSize(24);
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 12, { align: 'center' });
             
-            // Welcome text with smaller font
-            doc.setFontSize(18);
-            doc.text('Welcomes You', pageWidth/2, 25, { align: 'center' });  // Moved up from 30 to 25
+            // Add motto under the title with increased font size and reduced gap
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 20, { align: 'center' });
+            
+            // Welcome text with increased font size
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text('Welcomes You', pageWidth/2 + 10, 28, { align: 'center' });
             
             // Subtitle inside the header
-            doc.setFontSize(12);
+            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 33, { align: 'center' });  // Moved up from 38 to 33
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 36, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
             
-            // Section Styling Function
-            const createSection = (title, x, y) => {
-                doc.setFontSize(16);
-                doc.setTextColor(0, 128, 0);
-                doc.text(title, x, y);
-                doc.setDrawColor(0, 128, 0);
-                doc.setLineWidth(0.5);
-                doc.line(x, y + 2, x + columnWidth, y + 2);
-                doc.setTextColor(44, 62, 80);
-            };
-
-            // Start content higher on the page
-            const startY = 50;  // Reduced from 60
-
             // Left Column - Vehicle Details
-            createSection('Vehicle Details', startX1, startY);
+            createSection(doc, 'Vehicle Details', startX1, 50, columnWidth);
 
             const vehicleDetails = [
                 ['Vehicle No:', vehicle.vehicleNumber],
@@ -160,7 +182,7 @@ export function VehicleInfo() {
                     `${vehicle.numberOfDays} days` : 'Every Month']  ];
 
             doc.autoTable({
-                startY: startY + 8,
+                startY: 58,
                 margin: { left: startX1, right: startX1 },
                 head: [],
                 body: vehicleDetails,
@@ -179,7 +201,7 @@ export function VehicleInfo() {
 
             // Owner Details with reduced spacing
             const ownerY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection('Owner Details', startX1, ownerY);
+            createSection(doc, 'Owner Details', startX1, ownerY, columnWidth);
 
             const ownerDetails = [
                 ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
@@ -206,6 +228,7 @@ export function VehicleInfo() {
             });
 
             // Add Vehicle Image Section
+            let afterImageY = doc.autoTable.previous.finalY;
             if (vehicle.vehicleImage?.url) {
                 try {
                     const imgResponse = await fetch(vehicle.vehicleImage.url);
@@ -227,13 +250,28 @@ export function VehicleInfo() {
                         imageWidth,
                         50
                     );
+                    afterImageY = doc.autoTable.previous.finalY + 5 + 50;
                 } catch (imgError) {
                     console.error('Error loading vehicle image:', imgError);
                 }
             }
 
+            // Add invoice generation date and time in IST below the image
+            const nowInvoiceImg = new Date();
+            const istDateInvoiceImg = nowInvoiceImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+            const istTimeInvoiceImg = nowInvoiceImg.toLocaleTimeString('en-GB', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(44, 62, 80);
+            doc.text(`Generated on: ${istDateInvoiceImg} at ${istTimeInvoiceImg} IST`, startX1, afterImageY + 8);
+
             // Right Column - Our Facilities with proper spacing
-            createSection('Our Facilities', startX2, startY);
+            createSection(doc, 'Our Facilities', startX2, 50, columnWidth);
 
             const facilities = [
                 ['1.', '24/7 Security Surveillance'],
@@ -244,7 +282,7 @@ export function VehicleInfo() {
             ];
 
             doc.autoTable({
-                startY: startY + 8,  // Reduced from 10
+                startY: 58,  // Reduced from 10
                 margin: { left: startX2 },
                 head: [],
                 body: facilities,
@@ -263,7 +301,7 @@ export function VehicleInfo() {
 
             // Terms and Conditions with reduced spacing
             const termsY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
-            createSection('Terms & Conditions', startX2, termsY);
+            createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
@@ -292,7 +330,7 @@ export function VehicleInfo() {
 
             // Contact Details with reduced spacing
             const contactY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
-            createSection('Contact Details', startX2, contactY);
+            createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
 
             const contacts = [
                 ['Watchman:', '9842850753'],
@@ -320,11 +358,12 @@ export function VehicleInfo() {
             // QR Code Section with reduced size and spacing
             const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
             doc.setFontSize(16);
-            doc.setTextColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
             doc.text('Scan QR to Pay', startX2, qrY);
             doc.setFontSize(10);
+            doc.setTextColor(21, 101, 192);
             doc.text('(Ignore if already paid)', startX2, qrY + 6);  // Reduced from 8
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(startX2, qrY + 2, startX2 + columnWidth, qrY + 2);
             doc.setTextColor(44, 62, 80);
@@ -354,7 +393,7 @@ export function VehicleInfo() {
             );
 
             // Modern Footer - Moved closer to bottom
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
             
@@ -388,43 +427,57 @@ export function VehicleInfo() {
             const startX1 = 15;
             const startX2 = 110;
             
-            // Modern Header with Gradient - Reduced top margin
-            const gradient = doc.setFillColor(0, 128, 0);
-            doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced from 40 to 35
+            // Modern Header with Gradient - Reduced height
+            doc.setFillColor(21, 101, 192); // RGB for #1565C0
+            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
+            
+            // Add Logo (placeholder - replace with your logo later)
+            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            try {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+
+                // Add logo to the left with increased top padding
+                doc.addImage(logoBase64, 'PNG', 15, 5, 25, 25);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
+
+            // Title and Text with adjusted positions
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 15, { align: 'center' });  // Moved up from 20 to 15
+            doc.setFontSize(24);
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 12, { align: 'center' });
             
-            // Welcome text with smaller font
-            doc.setFontSize(18);
-            doc.text('Welcomes You', pageWidth/2, 25, { align: 'center' });  // Moved up from 30 to 25
+            // Add motto under the title with increased font size and reduced gap
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 20, { align: 'center' });
+            
+            // Welcome text with increased font size
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text('Welcomes You', pageWidth/2 + 10, 28, { align: 'center' });
             
             // Subtitle inside the header
-            doc.setFontSize(12);
+            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 33, { align: 'center' });  // Moved up from 38 to 33
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 36, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
-            
-            // Section Styling Function
-            const createSection = (title, x, y) => {
-                doc.setFontSize(16);
-                doc.setTextColor(0, 128, 0);
-                doc.text(title, x, y);
-                doc.setDrawColor(0, 128, 0);
-                doc.setLineWidth(0.5);
-                doc.line(x, y + 2, x + columnWidth, y + 2);
-                doc.setTextColor(44, 62, 80);
-            };
 
             // Start content higher on the page
             const startY = 50;  // Reduced from 60
 
             // Left Column - Vehicle Details
-            createSection('Vehicle Details', startX1, startY);
+            createSection(doc, 'Vehicle Details', startX1, startY, columnWidth);
 
             const vehicleDetails = [
                 ['Vehicle No:', vehicle.vehicleNumber],
@@ -459,7 +512,7 @@ export function VehicleInfo() {
 
             // Owner Details with reduced spacing
             const ownerY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection('Owner Details', startX1, ownerY);
+            createSection(doc, 'Owner Details', startX1, ownerY, columnWidth);
 
             const ownerDetails = [
                 ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
@@ -486,6 +539,7 @@ export function VehicleInfo() {
             });
 
             // Add Vehicle Image Section
+            let afterImageY = doc.autoTable.previous.finalY;
             if (vehicle.vehicleImage?.url) {
                 try {
                     const imgResponse = await fetch(vehicle.vehicleImage.url);
@@ -507,13 +561,28 @@ export function VehicleInfo() {
                         imageWidth,
                         50
                     );
+                    afterImageY = doc.autoTable.previous.finalY + 5 + 50;
                 } catch (imgError) {
                     console.error('Error loading vehicle image:', imgError);
                 }
             }
 
+            // Add invoice generation date and time in IST below the image
+            const nowDailyImg = new Date();
+            const istDateDailyImg = nowDailyImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+            const istTimeDailyImg = nowDailyImg.toLocaleTimeString('en-GB', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(44, 62, 80);
+            doc.text(`Generated on: ${istDateDailyImg} at ${istTimeDailyImg} IST`, startX1, afterImageY + 8);
+
             // Right Column - Our Facilities with proper spacing
-            createSection('Our Facilities', startX2, startY);
+            createSection(doc, 'Our Facilities', startX2, startY, columnWidth);
 
             const facilities = [
                 ['1.', '24/7 Security Surveillance'],
@@ -542,7 +611,7 @@ export function VehicleInfo() {
 
             // Terms and Conditions with reduced spacing
             const termsY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection('Terms & Conditions', startX2, termsY);
+            createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
@@ -571,7 +640,7 @@ export function VehicleInfo() {
 
             // Contact Details with reduced spacing
             const contactY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection('Contact Details', startX2, contactY);
+            createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
 
             const contacts = [
                 ['Watchman:', '9842850753'],
@@ -599,11 +668,12 @@ export function VehicleInfo() {
             // QR Code Section with reduced size and spacing
             const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
             doc.setFontSize(16);
-            doc.setTextColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
             doc.text('Scan QR to Pay', startX2, qrY);
             doc.setFontSize(10);
+            doc.setTextColor(21, 101, 192);
             doc.text('(Ignore if already paid)', startX2, qrY + 6);  // Reduced from 8
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(startX2, qrY + 2, startX2 + columnWidth, qrY + 2);
             doc.setTextColor(44, 62, 80);
@@ -633,7 +703,7 @@ export function VehicleInfo() {
             );
 
             // Modern Footer - Moved closer to bottom
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
             

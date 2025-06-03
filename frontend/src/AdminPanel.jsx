@@ -901,7 +901,7 @@ export function AdminPanel() {
                         placeholder="Search by vehicle number, owner name, or lot number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <SearchIcon className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
                 </div>

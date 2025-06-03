@@ -507,25 +507,25 @@ export function AdvanceDashboard() {
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-teal-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white text-teal-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
                                     >
                                         {monthNames.map((month, index) => (
                                             <option key={index} value={index}>{month}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-teal-600" />
                                 </div>
                                 <div className="relative w-full sm:w-32">
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-teal-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white text-teal-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
                                     >
                                         {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
                                             <option key={year} value={year}>{year}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-teal-600" />
                                 </div>
                             </div>
                         </div>
