@@ -113,7 +113,7 @@ export function RevenueDashboard() {
         return [...data].sort((a, b) => {
             const dateA = new Date(a.transactionDate);
             const dateB = new Date(b.transactionDate);
-            return dateB - dateA; // Changed to show latest first
+            return dateB - dateA; // Show latest first
         });
     };
 
@@ -169,6 +169,50 @@ export function RevenueDashboard() {
 
         const sortedData = [...revenueData].sort((a, b) => {
             if (key === 'transactionDate') {
+                const dateA = new Date(a.transactionDate);
+                const dateB = new Date(b.transactionDate);
+                return direction === 'asc' ? dateA - dateB : dateB - dateA;
+            }
+            if (key === 'lotNumber') {
+                const lotA = a.lotNumber || 'Open';
+                const lotB = b.lotNumber || 'Open';
+
+                // If both are 'Open', sort by date
+                if (lotA === 'Open' && lotB === 'Open') {
+                    const dateA = new Date(a.transactionDate);
+                    const dateB = new Date(b.transactionDate);
+                    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                }
+
+                // If one is 'Open', it should come last
+                if (lotA === 'Open') return direction === 'asc' ? 1 : -1;
+                if (lotB === 'Open') return direction === 'asc' ? -1 : 1;
+
+                // Extract letter and number from lot numbers
+                const getLotParts = (lot) => {
+                    const letter = lot.charAt(0);
+                    const number = parseInt(lot.slice(1)) || 0;
+                    return { letter, number };
+                };
+
+                const lotAParts = getLotParts(lotA);
+                const lotBParts = getLotParts(lotB);
+
+                // First compare letters
+                if (lotAParts.letter !== lotBParts.letter) {
+                    return direction === 'asc' 
+                        ? lotAParts.letter.localeCompare(lotBParts.letter)
+                        : lotBParts.letter.localeCompare(lotAParts.letter);
+                }
+
+                // If letters are same, compare numbers
+                if (lotAParts.number !== lotBParts.number) {
+                    return direction === 'asc'
+                        ? lotAParts.number - lotBParts.number
+                        : lotBParts.number - lotAParts.number;
+                }
+
+                // If lot numbers are same, sort by date
                 const dateA = new Date(a.transactionDate);
                 const dateB = new Date(b.transactionDate);
                 return direction === 'asc' ? dateA - dateB : dateB - dateA;
@@ -702,25 +746,25 @@ export function RevenueDashboard() {
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-indigo-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white text-green-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
                                     >
                                         {monthNames.map((month, index) => (
                                             <option key={index} value={index}>{month}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-600" />
                                 </div>
                                 <div className="relative flex-1 sm:flex-none">
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white bg-opacity-20 text-indigo-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 font-medium"
+                                        className="w-full appearance-none bg-white text-green-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
                                     >
                                         {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
                                             <option key={year} value={year}>{year}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-black" />
+                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-600" />
                                 </div>
                             </div>
                         </div>

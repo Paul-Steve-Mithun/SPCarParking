@@ -302,7 +302,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            A Wing (1A-20A)
+                            A Wing (A1-A20)
                         </button>
                         <button
                             type="button"
@@ -313,7 +313,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            B Wing (1B-20B)
+                            B Wing (B1-B20)
                         </button>
                         <button
                             type="button"
@@ -324,7 +324,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            C Wing (1C-21C)
+                            C Wing (C1-C21)
                         </button>
                     </div>
                 </div>
