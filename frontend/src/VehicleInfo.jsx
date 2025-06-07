@@ -12,6 +12,7 @@ export function VehicleInfo() {
     const [transactions, setTransactions] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [currentTxnIndex, setCurrentTxnIndex] = useState(0);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -29,6 +30,7 @@ export function VehicleInfo() {
     useEffect(() => {
         if (selectedVehicle) {
             fetchTransactions();
+            setCurrentTxnIndex(0); // Reset to latest transaction when vehicle changes
         }
     }, [selectedVehicle]);
 
@@ -729,6 +731,25 @@ export function VehicleInfo() {
         }
     };
 
+    // Helper to determine if a vehicle is premium (for monthly rental vehicles)
+    const isPremiumCustomer = (vehicle, transactions) => {
+        if (!vehicle || vehicle.rentalType !== 'monthly' || !transactions.length) return false;
+        // Count payments made on or before 5th of the month
+        let onTime = 0, total = 0;
+        transactions.forEach(t => {
+            if (t.revenueAmount > 0) {
+                const date = new Date(t.transactionDate);
+                if (date.getDate() <= 5) onTime++;
+                total++;
+            }
+        });
+        return total > 0 && onTime / total > 0.5;
+    };
+
+    const filteredTxns = transactions
+        .filter(t => t.revenueAmount > 0)
+        .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
+
     return (
         <div className="min-h-screen bg-gray-50 p-2 sm:p-6">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -801,6 +822,13 @@ export function VehicleInfo() {
                                         }`}>
                                             {selectedVehicle.status === 'active' ? 'Active' : 'Expired'}
                                         </span>
+                                        {/* Premium Badge for Monthly Rental Vehicles */}
+                                        {selectedVehicle.rentalType === 'monthly' && isPremiumCustomer(selectedVehicle, transactions) && (
+                                            <span className="px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border bg-yellow-400 text-white border-yellow-300 flex items-center gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.873 6.9-1.002L12 2.25l3.093 6.997 6.9 1.002-5 4.873 1.179 6.873z" /></svg>
+                                                Premium
+                                            </span>
+                                        )}
                                         <button
                                             onClick={() => selectedVehicle.rentalType === 'monthly' ? handlePrintInvoice(selectedVehicle) : handlePrintDailyInvoice(selectedVehicle)}
                                             className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors border border-white/20 backdrop-blur-sm"
@@ -1163,63 +1191,88 @@ export function VehicleInfo() {
                                     </div>
 
                                     {/* Mobile-friendly cards view */}
-                                    <div className="md:hidden space-y-4">
-                                        {transactions
-                                            .filter(transaction => transaction.revenueAmount > 0)
-                                            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))
-                                            .map((transaction, index) => (
-                                            <div 
-                                                key={transaction._id}
-                                                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                                            >
-                                                <div className="p-4 border-b border-gray-100">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <div className="font-semibold">{transaction.transactionType}</div>
+                                    <div className="md:hidden">
+                                        {filteredTxns.length > 0 && (
+                                            <div>
+                                                <div className="relative flex items-center justify-center">
+                                                    <button
+                                                        disabled={currentTxnIndex === 0}
+                                                        onClick={() => setCurrentTxnIndex(i => Math.max(i - 1, 0))}
+                                                        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow ${currentTxnIndex === 0 ? 'opacity-30' : 'hover:bg-blue-50'}`}
+                                                        aria-label="Previous transaction"
+                                                    >
+                                                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                                    </button>
+                                                    <div className="w-full px-8">
+                                                        {/* Transaction Card */}
+                                                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                                            <div className="p-4 border-b border-gray-100">
+                                                                <div className="flex justify-between items-start">
+                                                                    <div>
+                                                                        <div className="font-semibold">{filteredTxns[currentTxnIndex].transactionType}</div>
+                                                                    </div>
+                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                                        filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
+                                                                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
+                                                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                                    }`}>
+                                                                        {filteredTxns[currentTxnIndex].transactionMode === 'UPI' ? (
+                                                                            <>
+                                                                                <CreditCard className="w-3 h-3 mr-1" />
+                                                                                <span>UPI</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DollarSign className="w-3 h-3 mr-1" />
+                                                                                <span>Cash</span>
+                                                                            </>
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="p-4 space-y-3">
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-gray-500 text-sm">Date</span>
+                                                                    <span className="text-sm font-medium">
+                                                                        {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleDateString('en-GB')}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-gray-500 text-sm">Received By</span>
+                                                                    <span className="text-sm font-medium flex items-center">
+                                                                        <User className="w-3 h-3 text-gray-500 mr-1" />
+                                                                        {filteredTxns[currentTxnIndex].receivedBy || 'Admin'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between pt-2 border-t border-gray-100">
+                                                                    <span className="text-gray-500 text-sm">Amount</span>
+                                                                    <span className="text-green-600 font-semibold flex items-center">
+                                                                        <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
+                                                                        {filteredTxns[currentTxnIndex].revenueAmount.toLocaleString('en-IN')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                            transaction.transactionMode === 'UPI' 
-                                                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
-                                                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                        }`}>
-                                                            {transaction.transactionMode === 'UPI' ? (
-                                                                <>
-                                                                    <CreditCard className="w-3 h-3 mr-1" />
-                                                                    <span>UPI</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <DollarSign className="w-3 h-3 mr-1" />
-                                                                    <span>Cash</span>
-                                                                </>
-                                                            )}
-                                                        </span>
                                                     </div>
+                                                    <button
+                                                        disabled={currentTxnIndex === filteredTxns.length - 1}
+                                                        onClick={() => setCurrentTxnIndex(i => Math.min(i + 1, filteredTxns.length - 1))}
+                                                        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow ${currentTxnIndex === filteredTxns.length - 1 ? 'opacity-30' : 'hover:bg-blue-50'}`}
+                                                        aria-label="Next transaction"
+                                                    >
+                                                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                                    </button>
                                                 </div>
-                                                <div className="p-4 space-y-3">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-500 text-sm">Date</span>
-                                                        <span className="text-sm font-medium">
-                                                            {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-500 text-sm">Received By</span>
-                                                        <span className="text-sm font-medium flex items-center">
-                                                            <User className="w-3 h-3 text-gray-500 mr-1" />
-                                                            {transaction.receivedBy || 'Admin'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between pt-2 border-t border-gray-100">
-                                                        <span className="text-gray-500 text-sm">Amount</span>
-                                                        <span className="text-green-600 font-semibold flex items-center">
-                                                            <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
-                                                            {transaction.revenueAmount.toLocaleString('en-IN')}
-                                                        </span>
-                                                    </div>
+                                                <div className="flex justify-center mt-2 gap-1">
+                                                    {filteredTxns.map((_, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className={`inline-block w-2 h-2 rounded-full ${idx === currentTxnIndex ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                                        />
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                             )}
