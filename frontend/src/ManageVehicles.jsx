@@ -118,18 +118,42 @@ export function ManageVehicles() {
             const startX1 = 15;
             const startX2 = 110;
             
-            // Modern Header with Gradient - Reduced top margin
-            const gradient = doc.setFillColor(0, 128, 0);
-            doc.rect(0, 0, pageWidth, 40, 'F');
+            // Modern Header with Gradient - Reduced height
+            doc.setFillColor(21, 101, 192); // RGB for #1565C0
+            doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced height from 40 to 35
+            
+            // Add Logo (placeholder - replace with your logo later)
+            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            try {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+
+                // Add logo to the left with increased top padding
+                doc.addImage(logoBase64, 'PNG', 15, 2, 30, 30);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
+
+            // Title and Text with adjusted positions
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 25, { align: 'center' });
+            doc.setFontSize(24);
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
             
-            // Subtitle
+            // Add motto under the title with increased font size and reduced gap
             doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
+            
+            // Subtitle inside the header
+            doc.setFontSize(11); // Increased font size for address
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 35, { align: 'center' });
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 30, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
@@ -138,9 +162,10 @@ export function ManageVehicles() {
             // Section Styling Function
             const createSection = (title, x, y) => {
                 doc.setFontSize(16);
-                doc.setTextColor(0, 128, 0);
+                doc.setTextColor(21, 101, 192);  // Changed to header blue color
+                doc.setFont("helvetica", "bold");
                 doc.text(title, x, y);
-                doc.setDrawColor(0, 128, 0);
+                doc.setDrawColor(21, 101, 192);  // Changed to header blue color
                 doc.setLineWidth(0.5);
                 doc.line(x, y + 2, x + columnWidth, y + 2);
                 doc.setTextColor(44, 62, 80);
@@ -236,6 +261,20 @@ export function ManageVehicles() {
                         imageWidth,
                         50
                     );
+
+                    // Add invoice generation date and time in IST below the image
+                    const nowInvoiceImg = new Date();
+                    const istDateInvoiceImg = nowInvoiceImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+                    const istTimeInvoiceImg = nowInvoiceImg.toLocaleTimeString('en-GB', { 
+                        timeZone: 'Asia/Kolkata',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(44, 62, 80);
+                    doc.text(`Generated on: ${istDateInvoiceImg} at ${istTimeInvoiceImg} IST`, startX1, doc.autoTable.previous.finalY + 5 + 50 + 8);
                 } catch (imgError) {
                     console.error('Error loading vehicle image:', imgError);
                 }
@@ -299,11 +338,13 @@ export function ManageVehicles() {
 
             // QR Code Section
             doc.setFontSize(16);
-            doc.setTextColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
+            doc.setFont("helvetica", "bold");
             doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
             doc.setFontSize(10);
-            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
-            doc.setDrawColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 16);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
             doc.setTextColor(44, 62, 80);
@@ -333,9 +374,9 @@ export function ManageVehicles() {
             );
 
             // Modern Footer
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
-            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);  // Moved up from -25
+            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
             
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
@@ -376,17 +417,41 @@ export function ManageVehicles() {
             const startX2 = 110;
             
             // Modern Header with Gradient
-            const gradient = doc.setFillColor(0, 128, 0);
-            doc.rect(0, 0, pageWidth, 40, 'F');
+            doc.setFillColor(21, 101, 192); // RGB for #1565C0
+            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
+            
+            // Add Logo (placeholder - replace with your logo later)
+            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            try {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+
+                // Add logo to the left with increased top padding
+                doc.addImage(logoBase64, 'PNG', 15, 2, 30, 30);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
+
+            // Title and Text with adjusted positions
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 25, { align: 'center' });
+            doc.setFontSize(24);
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
             
-            // Subtitle
+            // Add motto under the title with increased font size and reduced gap
             doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
+            
+            // Subtitle inside the header
+            doc.setFontSize(11); // Increased font size for address
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 35, { align: 'center' });
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 30, { align: 'center' });
             
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
@@ -395,9 +460,10 @@ export function ManageVehicles() {
             // Section Styling Function
             const createSection = (title, x, y) => {
                 doc.setFontSize(16);
-                doc.setTextColor(0, 128, 0);
+                doc.setTextColor(21, 101, 192);  // Changed to header blue color
+                doc.setFont("helvetica", "bold");
                 doc.text(title, x, y);
-                doc.setDrawColor(0, 128, 0);
+                doc.setDrawColor(21, 101, 192);  // Changed to header blue color
                 doc.setLineWidth(0.5);
                 doc.line(x, y + 2, x + columnWidth, y + 2);
                 doc.setTextColor(44, 62, 80);
@@ -484,6 +550,20 @@ export function ManageVehicles() {
                         imageWidth,
                         50
                     );
+
+                    // Add invoice generation date and time in IST below the image
+                    const nowDailyImg = new Date();
+                    const istDateDailyImg = nowDailyImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+                    const istTimeDailyImg = nowDailyImg.toLocaleTimeString('en-GB', { 
+                        timeZone: 'Asia/Kolkata',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(44, 62, 80);
+                    doc.text(`Generated on: ${istDateDailyImg} at ${istTimeDailyImg} IST`, startX1, doc.autoTable.previous.finalY + 5 + 50 + 8);
                 } catch (imgError) {
                     console.error('Error loading vehicle image:', imgError);
                 }
@@ -547,11 +627,13 @@ export function ManageVehicles() {
 
             // QR Code Section
             doc.setFontSize(16);
-            doc.setTextColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
+            doc.setFont("helvetica", "bold");
             doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
             doc.setFontSize(10);
-            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 20);
-            doc.setDrawColor(0, 128, 0);
+            doc.setTextColor(21, 101, 192);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 16);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
             doc.setTextColor(44, 62, 80);
@@ -581,14 +663,14 @@ export function ManageVehicles() {
             );
 
             // Modern Footer
-            doc.setDrawColor(0, 128, 0);
+            doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
-            doc.line(15, pageHeight - 25, pageWidth - 15, pageHeight - 25);
+            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
             
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
             const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 15, { align: 'center' });
+            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
 
             doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`);
             toast.success('Receipt generated successfully');

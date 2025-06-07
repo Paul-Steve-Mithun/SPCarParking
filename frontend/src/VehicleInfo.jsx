@@ -100,6 +100,7 @@ export function VehicleInfo() {
     const createSection = (doc, title, x, y, columnWidth) => {
         doc.setFontSize(16);
         doc.setTextColor(21, 101, 192);
+        doc.setFont("helvetica", "bold");  // Set font to bold for all section titles
         doc.text(title, x, y);
         doc.setDrawColor(21, 101, 192);
         doc.setLineWidth(0.5);
@@ -136,7 +137,7 @@ export function VehicleInfo() {
                 });
 
                 // Add logo to the left with increased top padding
-                doc.addImage(logoBase64, 'PNG', 15, 5, 25, 25);
+                doc.addImage(logoBase64, 'PNG', 15, 5, 30, 30);  // Increased from 25,25 to 30,30
             } catch (logoError) {
                 console.error('Error loading logo:', logoError);
             }
@@ -272,6 +273,7 @@ export function VehicleInfo() {
 
             // Right Column - Our Facilities with proper spacing
             createSection(doc, 'Our Facilities', startX2, 50, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const facilities = [
                 ['1.', '24/7 Security Surveillance'],
@@ -302,6 +304,7 @@ export function VehicleInfo() {
             // Terms and Conditions with reduced spacing
             const termsY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
             createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
@@ -331,6 +334,7 @@ export function VehicleInfo() {
             // Contact Details with reduced spacing
             const contactY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
             createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const contacts = [
                 ['Watchman:', '9842850753'],
@@ -359,6 +363,7 @@ export function VehicleInfo() {
             const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
             doc.setFontSize(16);
             doc.setTextColor(21, 101, 192);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
             doc.text('Scan QR to Pay', startX2, qrY);
             doc.setFontSize(10);
             doc.setTextColor(21, 101, 192);
@@ -443,7 +448,7 @@ export function VehicleInfo() {
                 });
 
                 // Add logo to the left with increased top padding
-                doc.addImage(logoBase64, 'PNG', 15, 5, 25, 25);
+                doc.addImage(logoBase64, 'PNG', 15, 5, 30, 30);  // Increased from 25,25 to 30,30
             } catch (logoError) {
                 console.error('Error loading logo:', logoError);
             }
@@ -583,6 +588,7 @@ export function VehicleInfo() {
 
             // Right Column - Our Facilities with proper spacing
             createSection(doc, 'Our Facilities', startX2, startY, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const facilities = [
                 ['1.', '24/7 Security Surveillance'],
@@ -612,6 +618,7 @@ export function VehicleInfo() {
             // Terms and Conditions with reduced spacing
             const termsY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
             createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
@@ -641,6 +648,7 @@ export function VehicleInfo() {
             // Contact Details with reduced spacing
             const contactY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
             createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
 
             const contacts = [
                 ['Watchman:', '9842850753'],
@@ -669,6 +677,7 @@ export function VehicleInfo() {
             const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
             doc.setFontSize(16);
             doc.setTextColor(21, 101, 192);
+            doc.setFont("helvetica", "bold");  // Added bold font for section title
             doc.text('Scan QR to Pay', startX2, qrY);
             doc.setFontSize(10);
             doc.setTextColor(21, 101, 192);
