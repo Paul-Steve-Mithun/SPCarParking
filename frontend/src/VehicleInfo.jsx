@@ -16,6 +16,10 @@ export function VehicleInfo() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // For swipe gesture
+    const [touchStartX, setTouchStartX] = useState(null);
+    const [touchEndX, setTouchEndX] = useState(null);
+
     useEffect(() => {
         fetchVehicles();
         
@@ -148,12 +152,12 @@ export function VehicleInfo() {
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(24);
-            doc.text('SP CAR PARKING', pageWidth/2 + 10, 12, { align: 'center' });
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
             
             // Add motto under the title with increased font size and reduced gap
             doc.setFontSize(12);
             doc.setFont("helvetica", "italic");
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 20, { align: 'center' });
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
             
             // Welcome text with increased font size
             doc.setFontSize(16);
@@ -394,7 +398,7 @@ export function VehicleInfo() {
                 qrDataUrl, 
                 'PNG', 
                 qrX,
-                qrY + 10,  // Changed from 20 to 15
+                qrY + 15,  // Changed from 20 to 15
                 qrWidth,
                 45  // Changed from 50 to 45
             );
@@ -459,12 +463,12 @@ export function VehicleInfo() {
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(24);
-            doc.text('SP CAR PARKING', pageWidth/2 + 10, 12, { align: 'center' });
+            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
             
             // Add motto under the title with increased font size and reduced gap
             doc.setFontSize(12);
             doc.setFont("helvetica", "italic");
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 20, { align: 'center' });
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
             
             // Welcome text with increased font size
             doc.setFontSize(16);
@@ -749,6 +753,26 @@ export function VehicleInfo() {
     const filteredTxns = transactions
         .filter(t => t.revenueAmount > 0)
         .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
+
+    // Handle swipe
+    const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+    };
+    const handleTouchMove = (e) => {
+        setTouchEndX(e.touches[0].clientX);
+    };
+    const handleTouchEnd = () => {
+        if (touchStartX !== null && touchEndX !== null) {
+            const diff = touchStartX - touchEndX;
+            if (diff > 40 && currentTxnIndex < filteredTxns.length - 1) {
+                setCurrentTxnIndex(i => Math.min(i + 1, filteredTxns.length - 1));
+            } else if (diff < -40 && currentTxnIndex > 0) {
+                setCurrentTxnIndex(i => Math.max(i - 1, 0));
+            }
+        }
+        setTouchStartX(null);
+        setTouchEndX(null);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 p-2 sm:p-6">
@@ -1194,74 +1218,70 @@ export function VehicleInfo() {
                                     <div className="md:hidden">
                                         {filteredTxns.length > 0 && (
                                             <div>
-                                                <div className="relative flex items-center justify-center">
-                                                    <button
-                                                        disabled={currentTxnIndex === 0}
-                                                        onClick={() => setCurrentTxnIndex(i => Math.max(i - 1, 0))}
-                                                        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow ${currentTxnIndex === 0 ? 'opacity-30' : 'hover:bg-blue-50'}`}
-                                                        aria-label="Previous transaction"
-                                                    >
-                                                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                                    </button>
-                                                    <div className="w-full px-8">
-                                                        {/* Transaction Card */}
-                                                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className="p-4 border-b border-gray-100">
-                                                                <div className="flex justify-between items-start">
-                                                                    <div>
-                                                                        <div className="font-semibold">{filteredTxns[currentTxnIndex].transactionType}</div>
-                                                                    </div>
-                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                                        filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
-                                                                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
-                                                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                                    }`}>
-                                                                        {filteredTxns[currentTxnIndex].transactionMode === 'UPI' ? (
-                                                                            <>
-                                                                                <CreditCard className="w-3 h-3 mr-1" />
-                                                                                <span>UPI</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <DollarSign className="w-3 h-3 mr-1" />
-                                                                                <span>Cash</span>
-                                                                            </>
-                                                                        )}
-                                                                    </span>
+                                                <div
+                                                    className="w-full"
+                                                    onTouchStart={handleTouchStart}
+                                                    onTouchMove={handleTouchMove}
+                                                    onTouchEnd={handleTouchEnd}
+                                                >
+                                                    {/* Transaction Card */}
+                                                    <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                                        <div className="p-4 border-b border-gray-100">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <div className="font-semibold">{filteredTxns[currentTxnIndex].transactionType}</div>
                                                                 </div>
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                                    filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
+                                                                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
+                                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                                }`}>
+                                                                    {filteredTxns[currentTxnIndex].transactionMode === 'UPI' ? (
+                                                                        <>
+                                                                            <CreditCard className="w-3 h-3 mr-1" />
+                                                                            <span>UPI</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <DollarSign className="w-3 h-3 mr-1" />
+                                                                            <span>Cash</span>
+                                                                        </>
+                                                                    )}
+                                                                </span>
                                                             </div>
-                                                            <div className="p-4 space-y-3">
-                                                                <div className="flex justify-between">
-                                                                    <span className="text-gray-500 text-sm">Date</span>
+                                                        </div>
+                                                        <div className="p-4 space-y-3">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-gray-500 text-sm">Date</span>
+                                                                <div className="flex flex-col items-end">
                                                                     <span className="text-sm font-medium">
                                                                         {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleDateString('en-GB')}
                                                                     </span>
-                                                                </div>
-                                                                <div className="flex justify-between">
-                                                                    <span className="text-gray-500 text-sm">Received By</span>
-                                                                    <span className="text-sm font-medium flex items-center">
-                                                                        <User className="w-3 h-3 text-gray-500 mr-1" />
-                                                                        {filteredTxns[currentTxnIndex].receivedBy || 'Admin'}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex justify-between pt-2 border-t border-gray-100">
-                                                                    <span className="text-gray-500 text-sm">Amount</span>
-                                                                    <span className="text-green-600 font-semibold flex items-center">
-                                                                        <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
-                                                                        {filteredTxns[currentTxnIndex].revenueAmount.toLocaleString('en-IN')}
+                                                                    <span className="text-xs text-gray-400 mt-0.5">
+                                                                        {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleTimeString('en-GB', {
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit',
+                                                                            hour12: true
+                                                                        })}
                                                                     </span>
                                                                 </div>
                                                             </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-gray-500 text-sm">Received By</span>
+                                                                <span className="text-sm font-medium flex items-center">
+                                                                    <User className="w-3 h-3 text-gray-500 mr-1" />
+                                                                    {filteredTxns[currentTxnIndex].receivedBy || 'Admin'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between pt-2 border-t border-gray-100">
+                                                                <span className="text-gray-500 text-sm">Amount</span>
+                                                                <span className="text-green-600 font-semibold flex items-center">
+                                                                    <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
+                                                                    {filteredTxns[currentTxnIndex].revenueAmount.toLocaleString('en-IN')}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        disabled={currentTxnIndex === filteredTxns.length - 1}
-                                                        onClick={() => setCurrentTxnIndex(i => Math.min(i + 1, filteredTxns.length - 1))}
-                                                        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow ${currentTxnIndex === filteredTxns.length - 1 ? 'opacity-30' : 'hover:bg-blue-50'}`}
-                                                        aria-label="Next transaction"
-                                                    >
-                                                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                                    </button>
                                                 </div>
                                                 <div className="flex justify-center mt-2 gap-1">
                                                     {filteredTxns.map((_, idx) => (
