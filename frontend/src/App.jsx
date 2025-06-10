@@ -334,6 +334,32 @@ function App() {
         localStorage.getItem('spcarparking_auth') ? JSON.parse(localStorage.getItem('spcarparking_auth')).isAuthenticated : false
     );
 
+    // Add verifyCredentials function
+    const verifyCredentials = () => {
+        const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+        if (!auth.isAuthenticated) return false;
+
+        const adminUsername = import.meta.env.VITE_ADMIN_USERNAME;
+        const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+        const userUsername = import.meta.env.VITE_MANI_USERNAME;
+        const userPassword = import.meta.env.VITE_USER_PASSWORD;
+
+        if (auth.role === 'admin') {
+            return auth.username === adminUsername && auth.password === adminPassword;
+        } else if (auth.role === 'user') {
+            return auth.username === userUsername && auth.password === userPassword;
+        }
+        return false;
+    };
+
+    // Add useEffect to verify credentials on load
+    useEffect(() => {
+        if (!verifyCredentials()) {
+            localStorage.removeItem('spcarparking_auth');
+            setIsAuthenticated(false);
+        }
+    }, []);
+
     // Get user name based on role
     const getUserName = () => {
         const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');

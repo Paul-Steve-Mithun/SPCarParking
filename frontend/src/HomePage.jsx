@@ -371,13 +371,17 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             if (credentials.username === adminUsername && credentials.password === adminPassword) {
                 authData = {
                     isAuthenticated: true,
-                    role: 'admin'
+                    role: 'admin',
+                    username: credentials.username,
+                    password: credentials.password
                 };
                 setLoginError('');
             } else if (credentials.username === userUsername && credentials.password === userPassword) {
                 authData = {
                     isAuthenticated: true,
-                    role: 'user'
+                    role: 'user',
+                    username: credentials.username,
+                    password: credentials.password
                 };
                 setLoginError('');
             } else {
