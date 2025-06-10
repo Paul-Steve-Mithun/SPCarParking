@@ -1311,7 +1311,9 @@ export function ManageVehicles() {
                     {/* Desktop View */}
                     <div className="hidden sm:grid sm:grid-cols-2 gap-4 p-4">
                         <div className="bg-white shadow rounded-lg">
-                            <h2 className="text-xl font-semibold p-4 border-b">Monthly</h2>
+                            <h2 className="text-xl font-semibold p-4 border-b">
+                                Monthly ({filteredMonthlyVehicles.length})
+                            </h2>
                             {filteredMonthlyVehicles.length === 0 ? (
                                 <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                             ) : (
@@ -1321,7 +1323,9 @@ export function ManageVehicles() {
                             )}
                         </div>
                         <div className="bg-white shadow rounded-lg">
-                            <h2 className="text-xl font-semibold p-4 border-b">Daily</h2>
+                            <h2 className="text-xl font-semibold p-4 border-b">
+                                Daily ({filteredDailyVehicles.length})
+                            </h2>
                             {filteredDailyVehicles.length === 0 ? (
                                 <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                             ) : (
