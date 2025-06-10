@@ -24,8 +24,10 @@ import { Fragment } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useNavigate } from 'react-router-dom';
 
 export function RevenueDashboard() {
+    const navigate = useNavigate();
     const [revenueData, setRevenueData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -700,6 +702,32 @@ export function RevenueDashboard() {
         }
     };
 
+    const handleVehicleNumberClick = async (transaction) => {
+        if (!transaction) return;
+        
+        try {
+            // Fetch complete vehicle data using the search endpoint
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/vehicles/search?query=${transaction.vehicleNumber}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch vehicle details');
+            }
+            const vehicles = await response.json();
+            
+            // Find the exact vehicle match
+            const vehicleData = vehicles.find(v => v.vehicleNumber === transaction.vehicleNumber);
+            
+            if (!vehicleData) {
+                throw new Error('Vehicle not found');
+            }
+            
+            // Navigate to VehicleInfo with complete vehicle data
+            navigate('/vehicle-info', { state: { selectedVehicle: vehicleData } });
+        } catch (error) {
+            console.error('Error fetching vehicle details:', error);
+            toast.error('Failed to fetch vehicle details');
+        }
+    };
+
     return (
         <div className="relative">
             <Toaster position="top-right" />
@@ -1214,7 +1242,10 @@ export function RevenueDashboard() {
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-semibold text-gray-400">Vehicle Number</h4>
-                                                        <p className="text-lg font-bold text-gray-900">
+                                                        <p 
+                                                            onClick={() => handleVehicleNumberClick(editingTransaction)}
+                                                            className="text-lg font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors duration-200 rounded px-1"
+                                                        >
                                                             {editingTransaction.vehicleNumber}
                                                         </p>
                                                     </div>
