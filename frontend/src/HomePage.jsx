@@ -19,7 +19,9 @@ import {
     AlertCircle,
     User,
     Lock,
-    LogIn
+    LogIn,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSpring, animated } from 'react-spring';
@@ -355,6 +357,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             username: '',
             password: ''
         });
+        const [showPassword, setShowPassword] = useState(false);
 
         const handleLogin = (e) => {
             e.preventDefault();
@@ -487,7 +490,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                             ...prev,
                                                             username: e.target.value
                                                         }))}
-                                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                                         required
                                                     />
                                                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -502,18 +505,29 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                 </label>
                                                 <div className="relative">
                                                     <input
-                                                        type="password"
+                                                        type={showPassword ? "text" : "password"}
                                                         value={credentials.password}
                                                         onChange={(e) => setCredentials(prev => ({
                                                             ...prev,
                                                             password: e.target.value
                                                         }))}
-                                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                        className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                                         required
                                                     />
                                                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
                                                         <Lock className="w-5 h-5 text-gray-400" />
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                    >
+                                                        {showPassword ? (
+                                                            <EyeOff className="w-5 h-5" />
+                                                        ) : (
+                                                            <Eye className="w-5 h-5" />
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
