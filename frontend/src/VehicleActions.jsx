@@ -3,8 +3,10 @@ import { CheckIcon, TrashIcon, XIcon, PlusCircleIcon, Wallet, CreditCard, Indian
 import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showExtendForm, setShowExtendForm] = useState(false);
     const [additionalDays, setAdditionalDays] = useState('');
@@ -95,6 +97,12 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
         }
     };
 
+    const handleVehicleNumberClick = (e) => {
+        e.stopPropagation(); // Prevent the click from bubbling up
+        onClose(); // Close the current modal
+        navigate('/vehicle-info', { state: { selectedVehicle: vehicle } });
+    };
+
     return (
         <>
             <Transition appear show={!isClosing} as={Fragment}>
@@ -127,7 +135,12 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         <div className="flex flex-col gap-1">
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center gap-3">
-                                                    <h2 className="text-xl font-bold text-white">{vehicle.vehicleNumber}</h2>
+                                                    <h2 
+                                                        onClick={handleVehicleNumberClick}
+                                                        className="text-xl font-bold text-white cursor-pointer hover:text-gray-100 transition-colors duration-200"
+                                                    >
+                                                        {vehicle.vehicleNumber}
+                                                    </h2>
                                                     <span className="px-4 py-1.5 bg-white/20 text-white font-bold rounded-full text-base">
                                                         {vehicle.lotNumber || 'Open'}
                                                     </span>
