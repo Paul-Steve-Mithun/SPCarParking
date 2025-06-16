@@ -577,13 +577,16 @@ export function BalanceSheet() {
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="p-3 sm:p-4">
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-3 sm:mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">{user}</h2>
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-3 sm:gap-0">
+                        <div className="flex items-center gap-3">
+                            <div className={`rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold ${user === 'Balu' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{user[0]}</div>
+                            <span className="text-lg sm:text-xl font-extrabold tracking-wide">{user === 'Balu' ? 'Balu' : 'Mani'}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                             <button
                                 onClick={() => generateDetailedPDF(user)}
                                 disabled={isLoading}
-                                className="bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
                                 title="Download Statement"
                             >
                                 <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -592,7 +595,7 @@ export function BalanceSheet() {
                             <button
                                 onClick={() => onTakeHome(user)}
                                 disabled={isLoading}
-                                className="bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
                                 title="Take Home"
                             >
                                 <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -601,7 +604,7 @@ export function BalanceSheet() {
                             <button
                                 onClick={() => handleTransfer(user)}
                                 disabled={isLoading}
-                                className="bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
                                 title="Transfer Cash"
                             >
                                 <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -611,9 +614,9 @@ export function BalanceSheet() {
                     </div>
 
                     {/* Cards Grid */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         <div className="col-span-2">
-                            <div className="flex gap-2 sm:gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                 <div className="flex-1 min-w-0">
                                     <BalanceCard
                                         title="Revenue"
@@ -672,7 +675,7 @@ export function BalanceSheet() {
     };
 
     return (
-        <div className="max-w-[1920px] mx-auto px-2 py-2">
+        <div className="max-w-[1920px] mx-auto px-2 py-2 sm:px-4">
             <Toaster position="top-right" />
             
             {/* Header Section */}
@@ -682,8 +685,8 @@ export function BalanceSheet() {
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                             Balance Sheet Dashboard
                         </h1>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center">
-                            <div className="relative flex-1 sm:w-48">
+                        <div className="flex flex-col gap-3 w-full sm:flex-row sm:gap-4 sm:w-auto items-center">
+                            <div className="relative w-full sm:w-48">
                                 <select 
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -693,9 +696,9 @@ export function BalanceSheet() {
                                         <option key={index} value={index}>{month}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-600" />
+                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
                             </div>
-                            <div className="relative flex-1 sm:w-32">
+                            <div className="relative w-full sm:w-32">
                                 <select 
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -705,7 +708,7 @@ export function BalanceSheet() {
                                         <option key={year} value={year}>{year}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-600" />
+                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
                             </div>
                         </div>
                     </div>
@@ -736,7 +739,7 @@ export function BalanceSheet() {
                     />
                     <div className="fixed inset-0 flex items-center justify-center p-4">
                         <div 
-                            className="bg-white rounded-2xl p-6 w-full max-w-[90%] sm:max-w-md shadow-xl"
+                            className="bg-white rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl"
                             onClick={e => e.stopPropagation()}
                         >
                             {/* Header */}
@@ -750,15 +753,15 @@ export function BalanceSheet() {
                                             Withdraw Amount
                                         </h3>
                                         <p className="text-sm text-gray-500">
-                                            {selectedUser}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}
+                                            {selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}
                                         </p>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setIsModalOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    className="p-3 hover:bg-gray-100 rounded-full transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-gray-500" />
+                                    <X className="w-6 h-6 text-gray-500" />
                                 </button>
                             </div>
                             
@@ -824,7 +827,7 @@ export function BalanceSheet() {
                 <div className="fixed inset-0 z-50">
                     <div className="fixed inset-0 backdrop-blur-sm bg-black/30" onClick={() => setIsTransferModalOpen(false)} />
                     <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl p-6 w-full max-w-[90%] sm:max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="bg-white rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
                             {/* Header */}
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-3">
@@ -836,12 +839,12 @@ export function BalanceSheet() {
                                             Transfer Cash
                                         </h3>
                                         <p className="text-sm text-gray-500">
-                                            Transfer between Balu and Mani for {monthNames[selectedMonth]} {selectedYear}
+                                            Transfer between {transferFrom === 'Balu' ? 'Balu' : 'Mani'} and {transferTo === 'Balu' ? 'Balu' : 'Mani'} for {monthNames[selectedMonth]} {selectedYear}
                                         </p>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsTransferModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                    <X className="w-5 h-5 text-gray-500" />
+                                <button onClick={() => setIsTransferModalOpen(false)} className="p-3 hover:bg-gray-100 rounded-full transition-colors">
+                                    <X className="w-6 h-6 text-gray-500" />
                                 </button>
                             </div>
                             {/* From Dropdown */}
