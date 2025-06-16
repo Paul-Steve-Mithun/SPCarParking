@@ -175,6 +175,14 @@ const BalancesheetSchema = new mongoose.Schema({
     year: { 
         type: Number, 
         required: true 
+    },
+    type: { 
+        type: String, 
+        enum: ['normal', 'transfer'], 
+        default: 'normal' 
+    },
+    description: { 
+        type: String 
     }
 });
 
@@ -1060,6 +1068,41 @@ app.post('/revenue', async (req, res) => {
         res.json({ success: true, revenue: newRevenue });
     } catch (error) {
         console.error('Error adding revenue:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add Balancesheet endpoints
+app.post('/balancesheet/transfer', async (req, res) => {
+    try {
+        const { fromUser, toUser, amount, date, month, year } = req.body;
+        if (!fromUser || !toUser || !amount) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        // Deduct from sender
+        const senderRecord = new Balancesheet({
+            userName: fromUser,
+            amount: -Math.abs(amount),
+            date: date || new Date(),
+            month: month !== undefined ? month : new Date().getMonth(),
+            year: year !== undefined ? year : new Date().getFullYear(),
+            type: 'transfer',
+            description: `Transfer to ${toUser}`
+        });
+        // Add to receiver
+        const receiverRecord = new Balancesheet({
+            userName: toUser,
+            amount: Math.abs(amount),
+            date: date || new Date(),
+            month: month !== undefined ? month : new Date().getMonth(),
+            year: year !== undefined ? year : new Date().getFullYear(),
+            type: 'transfer',
+            description: `Received from ${fromUser}`
+        });
+        await senderRecord.save();
+        await receiverRecord.save();
+        res.json({ success: true, sender: senderRecord, receiver: receiverRecord });
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });

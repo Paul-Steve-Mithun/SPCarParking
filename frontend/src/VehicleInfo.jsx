@@ -20,16 +20,39 @@ export function VehicleInfo() {
     const [touchStartX, setTouchStartX] = useState(null);
     const [touchEndX, setTouchEndX] = useState(null);
 
+    // Add state for archived vehicles and all revenue
+    const [archivedVehicles, setArchivedVehicles] = useState([]);
+    const [allRevenue, setAllRevenue] = useState([]);
+    const [advances, setAdvances] = useState([]);
+
     useEffect(() => {
         fetchVehicles();
-        
-        // Check if a vehicle was passed in the location state
-        if (location.state?.selectedVehicle) {
-            setSelectedVehicle(location.state.selectedVehicle);
-            // Clear the location state to avoid reusing the same vehicle on refresh
+        fetchAllRevenue();
+        fetchAdvances();
+        // If a vehicleNumber is passed, try to find it in active vehicles, else build archived
+        if (location.state?.vehicleNumber) {
+            // Wait for vehicles and archivedVehicles to be loaded
+            // We'll use another effect below to handle this after data is loaded
             window.history.replaceState({}, document.title);
         }
     }, [location]);
+
+    // After vehicles and archivedVehicles are loaded, set selectedVehicle by vehicleNumber if needed
+    useEffect(() => {
+        if (location.state?.vehicleNumber) {
+            const vehicle = vehicles.find(v => v.vehicleNumber === location.state.vehicleNumber);
+            if (vehicle) {
+                setSelectedVehicle(vehicle);
+            } else {
+                const archived = archivedVehicles.find(v => v.vehicleNumber === location.state.vehicleNumber);
+                if (archived) {
+                    setSelectedVehicle(archived);
+                } else {
+                    toast.error('Vehicle not found');
+                }
+            }
+        }
+    }, [vehicles, archivedVehicles, location.state]);
 
     useEffect(() => {
         if (selectedVehicle) {
@@ -62,6 +85,82 @@ export function VehicleInfo() {
         }
     };
 
+    // Fetch all revenue data for archived vehicles
+    const fetchAllRevenue = async () => {
+        try {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/revenue');
+            const data = await response.json();
+            setAllRevenue(data);
+        } catch (error) {
+            toast.error('Failed to fetch revenue data');
+        }
+    };
+
+    const fetchAdvances = async () => {
+        try {
+            const today = new Date().toISOString();
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${today}`);
+            if (!response.ok) throw new Error('Failed to fetch advances');
+            const data = await response.json();
+            setAdvances(Array.isArray(data) ? data : []);
+        } catch (error) {
+            setAdvances([]);
+            toast.error('Failed to fetch advances');
+        }
+    };
+
+    // Build archived vehicles list when vehicles or allRevenue changes
+    useEffect(() => {
+        if (!vehicles.length || !allRevenue.length) return;
+        const vehicleNumbersSet = new Set(vehicles.map(v => v.vehicleNumber));
+        // Group revenue by vehicleNumber
+        const revenueByVehicle = {};
+        allRevenue.forEach(txn => {
+            if (!vehicleNumbersSet.has(txn.vehicleNumber)) {
+                if (!revenueByVehicle[txn.vehicleNumber]) {
+                    revenueByVehicle[txn.vehicleNumber] = [];
+                }
+                revenueByVehicle[txn.vehicleNumber].push(txn);
+            }
+        });
+        // For each archived vehicle, use the latest transaction as the base info
+        const archived = Object.values(revenueByVehicle).map(txns => {
+            // Sort by transactionDate desc
+            const sorted = txns.sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
+            const latest = sorted[0];
+            // Find latest advance and refund info for this vehicle (monthly rental only)
+            let advanceInfo = null, refundInfo = null;
+            if (Array.isArray(advances) && latest.rentalType === 'monthly') {
+                advanceInfo = advances
+                    .filter(a => a.vehicleNumber === latest.vehicleNumber && a.advanceAmount > 0)
+                    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+                refundInfo = advances
+                    .filter(a => a.vehicleNumber === latest.vehicleNumber && a.advanceRefund > 0)
+                    .sort((a, b) => new Date(b.refundDate) - new Date(a.refundDate))[0];
+            }
+            return {
+                ...latest,
+                isArchived: true,
+                lotNumber: latest.lotNumber || 'Open',
+                vehicleDescription: latest.vehicleDescription || '-',
+                rentalType: latest.rentalType || '-',
+                rentPrice: latest.rentPrice || 0,
+                numberOfDays: latest.numberOfDays || 0,
+                status: 'archived',
+                ownerName: '-',
+                contactNumber: '-',
+                // Use advance/refund info if available, else fallback
+                advanceAmount: advanceInfo ? advanceInfo.advanceAmount : 0,
+                startDate: advanceInfo ? advanceInfo.startDate : latest.transactionDate,
+                refundDate: refundInfo ? refundInfo.refundDate : undefined,
+                vehicleImage: {},
+                document1Image: {},
+                document2Image: {},
+            };
+        });
+        setArchivedVehicles(archived);
+    }, [vehicles, allRevenue, advances]);
+
     const handleSearch = (e) => {
         const query = e.target.value.toUpperCase();
         setSearchQuery(query);
@@ -69,14 +168,17 @@ export function VehicleInfo() {
         setTransactions([]);
     };
 
-    const filteredVehicles = vehicles.filter(vehicle => {
+    // Merge vehicles and archivedVehicles for search
+    const filteredVehicles = [
+        ...vehicles,
+        ...archivedVehicles
+    ].filter(vehicle => {
         const searchTermUpper = searchQuery.toUpperCase();
         return (
             vehicle.vehicleNumber.includes(searchTermUpper) ||
-            vehicle.vehicleDescription.toUpperCase().includes(searchTermUpper) ||
-            vehicle.ownerName.toUpperCase().includes(searchTermUpper) ||
-            vehicle.contactNumber.toUpperCase().includes(searchTermUpper) ||
-            // Check for both lot number and "open" parking
+            (vehicle.vehicleDescription || '').toUpperCase().includes(searchTermUpper) ||
+            (vehicle.ownerName || '').toUpperCase().includes(searchTermUpper) ||
+            (vehicle.contactNumber || '').toUpperCase().includes(searchTermUpper) ||
             (vehicle.lotNumber 
                 ? vehicle.lotNumber.toUpperCase().includes(searchTermUpper)
                 : searchTermUpper === 'OPEN')
@@ -804,7 +906,7 @@ export function VehicleInfo() {
                         <div className="mt-3 space-y-2 max-h-[300px] overflow-y-auto">
                             {filteredVehicles.map(vehicle => (
                                 <button
-                                    key={vehicle._id}
+                                    key={vehicle._id || vehicle.vehicleNumber + '_archived'}
                                     onClick={() => setSelectedVehicle(vehicle)}
                                     className="w-full text-left p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3"
                                 >
@@ -815,6 +917,11 @@ export function VehicleInfo() {
                                             <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
                                                 {vehicle.lotNumber || 'Open'}
                                             </span>
+                                            {vehicle.isArchived && (
+                                                <span className="px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full ml-2">
+                                                    Archived
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-xs sm:text-sm text-gray-500 truncate">{vehicle.vehicleDescription}</p>
                                     </div>
@@ -916,7 +1023,7 @@ export function VehicleInfo() {
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs text-gray-500">Owner Name</p>
-                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.ownerName}</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900">{selectedVehicle.ownerName || '-'}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
@@ -929,7 +1036,7 @@ export function VehicleInfo() {
                                                     href={`tel:${selectedVehicle.contactNumber}`}
                                                     className="font-semibold text-sm sm:text-base text-indigo-600 hover:text-indigo-800 hover:underline"
                                                 >
-                                                    {selectedVehicle.contactNumber}
+                                                    {selectedVehicle.contactNumber || '-'}
                                                 </a>
                                             </div>
                                         </div>
@@ -960,7 +1067,7 @@ export function VehicleInfo() {
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs text-gray-500">Rental Type</p>
-                                                <p className="font-semibold text-sm sm:text-base text-gray-900 capitalize">{selectedVehicle.rentalType}</p>
+                                                <p className="font-semibold text-sm sm:text-base text-gray-900 capitalize">{selectedVehicle.rentalType || '-'}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
@@ -992,6 +1099,54 @@ export function VehicleInfo() {
                                                 </p>
                                             </div>
                                         </div>
+                                        {selectedVehicle.isArchived && selectedVehicle.rentalType === 'monthly' && (
+                                            <>
+                                                <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                                    <div className="bg-emerald-100 p-2 rounded-full">
+                                                        <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs text-gray-500">Refund Amount</p>
+                                                        <p className="font-semibold text-sm sm:text-base text-gray-900">
+                                                            {(() => {
+                                                                // Find latest revenue transaction for this vehicle
+                                                                const latestRevenue = allRevenue
+                                                                    .filter(r => r.vehicleNumber === selectedVehicle.vehicleNumber && r.revenueAmount > 0)
+                                                                    .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+                                                                const advanceAmt = selectedVehicle.advanceAmount || 0;
+                                                                const paidAmt = latestRevenue ? latestRevenue.revenueAmount : 0;
+                                                                const refundAmt = advanceAmt - paidAmt;
+                                                                return `₹${refundAmt.toLocaleString('en-IN')}`;
+                                                            })()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                                    <div className="bg-emerald-100 p-2 rounded-full">
+                                                        <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs text-gray-500">Start Date</p>
+                                                        <p className="font-semibold text-sm sm:text-base text-gray-900">
+                                                            {selectedVehicle.startDate ? new Date(selectedVehicle.startDate).toLocaleDateString('en-GB') : '-'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {selectedVehicle.refundDate && (
+                                                    <div className="flex items-center space-x-3 bg-gradient-to-br from-gray-50 to-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                                        <div className="bg-emerald-100 p-2 rounded-full">
+                                                            <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs text-gray-500">Refund Date</p>
+                                                            <p className="font-semibold text-sm sm:text-base text-gray-900">
+                                                                {new Date(selectedVehicle.refundDate).toLocaleDateString('en-GB')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -16,13 +16,13 @@ export function NewVehicle() {
         lotNumber: 'Open',
         ownerName: '', 
         contactNumber: '',
-        parkingType: 'private', 
+        parkingType: 'open',
         rentalType: 'monthly', 
         rentPrice: '',
         numberOfDays: '', 
         advanceAmount: '5000',
         transactionMode: 'Cash',
-        receivedBy: 'Balu' // Add default value
+        receivedBy: 'Balu'
     });
 
     const [files, setFiles] = useState({
@@ -159,7 +159,7 @@ export function NewVehicle() {
                     lotNumber: '',
                     ownerName: '', 
                     contactNumber: '',
-                    parkingType: 'private', 
+                    parkingType: 'open',
                     rentalType: 'monthly', 
                     rentPrice: '',
                     numberOfDays: '',
@@ -337,7 +337,11 @@ export function NewVehicle() {
                             <button
                                 key={lot}
                                 type="button"
-                                onClick={() => setVehicle({...vehicle, lotNumber: lot})}
+                                onClick={() => setVehicle({
+                                    ...vehicle, 
+                                    lotNumber: lot,
+                                    parkingType: 'private'
+                                })}
                                 className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                             >
                                 {lot}
