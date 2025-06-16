@@ -5,6 +5,7 @@ import VehicleActions from './VehicleActions';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
+import { useNavigate } from 'react-router-dom';
 
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -19,6 +20,7 @@ export function ManageVehicles() {
     const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [selectedNotificationVehicle, setSelectedNotificationVehicle] = useState(null);
     const [isSendingNotification, setIsSendingNotification] = useState(false);
+    const navigate = useNavigate();
 
     const fetchExpiredVehicles = async () => {
         setLoading(true);
@@ -733,7 +735,7 @@ export function ManageVehicles() {
             <div 
                 key={vehicle._id} 
                 className="p-4 hover:bg-gray-50 cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
-                onClick={() => setSelectedVehicle(vehicle)}
+                onClick={() => navigate('/vehicle-info', { state: { vehicleNumber: vehicle.vehicleNumber } })}
             >
                 {/* Printer and Bell Buttons - Absolute positioned */}
                 <div className="absolute right-4 top-4 flex items-center gap-2">

@@ -174,7 +174,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
 
         // Add function to handle vehicle card click
         const handleVehicleCardClick = (vehicle) => {
-            navigate('/vehicle-info', { state: { selectedVehicle: vehicle } });
+            navigate('/vehicle-info', { state: { vehicleNumber: vehicle.vehicleNumber } });
         };
 
         // Add due amount calculation function
