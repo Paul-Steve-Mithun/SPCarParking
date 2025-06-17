@@ -1374,19 +1374,41 @@ export function VehicleInfo() {
                                         {filteredTxns.length > 0 && (
                                             <div>
                                                 <div
-                                                    className="w-full"
+                                                    className="w-full relative"
                                                     onTouchStart={handleTouchStart}
                                                     onTouchMove={handleTouchMove}
                                                     onTouchEnd={handleTouchEnd}
                                                 >
-                                                    {/* Transaction Card */}
-                                                    <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                                        <div className="p-4 border-b border-gray-100">
+                                                    {/* Swipe Indicators */}
+                                                    <div className="absolute inset-y-0 left-0 w-12 flex items-center justify-center pointer-events-none">
+                                                        <div className="bg-gradient-to-r from-blue-500/20 to-transparent w-full h-full flex items-center justify-center">
+                                                            <div className="transform -rotate-90 text-blue-500/50 flex items-center gap-1">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                                <span className="text-xs font-medium">Swipe</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="absolute inset-y-0 right-0 w-12 flex items-center justify-center pointer-events-none">
+                                                        <div className="bg-gradient-to-l from-blue-500/20 to-transparent w-full h-full flex items-center justify-center">
+                                                            <div className="transform rotate-90 text-blue-500/50 flex items-center gap-1">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                                <span className="text-xs font-medium">Swipe</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Transaction Card with enhanced effects */}
+                                                    <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                                        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                                                             <div className="flex justify-between items-start">
                                                                 <div>
-                                                                    <div className="font-semibold">{filteredTxns[currentTxnIndex].transactionType}</div>
+                                                                    <div className="font-semibold text-blue-900">{filteredTxns[currentTxnIndex].transactionType}</div>
                                                                 </div>
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
                                                                     filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
                                                                         ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
                                                                         : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
@@ -1405,11 +1427,11 @@ export function VehicleInfo() {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className="p-4 space-y-3">
+                                                        <div className="p-4 space-y-3 bg-gradient-to-br from-white to-gray-50">
                                                             <div className="flex justify-between">
                                                                 <span className="text-gray-500 text-sm">Date</span>
                                                                 <div className="flex flex-col items-end">
-                                                                    <span className="text-sm font-medium">
+                                                                    <span className="text-sm font-medium text-gray-900">
                                                                         {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleDateString('en-GB')}
                                                                     </span>
                                                                     <span className="text-xs text-gray-400 mt-0.5">
@@ -1423,7 +1445,7 @@ export function VehicleInfo() {
                                                             </div>
                                                             <div className="flex justify-between">
                                                                 <span className="text-gray-500 text-sm">Received By</span>
-                                                                <span className="text-sm font-medium flex items-center">
+                                                                <span className="text-sm font-medium flex items-center text-gray-900">
                                                                     <User className="w-3 h-3 text-gray-500 mr-1" />
                                                                     {filteredTxns[currentTxnIndex].receivedBy || 'Admin'}
                                                                 </span>
@@ -1438,13 +1460,22 @@ export function VehicleInfo() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-center mt-2 gap-1">
+                                                {/* Enhanced pagination dots */}
+                                                <div className="flex justify-center mt-4 gap-2">
                                                     {filteredTxns.map((_, idx) => (
                                                         <span
                                                             key={idx}
-                                                            className={`inline-block w-2 h-2 rounded-full ${idx === currentTxnIndex ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                                            className={`inline-block w-2 h-2 rounded-full transition-all duration-300 ${
+                                                                idx === currentTxnIndex 
+                                                                    ? 'bg-blue-500 w-4' 
+                                                                    : 'bg-gray-300 hover:bg-gray-400'
+                                                            }`}
                                                         />
                                                     ))}
+                                                </div>
+                                                {/* Transaction counter */}
+                                                <div className="text-center mt-2 text-sm text-gray-500">
+                                                    Transaction {currentTxnIndex + 1} of {filteredTxns.length}
                                                 </div>
                                             </div>
                                         )}
