@@ -721,7 +721,7 @@ export function ExpensesDashboard() {
 
             {/* Add Expense Modal */}
             <Transition appear show={isAddExpenseOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={() => setIsAddExpenseOpen(false)}>
+                <Dialog as="div" className="relative z-50" onClose={() => setIsAddExpenseOpen(false)}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -731,10 +731,10 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
                     </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
+                    <div className="fixed inset-0 overflow-y-auto z-50">
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
                             <Transition.Child
                                 as={Fragment}
@@ -930,7 +930,7 @@ export function ExpensesDashboard() {
 
             {/* Delete Confirmation Modal */}
             <Transition appear show={isDeleteModalOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={() => setIsDeleteModalOpen(false)}>
+                <Dialog as="div" className="relative z-50" onClose={() => setIsDeleteModalOpen(false)}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -940,10 +940,10 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
                     </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
+                    <div className="fixed inset-0 overflow-y-auto z-50">
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
                             <Transition.Child
                                 as={Fragment}
@@ -1017,7 +1017,7 @@ export function ExpensesDashboard() {
             <Transition appear show={isPdfModalOpen} as={Fragment}>
                 <Dialog 
                     as="div" 
-                    className="relative z-10" 
+                    className="relative z-50" 
                     onClose={() => setIsPdfModalOpen(false)}
                 >
                     <Transition.Child
@@ -1029,10 +1029,10 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
                     </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
+                    <div className="fixed inset-0 overflow-y-auto z-50">
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
                             <Transition.Child
                                 as={Fragment}
