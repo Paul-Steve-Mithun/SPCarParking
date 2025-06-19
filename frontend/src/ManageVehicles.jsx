@@ -735,7 +735,7 @@ export function ManageVehicles() {
             <div 
                 key={vehicle._id} 
                 className="p-4 hover:bg-gray-50 cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
-                onClick={() => navigate('/vehicle-info', { state: { vehicleNumber: vehicle.vehicleNumber } })}
+                onClick={() => setSelectedVehicle(vehicle)}
             >
                 {/* Printer and Bell Buttons - Absolute positioned */}
                 <div className="absolute right-4 top-4 flex items-center gap-2">

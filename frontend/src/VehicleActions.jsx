@@ -100,7 +100,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const handleVehicleNumberClick = (e) => {
         e.stopPropagation(); // Prevent the click from bubbling up
         onClose(); // Close the current modal
-        navigate('/vehicle-info', { state: { selectedVehicle: vehicle } });
+        navigate('/vehicle-info', { state: { vehicleNumber: vehicle.vehicleNumber } });
     };
 
     return (
