@@ -4,13 +4,15 @@ import {
     Calendar,
     ChevronDown,
     ArrowUp,
-    ArrowDown,
     Wallet,
     Receipt,
     IndianRupee,
     Download,
     X,
-    ArrowRight
+    ArrowRight,
+    User,
+    Users,
+    CalendarDays
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
@@ -43,6 +45,7 @@ export function BalanceSheet() {
     const [transferFrom, setTransferFrom] = useState('Balu');
     const [transferTo, setTransferTo] = useState('Mani');
     const [transferAmount, setTransferAmount] = useState('');
+    const [transferDate, setTransferDate] = useState('');
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -548,6 +551,7 @@ export function BalanceSheet() {
     const handleTransfer = (fromUser) => {
         setTransferFrom(fromUser);
         setTransferTo(fromUser === 'Balu' ? 'Mani' : 'Balu');
+        setTransferDate(new Date().toISOString().split('T')[0]);
         setIsTransferModalOpen(true);
     };
 
@@ -607,7 +611,7 @@ export function BalanceSheet() {
                                 className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
                                 title="Transfer Cash"
                             >
-                                <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 <span>Transfer Cash</span>
                             </button>
                         </div>
@@ -832,7 +836,7 @@ export function BalanceSheet() {
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-3">
                                     <div className="p-2 bg-blue-100 rounded-xl">
-                                        <ArrowUp className="w-6 h-6 text-blue-600" />
+                                        <ArrowRight className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900">
@@ -849,7 +853,10 @@ export function BalanceSheet() {
                             </div>
                             {/* From Dropdown */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <User className="w-4 h-4 text-blue-600" />
+                                    From
+                                </label>
                                 <select
                                     value={transferFrom}
                                     onChange={e => setTransferFrom(e.target.value)}
@@ -861,7 +868,10 @@ export function BalanceSheet() {
                             </div>
                             {/* To Dropdown */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-blue-600" />
+                                    To
+                                </label>
                                 <select
                                     value={transferTo}
                                     onChange={e => setTransferTo(e.target.value)}
@@ -871,9 +881,27 @@ export function BalanceSheet() {
                                     <option value="Mani">Mani</option>
                                 </select>
                             </div>
+                            {/* Date Input */}
+                            <div className="mb-4">
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <CalendarDays className="w-4 h-4 text-blue-600" />
+                                    Date
+                                </label>
+                                <input
+                                    type="date"
+                                    value={transferDate}
+                                    onChange={e => setTransferDate(e.target.value)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow bg-white text-gray-700"
+                                    max={new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0]}
+                                    min={new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0]}
+                                />
+                            </div>
                             {/* Amount Input */}
                             <div className="mb-8">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <IndianRupee className="w-4 h-4 text-blue-600" />
+                                    Amount
+                                </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <IndianRupee className="w-5 h-5 text-gray-400" />
@@ -902,10 +930,11 @@ export function BalanceSheet() {
                                 </button>
                                 <button
                                     onClick={async () => {
-                                        if (!transferAmount || transferFrom === transferTo) {
+                                        if (!transferAmount || transferFrom === transferTo || !transferDate) {
                                             toast.error('Invalid transfer');
                                             return;
                                         }
+                                        setIsLoading(true);
                                         try {
                                             const res = await fetch('https://spcarparkingbknd.onrender.com/balancesheet/transfer', {
                                                 method: 'POST',
@@ -914,7 +943,7 @@ export function BalanceSheet() {
                                                     fromUser: transferFrom,
                                                     toUser: transferTo,
                                                     amount: parseFloat(transferAmount),
-                                                    date: new Date(),
+                                                    date: new Date(transferDate),
                                                     month: selectedMonth,
                                                     year: selectedYear
                                                 })
@@ -923,15 +952,28 @@ export function BalanceSheet() {
                                             toast.success('Transfer successful!');
                                             setIsTransferModalOpen(false);
                                             setTransferAmount('');
+                                            setTransferDate('');
                                             await fetchBalanceData();
                                         } catch (err) {
                                             toast.error('Transfer failed');
+                                        } finally {
+                                            setIsLoading(false);
                                         }
                                     }}
-                                    disabled={!transferAmount || transferFrom === transferTo}
+                                    disabled={!transferAmount || transferFrom === transferTo || !transferDate || isLoading}
                                     className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                                 >
-                                    Transfer
+                                    {isLoading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ArrowRight className="w-4 h-4 text-white" />
+                                            Transfer
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
