@@ -989,20 +989,24 @@ export function ManageVehicles() {
                 vehicleNumber: 30,
                 description: 40,
                 parkingType: 25,
+                ownerName: 35,
+                contactNumber: 35,
                 rentalType: 30,
                 daysOverdue: 25,
-                dueAmount: 45  // Increased from 30 to 45 to match other reports
+                dueAmount: 45
             };
             
             const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
             const leftMargin = (pageWidth - totalTableWidth) / 2;
 
-            // Table columns
+            // Table columns (in the required order)
             const tableColumn = [
                 { header: 'S.No', dataKey: 'serialNumber' },
                 { header: 'Vehicle Number', dataKey: 'vehicleNumber' },
                 { header: 'Description', dataKey: 'description' },
                 { header: 'Parking Type', dataKey: 'parkingType' },
+                { header: 'Owner Name', dataKey: 'ownerName' },
+                { header: 'Contact No', dataKey: 'contactNumber' },
                 { header: 'Rental Type', dataKey: 'rentalType' },
                 { header: 'Days Overdue', dataKey: 'daysOverdue' },
                 { header: 'Due Amount', dataKey: 'dueAmount' }
@@ -1011,41 +1015,33 @@ export function ManageVehicles() {
             // Add the formatAmount function
             const formatAmount = (amount) => {
                 if (amount === '-') return '-';
-                
-                // Convert amount to string with 2 decimal places
                 const amountStr = amount.toFixed(2);
-                
-                // Calculate spaces needed (for maximum 999999.00 = 9 characters)
                 const spaceNeeded = Math.max(0, 10 - amountStr.length);
                 const spaces = ' '.repeat(spaceNeeded);
-                
-                // Return formatted string with consistent spacing
                 return `INR${spaces}${amountStr}`;
             };
 
             // Update table data preparation
             const tableRows = sortByLotNumber(vehicles).map((vehicle, index) => {
                 let dueAmount = vehicle.rentPrice;
-                let daysOverdue = 'Monthly';
-                
+                // Calculate days overdue for both rental types
+                const startDate = new Date(vehicle.endDate);
+                startDate.setDate(startDate.getDate() + 1);
+                startDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const diffTime = today.getTime() - startDate.getTime();
+                const daysOverdue = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1); // +1 to include today if overdue
                 if (vehicle.rentalType === 'daily') {
-                    const startDate = new Date(vehicle.endDate);
-                    startDate.setDate(startDate.getDate() + 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    
-                    const endDate = new Date();
-                    endDate.setHours(0, 0, 0, 0);
-
-                    const diffTime = endDate.getTime() - startDate.getTime();
-                    daysOverdue = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
                     dueAmount = vehicle.rentPrice * daysOverdue;
                 }
-                
                 return {
                     serialNumber: index + 1,
                     vehicleNumber: vehicle.vehicleNumber,
                     description: vehicle.vehicleDescription || '',
                     parkingType: vehicle.lotNumber || 'Open',
+                    ownerName: vehicle.ownerName || '',
+                    contactNumber: vehicle.contactNumber || '',
                     rentalType: `${capitalizeFirst(vehicle.rentalType)}${vehicle.rentalType === 'daily' ? ` (${vehicle.numberOfDays} days)` : ''}`,
                     daysOverdue: daysOverdue,
                     dueAmount: formatAmount(dueAmount)
@@ -1086,6 +1082,8 @@ export function ManageVehicles() {
                     vehicleNumber: { cellWidth: columnWidths.vehicleNumber, halign: 'center' },
                     description: { cellWidth: columnWidths.description, halign: 'left' },
                     parkingType: { cellWidth: columnWidths.parkingType, halign: 'center' },
+                    ownerName: { cellWidth: columnWidths.ownerName, halign: 'center' },
+                    contactNumber: { cellWidth: columnWidths.contactNumber, halign: 'center' },
                     rentalType: { cellWidth: columnWidths.rentalType, halign: 'center' },
                     daysOverdue: { cellWidth: columnWidths.daysOverdue, halign: 'center' },
                     dueAmount: { cellWidth: columnWidths.dueAmount, halign: 'right' }
@@ -1113,10 +1111,22 @@ export function ManageVehicles() {
                     }
                 },
                 didDrawCell: function(data) {
+                    // Make contact number a clickable tel: link
+                    if (data.column.dataKey === 'contactNumber' && data.cell.raw) {
+                        const phone = String(data.cell.raw).replace(/[^0-9+]/g, '');
+                        if (phone.length >= 8) { // basic validation
+                            doc.link(
+                                data.cell.x,
+                                data.cell.y,
+                                data.cell.width,
+                                data.cell.height,
+                                { url: `tel:${phone}` }
+                            );
+                        }
+                    }
                     if (data.row.index === tableRows.length - 1 && data.column.index === tableColumn.length - 1) {
                         let finalY = data.cell.y + data.cell.height + 15;
                         const requiredHeight = 70;
-                        
                         if (pageHeight - finalY < requiredHeight) {
                             hasStatsOverflow = true;
                             lastTablePage = doc.internal.getCurrentPageInfo().pageNumber;
@@ -1124,21 +1134,18 @@ export function ManageVehicles() {
                             finalY = 40;
                             totalPages = doc.internal.getNumberOfPages();
                         }
-
                         // Set styles for totals
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(11);
                         doc.setTextColor(0, 0, 0);
                         doc.setDrawColor(200, 200, 200);
                         doc.setLineWidth(0.1);
-
                         // Calculate positions for right side boxes
                         const boxWidth = 80;
                         const boxHeight = 12;
                         const boxX = pageWidth - leftMargin - boxWidth;
                         const textPadding = 2;
                         const lineSpacing = 10;
-
                         // Function to draw a box with text
                         const drawTotalBox = (y, label, amount, isGrandTotal = false) => {
                             doc.setDrawColor(200, 200, 200);
@@ -1149,12 +1156,10 @@ export function ManageVehicles() {
                             );
                             doc.setLineWidth(0.1);
                             doc.roundedRect(boxX, y - boxHeight + 5, boxWidth, boxHeight, 1, 1, 'FD');
-
                             // Set bold font for label
                             doc.setFont('helvetica', 'bold');
                             const labelX = boxX + textPadding;
                             doc.text(label, labelX, y);
-
                             // Set monospace bold font for amount
                             doc.setFont('courier', 'bold');
                             const amountX = boxX + boxWidth - textPadding;
@@ -1165,20 +1170,17 @@ export function ManageVehicles() {
                                 { align: 'right' }
                             );
                         };
-
                         // Draw right side amount boxes
                         drawTotalBox(
                             finalY,
                             'Monthly Due :', 
                             totalMonthlyDue
                         );
-
                         drawTotalBox(
                             finalY + lineSpacing,
                             'Daily Due :', 
                             totalDailyDue
                         );
-
                         drawTotalBox(
                             finalY + (lineSpacing * 2),
                             'Total Due :', 
