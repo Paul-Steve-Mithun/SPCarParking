@@ -213,8 +213,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const generateAllLots = () => {
         const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
-        const cLots = Array.from({ length: 21 }, (_, i) => `C${i + 1}`);
-        return [...aLots, ...bLots, ...cLots];
+        const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
+        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
+        return [...aLots, ...bLots, ...cLots, ...dLots];
     };
 
     useEffect(() => {
@@ -259,6 +260,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('B'))];
             case 'c':
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('C'))];
+            case 'd':
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('D'))];
             default:
                 return [...openButton, ...filteredAvailableLots]; // Show all non-empty lots
         }
@@ -427,7 +430,18 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                     : 'bg-gray-100 text-gray-700'
                                                             }`}
                                                         >
-                                                            C Wing (C1-C21)
+                                                            C Wing (C1-C22)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('d')}
+                                                            className={`px-3 py-1 rounded-md ${
+                                                                selectedLotType === 'd' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            D Wing (D1-D20)
                                                         </button>
                                                     </div>
                                                 </div>

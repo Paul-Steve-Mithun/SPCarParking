@@ -47,8 +47,9 @@ export function NewVehicle() {
     const generateAllLots = () => {
         const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
-        const cLots = Array.from({ length: 21 }, (_, i) => `C${i + 1}`);
-        return [...aLots, ...bLots, ...cLots];
+        const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`); // C1-C22
+        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`); // D1-D20
+        return [...aLots, ...bLots, ...cLots, ...dLots];
     };
 
     const allLots = generateAllLots();
@@ -78,11 +79,13 @@ export function NewVehicle() {
     const getFilteredLots = () => {
         switch (selectedLotType) {
             case 'a':
-                return availableLots.filter(lot => !lot.includes('B') && !lot.includes('C'));
+                return availableLots.filter(lot => lot.startsWith('A'));
             case 'b':
-                return availableLots.filter(lot => lot.includes('B'));
+                return availableLots.filter(lot => lot.startsWith('B'));
             case 'c':
-                return availableLots.filter(lot => lot.includes('C'));
+                return availableLots.filter(lot => lot.startsWith('C'));
+            case 'd':
+                return availableLots.filter(lot => lot.startsWith('D'));
             default:
                 return availableLots;
         }
@@ -282,9 +285,9 @@ export function NewVehicle() {
                                 <div>
                                 <label className="block text-gray-700 font-medium mb-2">Lot Number</label>
                                 <input 
-                                    type="text" 
-                                    placeholder="Select a lot number" 
-                                    value={vehicle.lotNumber}
+                                    type="text"
+                                    placeholder="Select a lot number"
+                                    value={vehicle.parkingType === 'open' ? 'Open' : vehicle.lotNumber}
                                     onChange={(e) => handleTextInput(e, 'lotNumber')}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     disabled
@@ -292,11 +295,11 @@ export function NewVehicle() {
                 
                 {/* Lot Type Selector */}
                 <div className="mt-2 mb-3">
-                    <div className="flex space-x-4">
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
                         <button
                             type="button"
                             onClick={() => setSelectedLotType('a')}
-                            className={`px-3 py-1 rounded-md ${
+                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'a' 
                                     ? 'bg-blue-600 text-white' 
                                     : 'bg-gray-100 text-gray-700'
@@ -307,7 +310,7 @@ export function NewVehicle() {
                         <button
                             type="button"
                             onClick={() => setSelectedLotType('b')}
-                            className={`px-3 py-1 rounded-md ${
+                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'b' 
                                     ? 'bg-blue-600 text-white' 
                                     : 'bg-gray-100 text-gray-700'
@@ -318,13 +321,24 @@ export function NewVehicle() {
                         <button
                             type="button"
                             onClick={() => setSelectedLotType('c')}
-                            className={`px-3 py-1 rounded-md ${
+                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'c' 
                                     ? 'bg-blue-600 text-white' 
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            C Wing (C1-C21)
+                            C Wing (C1-C22)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedLotType('d')}
+                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                selectedLotType === 'd' 
+                                    ? 'bg-blue-600 text-white' 
+                                    : 'bg-gray-100 text-gray-700'
+                            }`}
+                        >
+                            D Wing (D1-D20)
                         </button>
                     </div>
                 </div>
@@ -333,6 +347,22 @@ export function NewVehicle() {
                 <div className="mt-2">
                     <p className="text-sm text-gray-600 font-medium">Available Lots:</p>
                     <div className="flex flex-wrap gap-2 mt-1 max-h-40 overflow-y-auto">
+                        {/* Open button always first */}
+                        <button
+                            type="button"
+                            onClick={() => setVehicle({
+                                ...vehicle,
+                                lotNumber: '',
+                                parkingType: 'open'
+                            })}
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                vehicle.parkingType === 'open'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                        >
+                            Open
+                        </button>
                         {getFilteredLots().map((lot) => (
                             <button
                                 key={lot}
@@ -342,7 +372,11 @@ export function NewVehicle() {
                                     lotNumber: lot,
                                     parkingType: 'private'
                                 })}
-                                className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                    vehicle.lotNumber === lot && vehicle.parkingType !== 'open'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                }`}
                             >
                                 {lot}
                             </button>
