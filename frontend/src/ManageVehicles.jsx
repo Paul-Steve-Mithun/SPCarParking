@@ -352,7 +352,7 @@ export function ManageVehicles() {
             doc.setTextColor(44, 62, 80);
 
             // Generate QR Code
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 30,
                 margin: 2,
@@ -641,7 +641,7 @@ export function ManageVehicles() {
             doc.setTextColor(44, 62, 80);
 
             // QR Code Section with updated amount
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 30,
                 margin: 2,

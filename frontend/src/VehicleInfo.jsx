@@ -482,7 +482,7 @@ export function VehicleInfo() {
             doc.setTextColor(44, 62, 80);
 
             // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 25,
                 margin: 1,
@@ -500,7 +500,7 @@ export function VehicleInfo() {
                 qrDataUrl, 
                 'PNG', 
                 qrX,
-                qrY + 15,  // Changed from 20 to 15
+                qrY + 10,  // Moved up for more top padding
                 qrWidth,
                 45  // Changed from 50 to 45
             );
@@ -796,7 +796,7 @@ export function VehicleInfo() {
             doc.setTextColor(44, 62, 80);
 
             // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 25,
                 margin: 1,
@@ -814,7 +814,7 @@ export function VehicleInfo() {
                 qrDataUrl, 
                 'PNG', 
                 qrX,
-                qrY + 15,  // Changed from 20 to 15
+                qrY + 10,  // Changed from 20 to 15
                 qrWidth,
                 45  // Changed from 50 to 45
             );

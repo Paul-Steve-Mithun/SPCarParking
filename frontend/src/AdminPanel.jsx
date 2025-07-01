@@ -303,7 +303,7 @@ export function AdminPanel() {
             doc.setTextColor(44, 62, 80);
 
             // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 25,
                 margin: 1,
@@ -582,7 +582,7 @@ export function AdminPanel() {
             doc.setTextColor(44, 62, 80);
 
             // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@oksbi&pn=PAULCARS&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
                 width: 25,
                 margin: 1,
@@ -968,12 +968,12 @@ export function AdminPanel() {
 
                             {/* Action buttons */}
                             <div className="flex items-center gap-4 mt-2 sm:mt-0 w-full sm:w-auto justify-end">
-                                <button
+                                {/*<button
                                     onClick={() => vehicle.rentalType === 'monthly' ? handlePrintInvoice(vehicle) : handlePrintDailyInvoice(vehicle)}
                                     className="text-gray-600 hover:text-blue-600 transition-colors p-2"
                                 >
                                     <PrinterIcon className="w-5 h-5" />
-                                </button>
+                                </button>*/}
                                 <button 
                                     onClick={() => setSelectedVehicle(vehicle)}
                                     className="text-gray-600 hover:text-blue-600 transition-colors p-2"
