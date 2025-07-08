@@ -53,6 +53,15 @@ export function ExpensesDashboard() {
         direction: 'desc' 
     });
     const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+    // 1. Add state for edit modal
+    const [isEditExpenseOpen, setIsEditExpenseOpen] = useState(false);
+    const [editingExpense, setEditingExpense] = useState(null);
+    const [editExpenseForm, setEditExpenseForm] = useState({
+        amount: '',
+        transactionDate: '',
+        transactionMode: 'Cash',
+        spentBy: 'Balu',
+    });
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -486,6 +495,47 @@ export function ExpensesDashboard() {
         }
     };
 
+    // 2. Add handler to open edit modal
+    const handleEditExpense = (expense) => {
+        setEditingExpense(expense);
+        setEditExpenseForm({
+            amount: expense.amount,
+            transactionDate: expense.transactionDate.split('T')[0],
+            transactionMode: expense.transactionMode,
+            spentBy: expense.spentBy,
+            description: expense.description || '',
+        });
+        setIsEditExpenseOpen(true);
+    };
+
+    // 3. Add handler to save edit
+    const handleSaveEditExpense = async () => {
+        if (!editingExpense) return;
+        try {
+            const body = {
+                amount: editExpenseForm.amount,
+                transactionDate: editExpenseForm.transactionDate,
+                transactionMode: editExpenseForm.transactionMode,
+                spentBy: editExpenseForm.spentBy,
+            };
+            if (editingExpense.expenseType === 'Miscellaneous') {
+                body.description = editExpenseForm.description;
+            }
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${editingExpense._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) throw new Error('Failed to update expense');
+            await fetchExpenses();
+            setIsEditExpenseOpen(false);
+            setEditingExpense(null);
+            toast.success('Expense updated successfully');
+        } catch (error) {
+            toast.error('Failed to update expense');
+        }
+    };
+
     return (
         <div className="relative">
             <Toaster position="bottom-right" />
@@ -646,7 +696,11 @@ export function ExpensesDashboard() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {filteredData.map((expense, index) => (
-                                                <tr key={expense._id} className="hover:bg-gray-50">
+                                                <tr key={expense._id} className="hover:bg-gray-50 cursor-pointer" onClick={e => {
+                                                    // Prevent edit modal if delete button is clicked
+                                                    if (e.target.closest('button')) return;
+                                                    handleEditExpense(expense);
+                                                }}>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {index + 1}
                                                     </td>
@@ -700,7 +754,7 @@ export function ExpensesDashboard() {
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                                         <div className="flex justify-center">
                                                             <button
-                                                                onClick={() => handleDeleteExpense(expense._id, expense)}
+                                                                onClick={e => { e.stopPropagation(); handleDeleteExpense(expense._id, expense); }}
                                                                 className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
                                                                 title="Delete expense"
                                                             >
@@ -767,7 +821,7 @@ export function ExpensesDashboard() {
                                             <select
                                                 value={newExpense.expenseType}
                                                 onChange={(e) => setNewExpense({...newExpense, expenseType: e.target.value})}
-                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all"
+                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
                                             >
                                                 <option value="Watchman Night">Watchman Night</option>
                                                 <option value="Watchman Day">Watchman Day</option>
@@ -789,7 +843,7 @@ export function ExpensesDashboard() {
                                                     type="text"
                                                     value={newExpense.description}
                                                     onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all"
+                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
                                                     placeholder="Enter expense description"
                                                     required
                                                 />
@@ -806,7 +860,7 @@ export function ExpensesDashboard() {
                                                     type="number"
                                                     value={newExpense.amount}
                                                     onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
-                                                    className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all"
+                                                    className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
                                                     placeholder="0.00"
                                                     required
                                                 />
@@ -855,7 +909,7 @@ export function ExpensesDashboard() {
                                                 type="date"
                                                 value={newExpense.transactionDate}
                                                 onChange={(e) => setNewExpense({...newExpense, transactionDate: e.target.value})}
-                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all"
+                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
                                             />
                                         </div>
 
@@ -1089,6 +1143,186 @@ export function ExpensesDashboard() {
                                             onClick={() => setIsPdfModalOpen(false)}
                                         >
                                             Cancel
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* Edit Expense Modal */}
+            <Transition appear show={isEditExpenseOpen} as={Fragment}>
+                <Dialog as="div" className="relative z-50" onClose={() => setIsEditExpenseOpen(false)}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+                    </Transition.Child>
+                    <div className="fixed inset-0 overflow-y-auto z-50">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
+                                            Edit Expense
+                                        </Dialog.Title>
+                                        <button
+                                            onClick={() => setIsEditExpenseOpen(false)}
+                                            className="text-gray-400 hover:text-gray-500 transition-colors"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    {editingExpense && (
+                                        <div className="space-y-5">
+                                            <div className="mb-2">
+                                                <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                                    <ClipboardList className="w-4 h-4 mr-2 text-yellow-500" />
+                                                    Expense Type
+                                                </div>
+                                                <div className="px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 font-semibold">
+                                                    {editingExpense.expenseType}
+                                                </div>
+                                            </div>
+                                            {editingExpense.expenseType === 'Miscellaneous' && (
+                                                <div className="mb-2">
+                                                    <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                                        <FileText className="w-4 h-4 mr-2 text-yellow-500" />
+                                                        Description
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={editExpenseForm.description ?? editingExpense.description ?? ''}
+                                                        onChange={e => setEditExpenseForm({ ...editExpenseForm, description: e.target.value })}
+                                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                        placeholder="Enter expense description"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                                    <Banknote className="w-4 h-4 mr-2 text-yellow-500" />
+                                                    Amount
+                                                </label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="number"
+                                                        value={editExpenseForm.amount}
+                                                        onChange={e => setEditExpenseForm({ ...editExpenseForm, amount: e.target.value })}
+                                                        className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                        placeholder="0.00"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                                    <Wallet className="w-4 h-4 mr-2 text-yellow-500" />
+                                                    Transaction Mode
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditExpenseForm({ ...editExpenseForm, transactionMode: 'Cash' })}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
+                                                            editExpenseForm.transactionMode === 'Cash'
+                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
+                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        } transition-all`}
+                                                    >
+                                                        <DollarSign className="w-4 h-4 mr-2" />
+                                                        Cash
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditExpenseForm({ ...editExpenseForm, transactionMode: 'UPI' })}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
+                                                            editExpenseForm.transactionMode === 'UPI'
+                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
+                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        } transition-all`}
+                                                    >
+                                                        <CreditCard className="w-4 h-4 mr-2" />
+                                                        UPI
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                                    <Calendar className="w-4 h-4 mr-2 text-yellow-500" />
+                                                    Date
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    value={editExpenseForm.transactionDate}
+                                                    onChange={e => setEditExpenseForm({ ...editExpenseForm, transactionDate: e.target.value })}
+                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                                    <Users className="w-4 h-4 mr-2 text-yellow-500" />
+                                                    Spent By
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditExpenseForm({ ...editExpenseForm, spentBy: 'Balu' })}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
+                                                            editExpenseForm.spentBy === 'Balu'
+                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
+                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        } transition-all`}
+                                                    >
+                                                        <User className="w-4 h-4 mr-2" />
+                                                        Balu
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditExpenseForm({ ...editExpenseForm, spentBy: 'Mani' })}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
+                                                            editExpenseForm.spentBy === 'Mani'
+                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
+                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                        } transition-all`}
+                                                    >
+                                                        <User className="w-4 h-4 mr-2" />
+                                                        Mani
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="mt-8 flex justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={() => setIsEditExpenseOpen(false)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="px-6 py-2.5 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={handleSaveEditExpense}
+                                        >
+                                            Save
                                         </button>
                                     </div>
                                 </Dialog.Panel>
