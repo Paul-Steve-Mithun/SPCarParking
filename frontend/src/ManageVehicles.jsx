@@ -682,36 +682,20 @@ export function ManageVehicles() {
         }
     };
 
-    const sendNotificationToOwner = async (vehicle) => {
-        setIsSendingNotification(true);
-        try {
-            const response = await fetch('https://spcarparkingbknd.onrender.com/notifications/send-payment-reminder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    vehicleNumber: vehicle.vehicleNumber,
-                    ownerName: vehicle.ownerName,
-                    contactNumber: vehicle.contactNumber,
-                    amount: vehicle.rentPrice,
-                    dueDate: '5th of this month'
-                })
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                toast.success(`Payment reminder sent to ${vehicle.ownerName}`);
-                setShowNotificationModal(false);
-            } else {
-                toast.error('Failed to send reminder');
-            }
-        } catch (error) {
-            console.error('Error sending notification:', error);
-            toast.error('Failed to send notification');
-        } finally {
-            setIsSendingNotification(false);
+    // WhatsApp Reminder Function
+    const sendNotificationToOwner = (vehicle) => {
+        // Format phone number for WhatsApp (remove spaces, add country code if needed)
+        let phone = vehicle.contactNumber.replace(/\D/g, '');
+        if (!phone.startsWith('91') && phone.length === 10) {
+            phone = '91' + phone; // Add India country code if missing
         }
+        // WhatsApp message
+        const message = `Dear ${vehicle.ownerName}, your monthly parking rent of Rs.${vehicle.rentPrice} for vehicle ${vehicle.vehicleNumber} is due on 5th of this month. Please make the payment before the due date. - SP Car Parking`;
+        // WhatsApp click-to-chat URL
+        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        setShowNotificationModal(false);
+        toast.success('WhatsApp opened. Send the message to complete the reminder.');
     };
 
     const renderVehicleCard = (vehicle) => {
@@ -855,8 +839,8 @@ export function ManageVehicles() {
                                     <Bell className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">Payment Reminder</h3>
-                                    <p className="text-sm text-white/80">Send SMS notification</p>
+                                    <h3 className="text-lg font-semibold text-white">WhatsApp Payment Reminder</h3>
+                                    <p className="text-sm text-white/80">Send WhatsApp notification</p>
                                 </div>
                             </div>
                             <button
@@ -897,10 +881,10 @@ export function ManageVehicles() {
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm text-red-800">
-                                    SMS will be sent to <span className="font-medium">{vehicle.contactNumber}</span>
+                                    WhatsApp message will be sent to <span className="font-medium">{vehicle.contactNumber}</span>
                                 </p>
                                 <p className="text-xs text-red-600 mt-1">
-                                    Standard SMS charges may apply
+                                    WhatsApp must be installed on your device
                                 </p>
                             </div>
                         </div>
@@ -915,24 +899,11 @@ export function ManageVehicles() {
                             Cancel
                         </button>
                         <button
-                            onClick={() => {
-                                sendNotificationToOwner(vehicle);
-                                handleClose();
-                            }}
-                            disabled={isSendingNotification}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                            onClick={() => sendNotificationToOwner(vehicle)}
+                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02]"
                         >
-                            {isSendingNotification ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Sending...
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="w-4 h-4 mr-2" />
-                                    Send Reminder
-                                </>
-                            )}
+                            <Send className="w-4 h-4 mr-2" />
+                            Send WhatsApp Reminder
                         </button>
                     </div>
                 </div>
