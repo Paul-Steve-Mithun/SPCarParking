@@ -839,8 +839,8 @@ export function ManageVehicles() {
                                     <Bell className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">WhatsApp Payment Reminder</h3>
-                                    <p className="text-sm text-white/80">Send WhatsApp notification</p>
+                                    <h3 className="text-lg font-semibold text-white">Payment Reminder</h3>
+                                    <p className="text-sm text-white/80">Send whatsapp notification</p>
                                 </div>
                             </div>
                             <button
@@ -875,13 +875,15 @@ export function ManageVehicles() {
                             </div>
                         </div>
 
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-3">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:space-x-3 space-y-2 sm:space-y-0">
                             <div className="text-red-500 mt-0.5">
                                 <Bell className="w-4 h-4" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm text-red-800">
-                                    WhatsApp message will be sent to <span className="font-medium">{vehicle.contactNumber}</span>
+                                <p className="text-sm text-red-800 break-words">
+                                    WhatsApp message will be sent to
+                                    <br className="block sm:hidden" />
+                                    <span className="font-medium break-words"> {vehicle.contactNumber}</span>
                                 </p>
                                 <p className="text-xs text-red-600 mt-1">
                                     WhatsApp must be installed on your device
@@ -891,19 +893,19 @@ export function ManageVehicles() {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex justify-end gap-3 p-4 bg-gray-50 rounded-b-xl">
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
                         <button
                             onClick={handleClose}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 w-full sm:w-auto"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={() => sendNotificationToOwner(vehicle)}
-                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02]"
+                            className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] w-full sm:w-auto break-words"
                         >
                             <Send className="w-4 h-4 mr-2" />
-                            Send WhatsApp Reminder
+                            Send Reminder
                         </button>
                     </div>
                 </div>
