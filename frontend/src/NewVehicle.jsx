@@ -3,12 +3,14 @@ import { PlusCircleIcon, SaveIcon, Upload, Wallet, CreditCard, Car, User, MapPin
 import { toast, Toaster } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { useTheme } from './contexts/ThemeContext';
 
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 export function NewVehicle() {
+    const { isDarkMode } = useTheme();
     const [vehicle, setVehicle] = useState({
         vehicleNumber: '', 
         vehicleDescription: '', 
@@ -204,7 +206,9 @@ export function NewVehicle() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className={`max-w-7xl mx-auto shadow-xl rounded-xl overflow-hidden transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}>
             <Toaster position="top-right" />
             
             {/* Header */}
@@ -220,36 +224,54 @@ export function NewVehicle() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Vehicle Information Column */}
                     <div className="space-y-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h2>
+                        <div className={`p-4 rounded-lg transition-colors duration-300 ${
+                            isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                        }`}>
+                            <h2 className={`text-xl font-semibold border-b pb-2 mb-4 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-100 border-gray-600' : 'text-gray-800 border-gray-300'
+                            }`}>Vehicle Information</h2>
                             
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Vehicle Number</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Vehicle Number</label>
                                     <input 
                                         type="text" 
                                         placeholder="Enter vehicle number" 
                                         value={vehicle.vehicleNumber}
                                         onChange={(e) => handleTextInput(e, 'vehicleNumber')}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Vehicle Description</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Vehicle Description</label>
                                     <input 
                                         type="text" 
                                         placeholder="Enter vehicle description" 
                                         value={vehicle.vehicleDescription}
                                         onChange={(e) => handleTextInput(e, 'vehicleDescription')}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Vehicle Board Type</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Vehicle Board Type</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             type="button"
@@ -257,7 +279,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.vehicleType === 'own'
                                                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             Own Board
@@ -271,7 +295,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.vehicleType === 'tboard'
                                                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             T Board
@@ -283,13 +309,19 @@ export function NewVehicle() {
                                 </div>
 
                                 <div>
-                                <label className="block text-gray-700 font-medium mb-2">Lot Number</label>
+                                <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>Lot Number</label>
                                 <input 
                                     type="text"
                                     placeholder="Select a lot number"
                                     value={vehicle.parkingType === 'open' ? 'Open' : vehicle.lotNumber}
                                     onChange={(e) => handleTextInput(e, 'lotNumber')}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                            : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                    }`}
                                     disabled
                                 />
                 
@@ -302,7 +334,9 @@ export function NewVehicle() {
                             className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'a' 
                                     ? 'bg-blue-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700'
+                                    : isDarkMode 
+                                        ? 'bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             A Wing (A1-A20)
@@ -313,7 +347,9 @@ export function NewVehicle() {
                             className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'b' 
                                     ? 'bg-blue-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700'
+                                    : isDarkMode 
+                                        ? 'bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             B Wing (B1-B20)
@@ -324,7 +360,9 @@ export function NewVehicle() {
                             className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'c' 
                                     ? 'bg-blue-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700'
+                                    : isDarkMode 
+                                        ? 'bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             C Wing (C1-C22)
@@ -335,7 +373,9 @@ export function NewVehicle() {
                             className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
                                 selectedLotType === 'd' 
                                     ? 'bg-blue-600 text-white' 
-                                    : 'bg-gray-100 text-gray-700'
+                                    : isDarkMode 
+                                        ? 'bg-gray-600 text-gray-300' 
+                                        : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             D Wing (D1-D20)
@@ -345,7 +385,9 @@ export function NewVehicle() {
 
                 {/* Available Lots Display */}
                 <div className="mt-2">
-                    <p className="text-sm text-gray-600 font-medium">Available Lots:</p>
+                    <p className={`text-sm font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Available Lots:</p>
                     <div className="flex flex-wrap gap-2 mt-1 max-h-40 overflow-y-auto">
                         {/* Open button always first */}
                         <button
@@ -358,7 +400,9 @@ export function NewVehicle() {
                             className={`px-3 py-1 text-sm rounded-md transition-colors ${
                                 vehicle.parkingType === 'open'
                                     ? 'bg-green-600 text-white'
-                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : isDarkMode 
+                                        ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50' 
+                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
                         >
                             Open
@@ -375,7 +419,9 @@ export function NewVehicle() {
                                 className={`px-3 py-1 text-sm rounded-md transition-colors ${
                                     vehicle.lotNumber === lot && vehicle.parkingType !== 'open'
                                         ? 'bg-blue-600 text-white'
-                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                        : isDarkMode 
+                                            ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' 
+                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                 }`}
                             >
                                 {lot}
@@ -390,41 +436,61 @@ export function NewVehicle() {
 
                     {/* Owner Details Column */}
                     <div className="space-y-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h2>
+                        <div className={`p-4 rounded-lg transition-colors duration-300 ${
+                            isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                        }`}>
+                            <h2 className={`text-xl font-semibold border-b pb-2 mb-4 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-100 border-gray-600' : 'text-gray-800 border-gray-300'
+                            }`}>Owner Details</h2>
                             
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Owner Name</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Owner Name</label>
                                     <input 
                                         type="text" 
                                         placeholder="Enter owner name" 
                                         value={vehicle.ownerName}
                                         onChange={(e) => handleTextInput(e, 'ownerName')}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Contact Number</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Contact Number</label>
                                     <input 
                                         type="text" 
                                         placeholder="Enter contact number" 
                                         value={vehicle.contactNumber}
                                         onChange={(e) => handleTextInput(e, 'contactNumber')}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                         required
                                     />
                                 </div>
 
                                 {/* Document Upload Section */}
                             <div className="mt-6 space-y-4">
-                                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Document Upload</h3>
+                                <h3 className={`text-xl font-semibold border-b pb-2 mb-4 transition-colors duration-300 ${
+                                    isDarkMode ? 'text-gray-100 border-gray-600' : 'text-gray-800 border-gray-300'
+                                }`}>Document Upload</h3>
                                 
                                 {/* Vehicle Image Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-gray-700 font-medium">Vehicle Photo</label>
+                                    <label className={`block font-medium transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Vehicle Photo</label>
                                     <div className="flex items-center space-x-4">
                                         <div className="flex-1">
                                             <input
@@ -436,7 +502,11 @@ export function NewVehicle() {
                                             />
                                             <label
                                                 htmlFor="vehicleImage"
-                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                                className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors duration-300 ${
+                                                    isDarkMode 
+                                                        ? 'border-gray-500 text-gray-300 hover:bg-gray-600' 
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                }`}
                                             >
                                                 <Upload className="w-5 h-5 mr-2" />
                                                 Choose File
@@ -454,7 +524,9 @@ export function NewVehicle() {
 
                                 {/* Document 1 Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-gray-700 font-medium">Aadhar Card</label>
+                                    <label className={`block font-medium transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Aadhar Card</label>
                                     <div className="flex items-center space-x-4">
                                         <div className="flex-1">
                                             <input
@@ -466,7 +538,11 @@ export function NewVehicle() {
                                             />
                                             <label
                                                 htmlFor="document1Image"
-                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                                className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors duration-300 ${
+                                                    isDarkMode 
+                                                        ? 'border-gray-500 text-gray-300 hover:bg-gray-600' 
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                }`}
                                             >
                                                 <Upload className="w-5 h-5 mr-2" />
                                                 Choose File
@@ -484,7 +560,9 @@ export function NewVehicle() {
 
                                 {/* Document 2 Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-gray-700 font-medium">Rc/Driving License</label>
+                                    <label className={`block font-medium transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Rc/Driving License</label>
                                     <div className="flex items-center space-x-4">
                                         <div className="flex-1">
                                             <input
@@ -496,7 +574,11 @@ export function NewVehicle() {
                                             />
                                             <label
                                                 htmlFor="document2Image"
-                                                className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                                className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors duration-300 ${
+                                                    isDarkMode 
+                                                        ? 'border-gray-500 text-gray-300 hover:bg-gray-600' 
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                }`}
                                             >
                                                 <Upload className="w-5 h-5 mr-2" />
                                                 Choose File
@@ -520,23 +602,35 @@ export function NewVehicle() {
 
                     {/* Rental Details Column */}
                     <div className="space-y-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h2 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h2>
+                        <div className={`p-4 rounded-lg transition-colors duration-300 ${
+                            isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                        }`}>
+                            <h2 className={`text-xl font-semibold border-b pb-2 mb-4 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-100 border-gray-600' : 'text-gray-800 border-gray-300'
+                            }`}>Rental Details</h2>
                             
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Parking Type</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Parking Type</label>
                                     <select 
                                         value={vehicle.parkingType}
                                         onChange={(e) => setVehicle({...vehicle, parkingType: e.target.value})} 
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100' 
+                                                : 'border-gray-300 text-gray-900'
+                                        }`}
                                     >
                                         <option value="private">Private Parking</option>
                                         <option value="open">Open Parking</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-gray-700 font-medium mb-2">Rental Type</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Rental Type</label>
                                     <select 
                                         value={vehicle.rentalType}
                                         onChange={(e) => setVehicle({
@@ -545,7 +639,11 @@ export function NewVehicle() {
                                             advanceAmount: e.target.value === 'monthly' ? '5000' : '',
                                             numberOfDays: e.target.value === 'daily' ? '' : ''
                                         })} 
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100' 
+                                                : 'border-gray-300 text-gray-900'
+                                        }`}
                                     >
                                         <option value="monthly">Monthly</option>
                                         <option value="daily">Daily</option>
@@ -554,13 +652,19 @@ export function NewVehicle() {
 
                                 {vehicle.rentalType === 'daily' && (
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Number of Days</label>
+                                        <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>Number of Days</label>
                                         <input 
                                             type="number" 
                                             placeholder="Enter number of days"
                                             value={vehicle.numberOfDays}
                                             onChange={(e) => setVehicle({...vehicle, numberOfDays: e.target.value})} 
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                    : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                            }`}
                                             required
                                             min="0"
                                         />
@@ -569,9 +673,13 @@ export function NewVehicle() {
 
                                 <div>
                                     <div className="flex justify-between items-center">
-                                        <label className="block text-gray-700 font-medium mb-2">Rental Price (₹)</label>
+                                        <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>Rental Price (₹)</label>
                                         {vehicle.rentalType === 'daily' && vehicle.numberOfDays && vehicle.rentPrice && (
-                                            <span className="text-blue-700 font-medium">
+                                            <span className={`font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-blue-400' : 'text-blue-700'
+                                            }`}>
                                                 Total: ₹{Number(vehicle.numberOfDays) * Number(vehicle.rentPrice)}
                                             </span>
                                         )}
@@ -581,7 +689,11 @@ export function NewVehicle() {
                                         placeholder={vehicle.rentalType === 'monthly' ? 'Enter monthly rent - ₹2000/-' : 'Enter daily rent - ₹100/-'}
                                         value={vehicle.rentPrice}
                                         onChange={(e) => setVehicle({...vehicle, rentPrice: e.target.value})} 
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                         required
                                         min="0"
                                     />
@@ -589,20 +701,28 @@ export function NewVehicle() {
 
                                 {vehicle.rentalType === 'monthly' && (
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Advance Amount (₹)</label>
+                                        <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>Advance Amount (₹)</label>
                                         <input 
                                             type="number" 
                                             placeholder="Enter advance amount - ₹5000/-"
                                             value={vehicle.advanceAmount}
                                             onChange={(e) => setVehicle({...vehicle, advanceAmount: e.target.value})} 
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400' 
+                                                    : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                            }`}
                                             min="0"
                                         />
                                     </div>
                                 )}
 
                                 <div className="mt-4">
-                                    <label className="block text-gray-700 font-medium mb-2">Payment Mode</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Payment Mode</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             type="button"
@@ -610,7 +730,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.transactionMode === 'Cash'
                                                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <Wallet className="h-5 w-5 mr-2" />
@@ -625,7 +747,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.transactionMode === 'UPI'
                                                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <CreditCard className="h-5 w-5 mr-2" />
@@ -639,7 +763,9 @@ export function NewVehicle() {
 
                                 {/* New Received By Buttons */}
                                 <div className="mt-4">
-                                    <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                    <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                    }`}>Received By</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             type="button"
@@ -647,7 +773,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.receivedBy === 'Balu'
                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <User className="h-5 w-5 mr-2" />
@@ -662,7 +790,9 @@ export function NewVehicle() {
                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                 vehicle.receivedBy === 'Mani'
                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : isDarkMode 
+                                                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <User className="h-5 w-5 mr-2" />
@@ -720,16 +850,24 @@ export function NewVehicle() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-xl font-bold leading-6 text-gray-900 border-b pb-3 mb-4 text-center"
+                                        className={`text-xl font-bold leading-6 border-b pb-3 mb-4 text-center transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-100 border-gray-600' : 'text-gray-900 border-gray-300'
+                                        }`}
                                     >
                                         Confirm Vehicle Registration
                                     </Dialog.Title>
                                     <div className="mt-4 space-y-4">
-                                        <div className="bg-blue-50 p-4 rounded-lg space-y-3">
-                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                        <div className={`p-4 rounded-lg space-y-3 transition-colors duration-300 ${
+                                            isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                                        }`}>
+                                            <h4 className={`font-bold flex items-center gap-2 mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                            }`}>
                                                 <Car className="w-5 h-5 text-blue-600" />
                                                 Vehicle Details
                                             </h4>
@@ -737,81 +875,137 @@ export function NewVehicle() {
                                                 {/* First Row: Vehicle Number & Description */}
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                                     <div className="flex-1">
-                                                        <p className="font-semibold text-gray-600">Number</p>
-                                                        <p className="text-gray-800">{vehicle.vehicleNumber}</p>
+                                                        <p className={`font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                        }`}>Number</p>
+                                                        <p className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                        }`}>{vehicle.vehicleNumber}</p>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="font-semibold text-gray-600">Description</p>
-                                                        <p className="text-gray-800">{vehicle.vehicleDescription || '-'}</p>
+                                                        <p className={`font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                        }`}>Description</p>
+                                                        <p className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                        }`}>{vehicle.vehicleDescription || '-'}</p>
                                                     </div>
                                                 </div>
 
                                                 {/* Second Row: Lot Number & Type */}
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                                     <div className="flex-1">
-                                                        <p className="font-semibold text-gray-600">Lot Number</p>
-                                                        <p className="text-gray-800 font-bold">{vehicle.lotNumber || 'Open'}</p>
+                                                        <p className={`font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                        }`}>Lot Number</p>
+                                                        <p className={`font-bold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                        }`}>{vehicle.lotNumber || 'Open'}</p>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="font-semibold text-gray-600">Type</p>
-                                                        <p className="text-gray-800">{capitalizeFirst(vehicle.vehicleType)}</p>
+                                                        <p className={`font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                        }`}>Type</p>
+                                                        <p className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                        }`}>{capitalizeFirst(vehicle.vehicleType)}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-purple-50 p-4 rounded-lg space-y-3">
-                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                        <div className={`p-4 rounded-lg space-y-3 transition-colors duration-300 ${
+                                            isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50'
+                                        }`}>
+                                            <h4 className={`font-bold flex items-center gap-2 mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                            }`}>
                                                 <User className="w-5 h-5 text-purple-600" />
                                                 Owner Details
                                             </h4>
                                             <div className="grid grid-cols-2 gap-3 text-sm">
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Name</p>
-                                                    <p className="text-gray-800">{vehicle.ownerName}</p>
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Name</p>
+                                                    <p className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>{vehicle.ownerName}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Contact Number</p>
-                                                    <p className="text-gray-800">{vehicle.contactNumber}</p>
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Contact Number</p>
+                                                    <p className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>{vehicle.contactNumber}</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-green-50 p-4 rounded-lg space-y-3">
-                                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-2">
+                                        <div className={`p-4 rounded-lg space-y-3 transition-colors duration-300 ${
+                                            isDarkMode ? 'bg-green-900/20' : 'bg-green-50'
+                                        }`}>
+                                            <h4 className={`font-bold flex items-center gap-2 mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                            }`}>
                                                 <Calendar className="w-5 h-5 text-green-600" />
                                                 Rental Details
                                             </h4>
                                             <div className="grid grid-cols-2 gap-3 text-sm">
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Type</p>
-                                                    <p className="text-gray-800">{capitalizeFirst(vehicle.rentalType)}</p>
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Type</p>
+                                                    <p className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>{capitalizeFirst(vehicle.rentalType)}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Rent</p>
-                                                    <p className="text-gray-800">₹{vehicle.rentPrice}</p>
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Rent</p>
+                                                    <p className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>₹{vehicle.rentPrice}</p>
                                                 </div>
                                                 {vehicle.rentalType === 'monthly' && (
                                                     <div>
-                                                        <p className="font-semibold text-gray-600">Advance</p>
-                                                        <p className="text-gray-800">₹{vehicle.advanceAmount}</p>
+                                                        <p className={`font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                        }`}>Advance</p>
+                                                        <p className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                        }`}>₹{vehicle.advanceAmount}</p>
                                                     </div>
                                                 )}
                                                 {vehicle.rentalType === 'daily' && (
                                                     <>
                                                         <div>
-                                                            <p className="font-semibold text-gray-600">Days</p>
-                                                            <p className="text-gray-800">{vehicle.numberOfDays}</p>
+                                                            <p className={`font-semibold transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                            }`}>Days</p>
+                                                            <p className={`transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                            }`}>{vehicle.numberOfDays}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="font-semibold text-gray-600">Total</p>
-                                                            <p className="text-gray-800">₹{vehicle.rentPrice * vehicle.numberOfDays}</p>
+                                                            <p className={`font-semibold transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                            }`}>Total</p>
+                                                            <p className={`transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                            }`}>₹{vehicle.rentPrice * vehicle.numberOfDays}</p>
                                                         </div>
                                                     </>
                                                 )}
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Payment</p>
-                                                    <p className="flex items-center gap-1 text-gray-800">
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Payment</p>
+                                                    <p className={`flex items-center gap-1 transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>
                                                         {vehicle.transactionMode === 'UPI' ? (
                                                             <CreditCard className="w-4 h-4" />
                                                         ) : (
@@ -821,8 +1015,12 @@ export function NewVehicle() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-600">Received By</p>
-                                                    <p className="flex items-center gap-1 text-gray-800">
+                                                    <p className={`font-semibold transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                    }`}>Received By</p>
+                                                    <p className={`flex items-center gap-1 transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                                                    }`}>
                                                         <User className="w-4 h-4" />
                                                         {vehicle.receivedBy}
                                                     </p>
@@ -834,7 +1032,11 @@ export function NewVehicle() {
                                     <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={`inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
                                             onClick={() => setShowConfirmModal(false)}
                                             disabled={isRegistering}
                                         >

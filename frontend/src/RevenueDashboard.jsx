@@ -25,8 +25,10 @@ import toast, { Toaster } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from './contexts/ThemeContext';
 
 export function RevenueDashboard() {
+    const { isDarkMode } = useTheme();
     const navigate = useNavigate();
     const [revenueData, setRevenueData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
@@ -582,7 +584,7 @@ export function RevenueDashboard() {
             icon: <User className="w-8 h-8 text-green-600" />,
             label: "Mani's Collection",
             value: `₹${stats.maniCollection.toFixed(2)}`,
-            bgGradient: "from-green-100 to-green-200"
+            bgGradient: "from-green-50 to-green-100"
         }
     ];
 
@@ -726,18 +728,26 @@ export function RevenueDashboard() {
         <div className="relative">
             <Toaster position="top-right" />
             
-            <div className={`min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300 ${
-                isDeleteDialogOpen ? 'blur-sm' : ''
-            }`}>
+            <div className={`min-h-screen p-2 sm:p-6 transition-all duration-300 ${
+                isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+            } ${isDeleteDialogOpen ? 'blur-sm' : ''}`}>
                 <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 flex items-center">
-                            <AlertCircle className="h-5 w-5 mr-2 text-red-600" />
+                        <div className={`border rounded-lg p-4 flex items-center transition-colors duration-300 ${
+                            isDarkMode 
+                                ? 'bg-red-900/20 border-red-800 text-red-300' 
+                                : 'bg-red-50 border-red-200 text-red-800'
+                        }`}>
+                            <AlertCircle className={`h-5 w-5 mr-2 transition-colors duration-300 ${
+                                isDarkMode ? 'text-red-400' : 'text-red-600'
+                            }`} />
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${
+                        isDarkMode ? 'bg-gray-800' : 'bg-white'
+                    }`}>
                         <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
@@ -747,7 +757,11 @@ export function RevenueDashboard() {
                                     {/* Add Rent Button */}
                                     <button 
                                         onClick={() => setShowAddRentModal(true)}
-                                        className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                        className={`w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${
+                                            isDarkMode 
+                                                ? 'bg-gray-800 text-green-400 hover:bg-gray-700 border border-gray-600' 
+                                                : 'bg-white text-green-600 hover:bg-gray-50'
+                                        }`}
                                     >
                                         <IndianRupee className="w-5 h-5" />
                                         <span className="font-semibold">Pay Rent</span>
@@ -755,7 +769,11 @@ export function RevenueDashboard() {
                                     {/* Export PDF Button */}
                                     <button 
                                         onClick={() => setIsPdfModalOpen(true)}
-                                        className="w-full sm:w-auto bg-white text-green-600 px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                        className={`w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${
+                                            isDarkMode 
+                                                ? 'bg-gray-800 text-green-400 hover:bg-gray-700 border border-gray-600' 
+                                                : 'bg-white text-green-600 hover:bg-gray-50'
+                                        }`}
                                     >
                                         <Printer className="w-5 h-5" />
                                         <span className="font-semibold">Export PDF</span>
@@ -768,25 +786,37 @@ export function RevenueDashboard() {
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white text-green-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                        className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md transition-colors duration-200 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-800 text-green-400 border border-gray-600 hover:bg-gray-700' 
+                                                : 'bg-white text-green-600 hover:bg-gray-50'
+                                        }`}
                                     >
                                         {monthNames.map((month, index) => (
-                                            <option key={index} value={index}>{month}</option>
+                                            <option key={index} value={index} className={isDarkMode ? 'bg-gray-800 text-green-400' : 'bg-white text-green-600'}>{month}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-600" />
+                                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-green-400' : 'text-green-600'
+                                    }`} />
                                 </div>
                                 <div className="relative flex-1 sm:flex-none">
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white text-green-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                        className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium shadow-md transition-colors duration-200 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-800 text-green-400 border border-gray-600 hover:bg-gray-700' 
+                                                : 'bg-white text-green-600 hover:bg-gray-50'
+                                        }`}
                                     >
                                         {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
-                                            <option key={year} value={year}>{year}</option>
+                                            <option key={year} value={year} className={isDarkMode ? 'bg-gray-800 text-green-400' : 'bg-white text-green-600'}>{year}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-600" />
+                                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-green-400' : 'text-green-600'
+                                    }`} />
                                 </div>
                             </div>
                         </div>
@@ -797,13 +827,23 @@ export function RevenueDashboard() {
                                 {revenueStats.map((stat, index) => (
                                     <div 
                                         key={index} 
-                                        className={`rounded-2xl p-4 sm:p-6 bg-gradient-to-br ${stat.bgGradient} border border-white shadow-md hover:shadow-lg transition-all duration-200`}
+                                        className={`rounded-2xl p-4 sm:p-6 bg-gradient-to-br border shadow-md hover:shadow-lg transition-all duration-200 ${
+                                            isDarkMode 
+                                                ? `${stat.bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                                : `${stat.bgGradient} border-white`
+                                        }`}
                                     >
                                         <div className="flex items-center space-x-4">
-                                            <div className="p-3 rounded-xl bg-white shadow-sm">{stat.icon}</div>
+                                            <div className={`p-3 rounded-xl shadow-sm transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                            }`}>{stat.icon}</div>
                                             <div>
-                                                <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                                                <p className={`text-sm font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                }`}>{stat.label}</p>
+                                                <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                }`}>{stat.value}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -813,50 +853,100 @@ export function RevenueDashboard() {
                             {/* Mobile View - Custom Layout (hidden on desktop) */}
                             <div className="sm:hidden space-y-4">
                                 {/* Total Revenue - Full Width with centered content */}
-                                <div className={`rounded-2xl p-4 bg-gradient-to-br ${revenueStats[0].bgGradient} border border-white shadow-md`}>
+                                <div className={`rounded-2xl p-4 bg-gradient-to-br border shadow-md ${
+                                    isDarkMode 
+                                        ? `${revenueStats[0].bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                        : `${revenueStats[0].bgGradient} border-white`
+                                }`}>
                                     <div className="flex flex-col items-center text-center">
-                                        <div className="p-3 rounded-xl bg-white shadow-sm mb-2">{revenueStats[0].icon}</div>
+                                        <div className={`p-3 rounded-xl shadow-sm mb-2 transition-colors duration-300 ${
+                                            isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                        }`}>{revenueStats[0].icon}</div>
                                         <div>
-                                            <p className="text-gray-600 text-sm font-medium">{revenueStats[0].label}</p>
-                                            <p className="text-xl font-bold text-gray-900">{revenueStats[0].value}</p>
+                                            <p className={`text-sm font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                            }`}>{revenueStats[0].label}</p>
+                                            <p className={`text-xl font-bold transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>{revenueStats[0].value}</p>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 {/* Monthly and Daily Revenue - Two Columns */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[1].bgGradient} border border-white shadow-md`}>
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br border shadow-md ${
+                                        isDarkMode 
+                                            ? `${revenueStats[1].bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                            : `${revenueStats[1].bgGradient} border-white`
+                                    }`}>
                                         <div className="flex flex-col items-center text-center">
-                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[1].icon}</div>
-                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[1].label}</p>
-                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[1].value}</p>
+                                            <div className={`p-2 rounded-xl shadow-sm mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                            }`}>{revenueStats[1].icon}</div>
+                                            <p className={`text-xs font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                            }`}>{revenueStats[1].label}</p>
+                                            <p className={`text-sm font-bold truncate w-full transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>{revenueStats[1].value}</p>
                                         </div>
                                     </div>
                                     
-                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[2].bgGradient} border border-white shadow-md`}>
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br border shadow-md ${
+                                        isDarkMode 
+                                            ? `${revenueStats[2].bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                            : `${revenueStats[2].bgGradient} border-white`
+                                    }`}>
                                         <div className="flex flex-col items-center text-center">
-                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[2].icon}</div>
-                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[2].label}</p>
-                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[2].value}</p>
+                                            <div className={`p-2 rounded-xl shadow-sm mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                            }`}>{revenueStats[2].icon}</div>
+                                            <p className={`text-xs font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                            }`}>{revenueStats[2].label}</p>
+                                            <p className={`text-sm font-bold truncate w-full transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>{revenueStats[2].value}</p>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 {/* Balu's and Mani's Collection - Two Columns */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[3].bgGradient} border border-white shadow-md`}>
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br border shadow-md ${
+                                        isDarkMode 
+                                            ? `${revenueStats[3].bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                            : `${revenueStats[3].bgGradient} border-white`
+                                    }`}>
                                         <div className="flex flex-col items-center text-center">
-                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[3].icon}</div>
-                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[3].label}</p>
-                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[3].value}</p>
+                                            <div className={`p-2 rounded-xl shadow-sm mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                            }`}>{revenueStats[3].icon}</div>
+                                            <p className={`text-xs font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                            }`}>{revenueStats[3].label}</p>
+                                            <p className={`text-sm font-bold truncate w-full transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>{revenueStats[3].value}</p>
                                         </div>
                                     </div>
                                     
-                                    <div className={`rounded-2xl p-3 bg-gradient-to-br ${revenueStats[4].bgGradient} border border-white shadow-md`}>
+                                    <div className={`rounded-2xl p-3 bg-gradient-to-br border shadow-md ${
+                                        isDarkMode 
+                                            ? `${revenueStats[4].bgGradient.replace('50', '900/20').replace('100', '800/20')} border-gray-700` 
+                                            : `${revenueStats[4].bgGradient} border-white`
+                                    }`}>
                                         <div className="flex flex-col items-center text-center">
-                                            <div className="p-2 rounded-xl bg-white shadow-sm mb-2">{revenueStats[4].icon}</div>
-                                            <p className="text-gray-600 text-xs font-medium">{revenueStats[4].label}</p>
-                                            <p className="text-sm font-bold text-gray-900 truncate w-full">{revenueStats[4].value}</p>
+                                            <div className={`p-2 rounded-xl shadow-sm mb-2 transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-white'
+                                            }`}>{revenueStats[4].icon}</div>
+                                            <p className={`text-xs font-medium transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                            }`}>{revenueStats[4].label}</p>
+                                            <p className={`text-sm font-bold truncate w-full transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>{revenueStats[4].value}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -864,10 +954,14 @@ export function RevenueDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${
+                        isDarkMode ? 'bg-gray-800' : 'bg-white'
+                    }`}>
                         <div className="p-4 sm:p-6">
                             <div className="flex flex-col space-y-4">
-                                <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
+                                <h2 className={`text-xl font-bold mb-4 text-center sm:text-left transition-colors duration-300 ${
+                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                }`}>
                                     Transaction History
                                 </h2>
                                 <div className="relative w-full mb-6">
@@ -876,9 +970,15 @@ export function RevenueDashboard() {
                                         placeholder="Search by vehicle number, description, or lot number..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                        className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-300 ${
+                                            isDarkMode 
+                                                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                        }`}
                                     />
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                    <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                    }`} />
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
@@ -886,14 +986,22 @@ export function RevenueDashboard() {
                                     <div className="inline-block min-w-full align-middle">
                                         <div className="overflow-hidden">
                                             {filteredData.length === 0 ? (
-                                                <div className="text-center py-8 text-gray-500">
+                                                <div className={`text-center py-8 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
                                                     No transactions found matching your search
                                                 </div>
                                             ) : (
-                                                <table className="min-w-full divide-y divide-gray-200">
+                                                <table className={`min-w-full divide-y transition-colors duration-300 ${
+                                                    isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
+                                                }`}>
                                                     <thead>
-                                                        <tr className="bg-gray-50">
-                                                            <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                                                        <tr className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                                                        }`}>
+                                                            <th className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                            }`}>
                                                                 S.No
                                                             </th>
                                                             {[
@@ -910,7 +1018,11 @@ export function RevenueDashboard() {
                                                                 <th 
                                                                     key={column}
                                                                     onClick={() => handleSort(column)}
-                                                                    className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                                    className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer transition-colors duration-300 ${
+                                                                        isDarkMode 
+                                                                            ? 'text-gray-400 hover:bg-gray-600' 
+                                                                            : 'text-gray-600 hover:bg-gray-100'
+                                                                    }`}
                                                                 >
                                                                     <div className="flex items-center">
                                                                         <span className="hidden sm:inline">
@@ -949,41 +1061,63 @@ export function RevenueDashboard() {
                                                             ))}
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-gray-200">
+                                                    <tbody className={`divide-y transition-colors duration-300 ${
+                                                        isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
+                                                    }`}>
                                                         {filteredData.map((record, index) => (
                                                             <tr 
                                                                 key={record._id} 
                                                                 onClick={() => handleEditClick(record)}
-                                                                className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer group"
+                                                                className={`transition-colors duration-150 cursor-pointer group ${
+                                                                    isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                                                                }`}
                                                             >
-                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     {index + 1}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     {new Date(record.transactionDate).toLocaleDateString('en-GB')}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     <span title={record.vehicleNumber}>
                                                                         {record.vehicleNumber.length > 10 
                                                                             ? `${record.vehicleNumber.slice(0, 10)}...` 
                                                                             : record.vehicleNumber}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-600">
+                                                                <td className={`px-3 sm:px-6 py-4 text-sm transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                }`}>
                                                                     {record.vehicleDescription}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-600">
+                                                                <td className={`px-3 sm:px-6 py-4 text-sm transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                }`}>
                                                                     {record.lotNumber || 'Open'}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-600">
+                                                                <td className={`px-3 sm:px-6 py-4 text-sm transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                }`}>
                                                                     {capitalizeFirst(record.rentalType)}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-600">
+                                                                <td className={`px-3 sm:px-6 py-4 text-sm transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                }`}>
                                                                     {record.transactionType}
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-600">
+                                                                <td className={`px-3 sm:px-6 py-4 text-sm transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                }`}>
                                                                     <span className="inline-flex items-center gap-1">
-                                                                        <User className="w-4 h-4 text-gray-500" />
+                                                                        <User className={`w-4 h-4 transition-colors duration-300 ${
+                                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                        }`} />
                                                                         {record.receivedBy || 'N/A'}
                                                                     </span>
                                                                 </td>
@@ -1006,7 +1140,9 @@ export function RevenueDashboard() {
                                                                         )}
                                                                     </span>
                                                                 </td>
-                                                                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     <div className="w-full text-right font-mono">
                                                                         <span className="inline-block w-[80px] text-right text-base">
                                                                             {record.revenueAmount.toFixed(2)}
@@ -1057,21 +1193,33 @@ export function RevenueDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold leading-6 text-gray-900"
+                                        className={`text-lg font-bold leading-6 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                        }`}
                                     >
                                         Delete Transaction
                                     </Dialog.Title>
                                     <div className="mt-2">
-                                        <p className="text-sm text-gray-500">
+                                        <p className={`text-sm transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                        }`}>
                                             Are you sure you want to delete this transaction? This action cannot be undone.
                                         </p>
                                         {selectedTransaction && (
-                                            <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                                                <p className="text-sm font-medium text-gray-700">Transaction Details:</p>
-                                                <div className="mt-2 text-sm text-gray-600">
+                                            <div className={`mt-4 p-4 rounded-lg transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                                            }`}>
+                                                <p className={`text-sm font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>Transaction Details:</p>
+                                                <div className={`mt-2 text-sm transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                                }`}>
                                                     <p>Vehicle Number: {selectedTransaction.vehicleNumber}</p>
                                                     <p>Amount: ₹{selectedTransaction.revenueAmount.toFixed(2)}</p>
                                                     <p>Type: {selectedTransaction.transactionType}</p>
@@ -1083,7 +1231,11 @@ export function RevenueDashboard() {
                                     <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                                            className={`inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700 focus-visible:ring-gray-400' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 focus-visible:ring-gray-500'
+                                            }`}
                                             onClick={() => setIsDeleteDialogOpen(false)}
                                         >
                                             Cancel
@@ -1133,49 +1285,83 @@ export function RevenueDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold text-gray-900 mb-4"
+                                        className={`text-lg font-bold mb-4 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                        }`}
                                     >
                                         Generate PDF Report
                                     </Dialog.Title>
                                     <div className="space-y-4">
                                         <button
                                             onClick={() => generateFilteredPDF()}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 text-left rounded-lg border transition-colors flex items-center space-x-3 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 hover:bg-gray-700' 
+                                                    : 'border-gray-200 hover:bg-gray-50'
+                                            }`}
                                         >
-                                            <Printer className="w-5 h-5 text-gray-600" />
+                                            <Printer className={`w-5 h-5 transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                            }`} />
                                             <div>
-                                                <p className="font-medium text-gray-900">Complete Report</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with all transactions</p>
+                                                <p className={`font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                }`}>Complete Report</p>
+                                                <p className={`text-sm transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>Generate PDF with all transactions</p>
                                             </div>
                                         </button>
                                         <button
                                             onClick={() => generateFilteredPDF('Balu')}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 text-left rounded-lg border transition-colors flex items-center space-x-3 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 hover:bg-gray-700' 
+                                                    : 'border-gray-200 hover:bg-gray-50'
+                                            }`}
                                         >
                                             <User className="w-5 h-5 text-blue-600" />
                                             <div>
-                                                <p className="font-medium text-gray-900">Balu's Collection</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with Balu's transactions only</p>
+                                                <p className={`font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                }`}>Balu's Collection</p>
+                                                <p className={`text-sm transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>Generate PDF with Balu's transactions only</p>
                                             </div>
                                         </button>
                                         <button
                                             onClick={() => generateFilteredPDF('Mani')}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 text-left rounded-lg border transition-colors flex items-center space-x-3 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 hover:bg-gray-700' 
+                                                    : 'border-gray-200 hover:bg-gray-50'
+                                            }`}
                                         >
                                             <User className="w-5 h-5 text-green-600" />
                                             <div>
-                                                <p className="font-medium text-gray-900">Mani's Collection</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with Mani's transactions only</p>
+                                                <p className={`font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                }`}>Mani's Collection</p>
+                                                <p className={`text-sm transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>Generate PDF with Mani's transactions only</p>
                                             </div>
                                         </button>
                                     </div>
                                     <div className="mt-6">
                                         <button
                                             type="button"
-                                            className="w-full inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`w-full inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
                                             onClick={() => setIsPdfModalOpen(false)}
                                         >
                                             Cancel
@@ -1218,7 +1404,9 @@ export function RevenueDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                     <Dialog.Title
                                         as="h3"
                                         className="text-lg font-bold text-white mb-4 -mx-6 -mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600"
@@ -1229,16 +1417,28 @@ export function RevenueDashboard() {
                                     {editingTransaction && (
                                         <div className="space-y-4">
                                             {/* Vehicle Details Section */}
-                                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
+                                            <div className={`bg-gradient-to-br p-4 sm:p-5 rounded-xl border shadow-sm transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'from-gray-700 to-gray-800 border-gray-600' 
+                                                    : 'from-gray-50 to-gray-100 border-gray-200'
+                                            }`}>
                                                 <div className="flex items-center gap-3 mb-4">
-                                                    <div className="p-2 bg-white rounded-lg shadow-sm flex-shrink-0">
+                                                    <div className={`p-2 rounded-lg shadow-sm flex-shrink-0 transition-colors duration-300 ${
+                                                        isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                    }`}>
                                                         <Car className="w-6 h-6 text-blue-600" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
-                                                        <h4 className="text-sm font-semibold text-gray-400">Vehicle Number</h4>
+                                                        <h4 className={`text-sm font-semibold transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                                        }`}>Vehicle Number</h4>
                                                         <p 
                                                             onClick={() => handleVehicleNumberClick(editingTransaction)}
-                                                            className="text-base sm:text-lg font-bold text-gray-900 cursor-pointer hover:bg-gray-100 transition-colors duration-200 rounded px-1 truncate"
+                                                            className={`text-base sm:text-lg font-bold cursor-pointer transition-colors duration-200 rounded px-1 truncate ${
+                                                                isDarkMode 
+                                                                    ? 'text-gray-100 hover:bg-gray-700' 
+                                                                    : 'text-gray-900 hover:bg-gray-100'
+                                                            }`}
                                                             title={editingTransaction.vehicleNumber}
                                                         >
                                                             {editingTransaction.vehicleNumber}
@@ -1247,22 +1447,34 @@ export function RevenueDashboard() {
                                                 </div>
                                                 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                    <div className={`p-3 rounded-lg shadow-sm transition-colors duration-300 ${
+                                                        isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                    }`}>
                                                         <div className="flex items-center gap-2 mb-1">
                                                             <AlertCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                                                            <span className="text-xs font-medium text-gray-500">Description</span>
+                                                            <span className={`text-xs font-medium transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>Description</span>
                                                         </div>
-                                                        <p className="text-sm font-semibold text-gray-900 line-clamp-2 break-words">
+                                                        <p className={`text-sm font-semibold line-clamp-2 break-words transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                        }`}>
                                                             {editingTransaction.vehicleDescription || 'No description'}
                                                         </p>
                                                     </div>
 
-                                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                    <div className={`p-3 rounded-lg shadow-sm transition-colors duration-300 ${
+                                                        isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                    }`}>
                                                         <div className="flex items-center gap-2 mb-1">
                                                             <MapPin className="w-4 h-4 text-red-600 flex-shrink-0" />
-                                                            <span className="text-xs font-medium text-gray-500">Lot Number</span>
+                                                            <span className={`text-xs font-medium transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>Lot Number</span>
                                                         </div>
-                                                        <p className="text-sm font-semibold text-gray-900 break-words">
+                                                        <p className={`text-sm font-semibold break-words transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                        }`}>
                                                             {editingTransaction.lotNumber || 'Open'}
                                                         </p>
                                                     </div>
@@ -1270,11 +1482,15 @@ export function RevenueDashboard() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Rent Amount
                                                 </label>
                                                 <div className="relative">
-                                                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                    <IndianRupee className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                                    }`} />
                                                     <input
                                                         type="text"
                                                         value={editForm.revenueAmount}
@@ -1287,14 +1503,20 @@ export function RevenueDashboard() {
                                                                 });
                                                             }
                                                         }}
-                                                        className="w-full pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-base"
+                                                        className={`w-full pl-10 pr-4 py-2.5 sm:py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-base transition-colors duration-300 ${
+                                                            isDarkMode 
+                                                                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                                : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                                        }`}
                                                         placeholder="Enter amount"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Transaction Date
                                                 </label>
                                                 <input
@@ -1304,13 +1526,19 @@ export function RevenueDashboard() {
                                                         ...editForm,
                                                         transactionDate: e.target.value
                                                     })}
-                                                    className="w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-base"
+                                                    className={`w-full px-3 py-2.5 sm:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-base transition-colors duration-300 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                                                            : 'border-gray-300 text-gray-900'
+                                                    }`}
                                                 />
                                             </div>
 
                                             {/* Transaction Mode Buttons */}
                                             <div>
-                                                <label className="block text-gray-700 font-medium mb-2">Transaction Mode</label>
+                                                <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>Transaction Mode</label>
                                                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                                     <button
                                                         type="button"
@@ -1321,7 +1549,9 @@ export function RevenueDashboard() {
                                                         className={`relative px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             editForm.transactionMode === 'Cash'
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode 
+                                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1339,7 +1569,9 @@ export function RevenueDashboard() {
                                                         className={`relative px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             editForm.transactionMode === 'UPI'
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode 
+                                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1353,7 +1585,9 @@ export function RevenueDashboard() {
 
                                             {/* Received By Buttons */}
                                             <div>
-                                                <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                                <label className={`block font-medium mb-2 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>Received By</label>
                                                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                                     <button
                                                         type="button"
@@ -1364,7 +1598,9 @@ export function RevenueDashboard() {
                                                         className={`relative px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             editForm.receivedBy === 'Balu'
                                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode 
+                                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <User className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1382,7 +1618,9 @@ export function RevenueDashboard() {
                                                         className={`relative px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             editForm.receivedBy === 'Mani'
                                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode 
+                                                                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <User className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1399,7 +1637,11 @@ export function RevenueDashboard() {
                                     <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="w-full sm:w-auto inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`w-full sm:w-auto inline-flex justify-center rounded-lg border px-4 py-2.5 text-sm font-medium focus:outline-none transition-colors duration-300 ${
+                                                isDarkMode 
+                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
                                             onClick={() => setIsEditModalOpen(false)}
                                             disabled={isSaving}
                                         >
@@ -1454,7 +1696,9 @@ export function RevenueDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl shadow-xl transition-all ${
+                                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                     <div className="bg-gradient-to-r from-green-500 to-green-600 p-6">
                                         <Dialog.Title className="text-lg font-bold text-white">
                                             Add Rent Payment
@@ -1466,45 +1710,67 @@ export function RevenueDashboard() {
                                             {!selectedVehicle ? (
                                                 <div className="space-y-3">
                                                     <div className="relative">
-                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                                        }`} />
                                                         <input
                                                             type="text"
                                                             value={searchQuery}
                                                             onChange={(e) => handleSearch(e.target.value)}
                                                             placeholder="Search vehicle number, description, lot..."
-                                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                            className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors duration-300 ${
+                                                                isDarkMode 
+                                                                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                                    : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                                            }`}
                                                         />
                                                     </div>
 
                                                     {searchResults.length > 0 && (
-                                                        <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y">
+                                                        <div className={`max-h-48 overflow-y-auto rounded-lg border divide-y transition-colors duration-300 ${
+                                                            isDarkMode ? 'border-gray-600' : 'border-gray-200'
+                                                        }`}>
                                                             {searchResults.map((vehicle) => (
                                                                 <button
                                                                     key={vehicle._id}
                                                                     onClick={() => handleVehicleSelect(vehicle)}
-                                                                    className="w-full p-3 text-left hover:bg-gray-50 transition-colors flex flex-col gap-1"
+                                                                    className={`w-full p-3 text-left transition-colors flex flex-col gap-1 ${
+                                                                        isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                                                                    }`}
                                                                 >
                                                                     <div className="flex items-center justify-between">
-                                                                        <span className="font-medium text-gray-900">
+                                                                        <span className={`font-medium transition-colors duration-300 ${
+                                                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                        }`}>
                                                                             {vehicle.vehicleNumber}
                                                                         </span>
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full transition-colors duration-300 ${
+                                                                                isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-600'
+                                                                            }`}>
                                                                                 {vehicle.lotNumber || 'Open'}
                                                                             </span>
                                                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                                                 vehicle.status === 'active' 
-                                                                                    ? 'bg-green-100 text-green-800'
-                                                                                    : 'bg-red-100 text-red-800'
+                                                                                    ? isDarkMode 
+                                                                                        ? 'bg-green-900/30 text-green-300' 
+                                                                                        : 'bg-green-100 text-green-800'
+                                                                                    : isDarkMode 
+                                                                                        ? 'bg-red-900/30 text-red-300' 
+                                                                                        : 'bg-red-100 text-red-800'
                                                                             }`}>
                                                                                 {vehicle.status}
                                                                             </span>
                                                                         </div>
                                                                     </div>
-                                                                    <p className="text-sm text-gray-600">
+                                                                    <p className={`text-sm transition-colors duration-300 ${
+                                                                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                    }`}>
                                                                         {vehicle.vehicleDescription}
                                                                     </p>
-                                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                    <div className={`flex items-center gap-2 text-xs transition-colors duration-300 ${
+                                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>
                                                                         <span>{vehicle.ownerName}</span>
                                                                     </div>
                                                                 </button>
@@ -1514,45 +1780,71 @@ export function RevenueDashboard() {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-4">
-                                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200 shadow-sm">
-                                                        <div className="flex items-center gap-3 mb-4">
-                                                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                                <Car className="w-6 h-6 text-blue-600" />
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="text-sm font-semibold text-gray-400">Vehicle Number</h4>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="text-lg font-bold text-gray-900">
-                                                                        {selectedVehicle.vehicleNumber}
-                                                                    </p>
-                                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                                                        selectedVehicle.status === 'active' 
-                                                                            ? 'bg-green-100 text-green-800'
+                                                                                                    <div className={`bg-gradient-to-br p-5 rounded-xl border shadow-sm transition-colors duration-300 ${
+                                                    isDarkMode 
+                                                        ? 'from-gray-700 to-gray-800 border-gray-600' 
+                                                        : 'from-gray-50 to-gray-100 border-gray-200'
+                                                }`}>
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className={`p-2 rounded-lg shadow-sm transition-colors duration-300 ${
+                                                            isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                        }`}>
+                                                            <Car className="w-6 h-6 text-blue-600" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className={`text-sm font-semibold transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                                            }`}>Vehicle Number</h4>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={`text-lg font-bold transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
+                                                                    {selectedVehicle.vehicleNumber}
+                                                                </p>
+                                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                                                    selectedVehicle.status === 'active' 
+                                                                        ? isDarkMode 
+                                                                            ? 'bg-green-900/30 text-green-300' 
+                                                                            : 'bg-green-100 text-green-800'
+                                                                        : isDarkMode 
+                                                                            ? 'bg-red-900/30 text-red-300' 
                                                                             : 'bg-red-100 text-red-800'
-                                                                    }`}>
-                                                                        {capitalizeFirst(selectedVehicle.status || 'expired')}
-                                                                    </span>
-                                                                </div>
+                                                                }`}>
+                                                                    {capitalizeFirst(selectedVehicle.status || 'expired')}
+                                                                </span>
                                                             </div>
                                                         </div>
+                                                    </div>
                                                         
                                                         <div className="grid grid-cols-2 gap-4">
-                                                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                            <div className={`p-3 rounded-lg shadow-sm transition-colors duration-300 ${
+                                                                isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                            }`}>
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <AlertCircle className="w-4 h-4 text-purple-600" />
-                                                                    <span className="text-xs font-medium text-gray-500">Description</span>
+                                                                    <span className={`text-xs font-medium transition-colors duration-300 ${
+                                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>Description</span>
                                                                 </div>
-                                                                <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                                                                <p className={`text-sm font-semibold line-clamp-2 transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     {selectedVehicle.vehicleDescription || 'No description'}
                                                                 </p>
                                                             </div>
 
-                                                            <div className="bg-white p-3 rounded-lg shadow-sm">
+                                                            <div className={`p-3 rounded-lg shadow-sm transition-colors duration-300 ${
+                                                                isDarkMode ? 'bg-gray-600' : 'bg-white'
+                                                            }`}>
                                                                 <div className="flex items-center gap-2 mb-1">
                                                                     <MapPin className="w-4 h-4 text-red-600" />
-                                                                    <span className="text-xs font-medium text-gray-500">Lot Number</span>
+                                                                    <span className={`text-xs font-medium transition-colors duration-300 ${
+                                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>Lot Number</span>
                                                                 </div>
-                                                                <p className="text-sm font-semibold text-gray-900">
+                                                                <p className={`text-sm font-semibold transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                     {selectedVehicle.lotNumber || 'Open'}
                                                                 </p>
                                                             </div>
@@ -1560,11 +1852,15 @@ export function RevenueDashboard() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                        }`}>
                                                             Rent Amount
                                                         </label>
                                                         <div className="relative">
-                                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                                            <IndianRupee className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                                            }`} />
                                                             <input
                                                                 type="text"
                                                                 value={rentAmount}
@@ -1574,26 +1870,38 @@ export function RevenueDashboard() {
                                                                         setRentAmount(value);
                                                                     }
                                                                 }}
-                                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors duration-300 ${
+                                                                    isDarkMode 
+                                                                        ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                                        : 'border-gray-300 text-gray-900 placeholder-gray-500'
+                                                                }`}
                                                                 placeholder="Enter amount"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                        }`}>
                                                             Transaction Date
                                                         </label>
                                                         <input
                                                             type="date"
                                                             value={selectedDate}
                                                             onChange={(e) => setSelectedDate(e.target.value)}
-                                                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                                                            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors duration-300 ${
+                                                                isDarkMode 
+                                                                    ? 'bg-gray-700 border-gray-600 text-gray-100' 
+                                                                    : 'border-gray-300 text-gray-900'
+                                                            }`}
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                        }`}>
                                                             Transaction Mode
                                                         </label>
                                                         <div className="grid grid-cols-2 gap-4">
@@ -1603,7 +1911,9 @@ export function RevenueDashboard() {
                                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                     transactionMode === 'Cash'
                                                                         ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : isDarkMode 
+                                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <Wallet className="h-5 w-5 mr-2" />
@@ -1618,7 +1928,9 @@ export function RevenueDashboard() {
                                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                     transactionMode === 'UPI'
                                                                         ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : isDarkMode 
+                                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <CreditCard className="h-5 w-5 mr-2" />
@@ -1631,7 +1943,9 @@ export function RevenueDashboard() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        <label className={`block text-sm font-medium mb-2 transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                        }`}>
                                                             Received By
                                                         </label>
                                                         <div className="grid grid-cols-2 gap-4">
@@ -1641,7 +1955,9 @@ export function RevenueDashboard() {
                                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                     receivedBy === 'Balu'
                                                                         ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : isDarkMode 
+                                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <User className="h-5 w-5 mr-2" />
@@ -1656,7 +1972,9 @@ export function RevenueDashboard() {
                                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                     receivedBy === 'Mani'
                                                                         ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : isDarkMode 
+                                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <User className="h-5 w-5 mr-2" />
@@ -1679,7 +1997,11 @@ export function RevenueDashboard() {
                                                         setSearchQuery('');
                                                         setSearchResults([]);
                                                     }}
-                                                    className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                    className={`w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                                        isDarkMode 
+                                                            ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' 
+                                                            : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                                                    }`}
                                                 >
                                                     Cancel
                                                 </button>
