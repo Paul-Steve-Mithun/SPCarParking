@@ -26,6 +26,7 @@ import {
 import { motion } from 'framer-motion';
 import { useSpring, animated } from 'react-spring';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from './contexts/ThemeContext';
 
 export function HomePage({ isAuthenticated, onAuthentication }) {
     const [vehicles, setVehicles] = useState([]);
@@ -34,6 +35,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
     const [filteredVehicles, setFilteredVehicles] = useState([]);
     const [loginError, setLoginError] = useState('');
     const navigate = useNavigate();
+    const { isDarkMode } = useTheme();
 
     useEffect(() => {
         fetch('https://spcarparkingbknd.onrender.com/vehicles')
@@ -201,7 +203,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                     className="fixed inset-0 bg-black/30 backdrop-blur-sm"
                     onClick={() => setShowModal(false)}
                 />
-                <div className="bg-white rounded-2xl w-full max-w-4xl mx-2 max-h-[90vh] sm:max-h-[80vh] overflow-hidden relative">
+                <div className={`rounded-2xl w-full max-w-4xl mx-2 max-h-[90vh] sm:max-h-[80vh] overflow-hidden relative transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-900' : 'bg-white'
+                }`}>
                     <div className="bg-blue-600 p-3 sm:p-4 flex justify-between items-center">
                         <h2 className="text-base sm:text-xl font-bold text-white">{selectedCategory}</h2>
                         <button 
@@ -213,16 +217,24 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                     </div>
 
                     {/* Search Bar */}
-                    <div className="p-3 sm:p-4 border-b border-gray-200">
+                    <div className={`p-3 sm:p-4 border-b transition-colors duration-300 ${
+                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                    }`}>
                         <div className="relative">
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search vehicles..."
-                                className="w-full pl-9 pr-3 py-2 text-sm sm:text-base rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                                className={`w-full pl-9 pr-3 py-2 text-sm sm:text-base rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                                    isDarkMode 
+                                        ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                        : 'border-gray-200 text-gray-900 placeholder-gray-500'
+                                }`}
                             />
-                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                            <div className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                            }`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
@@ -232,7 +244,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
 
                     <div className="p-3 sm:p-6 overflow-auto max-h-[calc(90vh-120px)] sm:max-h-[calc(80vh-140px)]">
                         {displayedVehicles.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
+                            <div className={`text-center py-8 text-sm sm:text-base transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
                                 No vehicles found matching your search.
                             </div>
                         ) : (
@@ -243,26 +257,42 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     return (
                                         <div 
                                             key={vehicle._id} 
-                                            className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                                            className={`rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-800 border-gray-700 hover:shadow-gray-900/50' 
+                                                    : 'bg-white border-gray-200 hover:shadow-gray-200/50'
+                                            }`}
                                             onClick={() => handleVehicleCardClick(vehicle)}
                                         >
-                                            <div className="p-3 sm:p-4 bg-gray-50 border-b border-gray-200">
+                                            <div className={`p-3 sm:p-4 border-b transition-colors duration-300 ${
+                                                isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                                            }`}>
                                                 <div className="flex flex-col gap-1.5 sm:gap-2">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0 flex-1">
-                                                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                                                            <h3 className={`font-semibold text-sm sm:text-base truncate transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                            }`}>
                                                                 {vehicle.vehicleNumber}
                                                             </h3>
-                                                            <p className="text-xs sm:text-sm text-gray-500 truncate">
+                                                            <p className={`text-xs sm:text-sm truncate transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                                 {vehicle.vehicleDescription || 'No description'}
                                                             </p>
                                                         </div>
                                                         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                                                             vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
-                                                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                                                ? isDarkMode 
+                                                                    ? 'bg-red-900/30 text-red-300 border border-red-800'
+                                                                    : 'bg-red-100 text-red-800 border border-red-200'
                                                                 : vehicle.status === 'active'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-red-100 text-red-800'
+                                                                    ? isDarkMode
+                                                                        ? 'bg-green-900/30 text-green-300'
+                                                                        : 'bg-green-100 text-green-800'
+                                                                    : isDarkMode
+                                                                        ? 'bg-red-900/30 text-red-300'
+                                                                        : 'bg-red-100 text-red-800'
                                                         }`}>
                                                             {vehicle.rentalType === 'daily' && vehicle.status === 'inactive' 
                                                                 ? <span className="font-bold">Due: ₹{dueAmount}</span>
@@ -276,20 +306,34 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             </div>
                                             <div className="p-3 sm:p-4 space-y-2">
                                                 <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                    <span className="text-gray-500">Lot Number:</span>
-                                                    <span className="font-medium text-gray-900">{vehicle.lotNumber || 'Open'}</span>
+                                                    <span className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Lot Number:</span>
+                                                    <span className={`font-medium transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                                    }`}>{vehicle.lotNumber || 'Open'}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                    <span className="text-gray-500">Type:</span>
-                                                    <span className="font-medium text-gray-900 capitalize">{vehicle.rentalType}</span>
+                                                    <span className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Type:</span>
+                                                    <span className={`font-medium transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                                    }`}>{vehicle.rentalType}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                    <span className="text-gray-500">Rent:</span>
-                                                    <span className="font-medium text-gray-900">
+                                                    <span className={`transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Rent:</span>
+                                                    <span className={`font-medium transition-colors duration-300 ${
+                                                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                                    }`}>
                                                         {vehicle.rentalType === 'daily' ? (
                                                             <>
                                                                 ₹{vehicle.rentPrice * vehicle.numberOfDays}
-                                                                <span className="text-gray-500">
+                                                                <span className={`transition-colors duration-300 ${
+                                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                }`}>
                                                                     {' '}({vehicle.numberOfDays} days)
                                                                 </span>
                                                             </>
@@ -300,28 +344,38 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                 </div>
                                                 {(vehicle.endDate || vehicle.startDate) && (
                                                     <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                        <span className="text-gray-500">
+                                                        <span className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                        }`}>
                                                             {selectedCategory === 'Daily Rentals' ? 'End Date:' : 'Start Date:'}
                                                         </span>
-                                                        <span className="font-medium text-gray-900">
+                                                        <span className={`font-medium transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                                        }`}>
                                                             {formatDate(selectedCategory === 'Daily Rentals' ? vehicle.endDate : vehicle.startDate)}
                                                         </span>
                                                     </div>
                                                 )}
                                                 {vehicle.ownerName && (
                                                     <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                        <span className="text-gray-500">Owner:</span>
-                                                        <span className="font-medium text-gray-900 truncate max-w-[60%]">
+                                                        <span className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                        }`}>Owner:</span>
+                                                        <span className={`font-medium truncate max-w-[60%] transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                                        }`}>
                                                             MR. {vehicle.ownerName}
                                                         </span>
                                                     </div>
                                                 )}
                                                 {vehicle.contactNumber && (
                                                     <div className="flex items-center justify-between text-xs sm:text-sm">
-                                                        <span className="text-gray-500">Contact:</span>
+                                                        <span className={`transition-colors duration-300 ${
+                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                        }`}>Contact:</span>
                                                         <a 
                                                             href={`tel:${vehicle.contactNumber}`}
-                                                            className="font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                                                            className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
                                                             onClick={(e) => e.stopPropagation()} // Prevent card click when clicking phone number
                                                         >
                                                             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,14 +451,18 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         };
 
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+            }`}>
                 {/* Main Content */}
                 <div className="max-w-5xl w-full">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="bg-white rounded-2xl shadow-xl overflow-hidden"
+                        className={`rounded-2xl shadow-xl overflow-hidden transition-colors duration-300 ${
+                            isDarkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}
                     >
                         <div className="flex flex-col lg:flex-row">
                             {/* Left Section - Brand & Features */}
@@ -461,8 +519,12 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             <div className="lg:w-7/12 p-8 lg:p-12">
                                 <div className="max-w-md mx-auto">
                                     <div className="text-center mb-8">
-                                        <h2 className="text-2xl font-bold text-gray-900">Welcome Back!</h2>
-                                        <p className="mt-2 text-gray-600">Please sign in to your account</p>
+                                        <h2 className={`text-2xl font-bold transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                        }`}>Welcome Back!</h2>
+                                        <p className={`mt-2 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                        }`}>Please sign in to your account</p>
                                     </div>
 
                                     <form onSubmit={handleLogin} className="space-y-6">
@@ -470,16 +532,24 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             <motion.div
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                className="p-4 bg-red-50 rounded-xl border border-red-100 flex items-center space-x-3"
+                                                className={`p-4 rounded-xl border flex items-center space-x-3 transition-colors duration-300 ${
+                                                    isDarkMode 
+                                                        ? 'bg-red-900/20 border-red-800' 
+                                                        : 'bg-red-50 border-red-100'
+                                                }`}
                                             >
                                                 <AlertCircle className="w-5 h-5 text-red-500" />
-                                                <p className="text-sm text-red-600 font-medium">{loginError}</p>
+                                                <p className={`text-sm font-medium transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-red-400' : 'text-red-600'
+                                                }`}>{loginError}</p>
                                             </motion.div>
                                         )}
 
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Username
                                                 </label>
                                                 <div className="relative">
@@ -490,7 +560,11 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                             ...prev,
                                                             username: e.target.value
                                                         }))}
-                                                        className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                        className={`w-full pl-12 pr-4 py-3.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                                            isDarkMode 
+                                                                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                                : 'border-gray-200 text-gray-900 placeholder-gray-500'
+                                                        }`}
                                                         required
                                                     />
                                                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -500,7 +574,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 transition-colors duration-300 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Password
                                                 </label>
                                                 <div className="relative">
@@ -511,7 +587,11 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                             ...prev,
                                                             password: e.target.value
                                                         }))}
-                                                        className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                                        className={`w-full pl-12 pr-12 py-3.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                                                            isDarkMode 
+                                                                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                                                                : 'border-gray-200 text-gray-900 placeholder-gray-500'
+                                                        }`}
                                                         required
                                                     />
                                                     <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -541,7 +621,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         </button>
 
                                         <div className="text-center mt-6">
-                                            <p className="text-sm text-gray-500">
+                                            <p className={`text-sm transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                            }`}>
                                                 © {new Date().getFullYear()} SP Car Parking. All rights reserved.
                                             </p>
                                         </div>
@@ -565,13 +647,17 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+        }`}>
             {!isAuthenticated ? (
                 <LoginSection />
             ) : (
                 <>
                     {/* Hero Section */}
-                    <div className="relative overflow-hidden bg-white shadow-sm">
+                    <div className={`relative overflow-hidden shadow-sm transition-colors duration-300 ${
+                        isDarkMode ? 'bg-gray-800' : 'bg-white'
+                    }`}>
                         {/* Background Pattern */}
                         <div className="absolute inset-0 z-0">
                             {/* Network Pattern */}
@@ -584,7 +670,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         linear-gradient(to bottom, rgba(79, 70, 229, 0.15) 1px, transparent 1px)
                                     `,
                                     backgroundSize: '40px 40px, 20px 20px, 20px 20px',
-                                    opacity: 0.1
+                                    opacity: isDarkMode ? 0.05 : 0.1
                                 }}
                             />
                         </div>
@@ -598,7 +684,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                 >
                                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold">
                                         <motion.span 
-                                            className="inline-block font-mono text-blue-600 font-black tracking-tight"
+                                            className={`inline-block font-mono font-black tracking-tight ${
+                                                isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                            }`}
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ 
@@ -606,7 +694,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                 delay: 0.2
                                             }}
                                             style={{
-                                                textShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
+                                                textShadow: isDarkMode 
+                                                    ? '0 4px 12px rgba(96, 165, 250, 0.15)' 
+                                                    : '0 4px 12px rgba(37, 99, 235, 0.15)'
                                             }}
                                         >
                                             <span className="inline-block hover:scale-105 transition-transform duration-300">S</span>
@@ -626,7 +716,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         </motion.span>
                                     </h1>
                                     <motion.p 
-                                        className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto"
+                                        className={`mt-4 text-xl max-w-2xl mx-auto transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                        }`}
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.5 }}
@@ -648,9 +740,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     className="mt-12 perspective-1000"
                                 >
                                     <animated.div 
-                                        className="text-8xl font-black tracking-tight text-blue-600 font-mono"
+                                        className={`text-8xl font-black tracking-tight font-mono ${
+                                            isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                        }`}
                                         style={{
-                                            textShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
+                                            textShadow: isDarkMode 
+                                                ? '0 4px 12px rgba(96, 165, 250, 0.15)' 
+                                                : '0 4px 12px rgba(37, 99, 235, 0.15)'
                                         }}
                                     >
                                         {number.to(n => Math.floor(n))}
@@ -670,21 +766,31 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: index * 0.05 }}
                                     onClick={() => handleCardClick(stat)}
-                                    className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                                    className={`group relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ${
+                                        isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                    }`}
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-gray-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                                        isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-800' : 'bg-gradient-to-r from-gray-50 to-white'
+                                    }`} />
                                     <div className="relative p-6">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} text-white shadow-lg`}>
                                                 {stat.icon}
                                             </div>
-                                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors duration-300" />
+                                            <ChevronRight className={`w-5 h-5 transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-400 group-hover:text-gray-600'
+                                            }`} />
                                         </div>
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                        <h3 className={`text-lg font-semibold mb-1 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                        }`}>
                                             {stat.label}
                                         </h3>
                                         <div className="flex items-center justify-between">
-                                            <p className="text-3xl font-bold text-gray-900">
+                                            <p className={`text-3xl font-bold transition-colors duration-300 ${
+                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                            }`}>
                                                 {stat.value}
                                             </p>
                                             <TrendingUp className="w-4 h-4 text-green-500" />
