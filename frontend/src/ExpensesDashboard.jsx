@@ -24,8 +24,10 @@ import { Fragment } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useTheme } from './contexts/ThemeContext';
 
 export function ExpensesDashboard() {
+    const { isDarkMode } = useTheme();
     const [expenses, setExpenses] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -537,11 +539,11 @@ export function ExpensesDashboard() {
     };
 
     return (
-        <div className="relative">
+        <div className={`relative ${isDarkMode ? 'bg-gray-900' : ''}`}>
             <Toaster position="bottom-right" />
-            <div className="min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300">
+            <div className={`min-h-screen p-2 sm:p-6 transition-all duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
                 <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg overflow-hidden mb-6`}>
                 <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
@@ -550,14 +552,14 @@ export function ExpensesDashboard() {
                         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                             <button
                                 onClick={() => setIsAddExpenseOpen(true)}
-                                className="w-full sm:w-auto bg-white text-yellow-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                className={`w-full sm:w-auto px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${isDarkMode ? 'bg-gray-900 text-yellow-400 hover:bg-gray-800' : 'bg-white text-yellow-600 hover:bg-gray-50'}`}
                             >
                                 <Plus className="w-5 h-5" />
                                 <span className="font-semibold">Add Expense</span>
                             </button>
                             <button 
                                 onClick={() => setIsPdfModalOpen(true)}
-                                className="w-full sm:w-auto bg-white text-yellow-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                className={`w-full sm:w-auto px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${isDarkMode ? 'bg-gray-900 text-yellow-400 hover:bg-gray-800' : 'bg-white text-yellow-600 hover:bg-gray-50'}`}
                             >
                                 <Printer className="w-5 h-5" />
                                 <span className="font-semibold">Export PDF</span>
@@ -570,95 +572,89 @@ export function ExpensesDashboard() {
                             <select 
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                className="w-full appearance-none bg-white text-yellow-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 font-medium shadow-md transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-yellow-400 border-gray-700 hover:bg-gray-800' : 'bg-white text-yellow-600 border-gray-200 hover:bg-gray-50'}`}
                             >
                                 {monthNames.map((month, index) => (
                                     <option key={index} value={index}>{month}</option>
                                 ))}
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-yellow-600" />
+                            <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
                         </div>
                         <div className="relative w-full sm:w-32">
                             <select 
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="w-full appearance-none bg-white text-yellow-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 font-medium shadow-md transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-yellow-400 border-gray-700 hover:bg-gray-800' : 'bg-white text-yellow-600 border-gray-200 hover:bg-gray-50'}`}
                             >
                                 {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
                                     <option key={year} value={year}>{year}</option>
                                 ))}
                             </select>
-                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-yellow-600" />
+                            <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
                         </div>
                     </div>
                 </div>
-
                 {/* Stats Cards */}
                 <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
                         <div className="flex items-center space-x-4">
-                            <div className="p-3 rounded-xl bg-white shadow-sm">
-                                <DollarSign className="w-6 h-6 text-yellow-600" />
+                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm font-medium">Total Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.totalExpenses.toFixed(2)}</p>
+                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Total Expenses</p>
+                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.totalExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
                         <div className="flex items-center space-x-4">
-                            <div className="p-3 rounded-xl bg-white shadow-sm">
-                                <User className="w-6 h-6 text-yellow-600" />
+                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm font-medium">Balu's Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.baluExpenses.toFixed(2)}</p>
+                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Balu's Expenses</p>
+                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.baluExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
                         <div className="flex items-center space-x-4">
-                            <div className="p-3 rounded-xl bg-white shadow-sm">
-                                <User className="w-6 h-6 text-yellow-600" />
+                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm font-medium">Mani's Expenses</p>
-                                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stats.maniExpenses.toFixed(2)}</p>
+                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Mani's Expenses</p>
+                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.maniExpenses.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
             {/* Transaction History section */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg overflow-hidden`}>
                 <div className="p-4 sm:p-6">
                     <div className="flex flex-col space-y-4">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
-                            Transaction History
-                        </h2>
+                        <h2 className={`text-xl font-bold mb-4 text-center sm:text-left ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>Transaction History</h2>
                         <div className="relative w-full mb-6">
                             <input
                                 type="text"
                                 placeholder="Search expenses..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${isDarkMode ? 'bg-gray-900 text-yellow-200 border-gray-700 placeholder-yellow-400' : 'border-gray-300'}`}
                             />
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
                         </div>
                     </div>
                     <div className="overflow-x-auto">
                         <div className="max-w-[1400px] mx-auto">
                             <div className="inline-block min-w-full align-middle">
                                 <div className="overflow-hidden">
-                                    <table className="min-w-full divide-y divide-gray-200">
+                                    <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                         <thead>
-                                            <tr className="bg-gray-50">
-                                                <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                                    S.NO
-                                                </th>
+                                            <tr className={isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}>
+                                                <th className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>S.NO</th>
                                                 {[
                                                     { key: 'transactionDate', label: 'Date', shortLabel: 'Date' },
                                                     { key: 'expenseType', label: 'Type', shortLabel: 'Type' },
@@ -671,7 +667,7 @@ export function ExpensesDashboard() {
                                                     <th 
                                                         key={column.key}
                                                         onClick={() => column.key !== 'actions' && handleSort(column.key)}
-                                                        className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider ${column.key !== 'actions' ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                                                        className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'} ${column.key !== 'actions' ? isDarkMode ? 'cursor-pointer hover:bg-gray-800' : 'cursor-pointer hover:bg-gray-100' : ''}`}
                                                     >
                                                         <div className="flex items-center">
                                                             <span className="hidden sm:inline">
@@ -694,24 +690,18 @@ export function ExpensesDashboard() {
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody className={`${isDarkMode ? 'bg-gray-900 divide-gray-800' : 'bg-white divide-gray-200'}`}>
                                             {filteredData.map((expense, index) => (
-                                                <tr key={expense._id} className="hover:bg-gray-50 cursor-pointer" onClick={e => {
+                                                <tr key={expense._id} className={`${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`} onClick={e => {
                                                     // Prevent edit modal if delete button is clicked
                                                     if (e.target.closest('button')) return;
                                                     handleEditExpense(expense);
                                                 }}>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {new Date(expense.transactionDate).toLocaleDateString('en-GB')}
-                                                    </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {expense.expenseType}
-                                                    </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                                        <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-'}>
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{index + 1}</td>
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{new Date(expense.transactionDate).toLocaleDateString('en-GB')}</td>
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{expense.expenseType}</td>
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+                                                        <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-' }>
                                                             {expense.description ? (
                                                                 expense.description.length > 25 
                                                                     ? `${expense.description.substring(0, 25)}...` 
@@ -719,11 +709,11 @@ export function ExpensesDashboard() {
                                                             ) : '-'}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                                             expense.transactionMode === 'UPI' 
-                                                                ? 'bg-blue-100 text-blue-800' 
-                                                                : 'bg-green-100 text-green-800'
+                                                                ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
+                                                                : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
                                                         }`}>
                                                             {expense.transactionMode === 'UPI' ? (
                                                                 <>
@@ -738,24 +728,24 @@ export function ExpensesDashboard() {
                                                             )}
                                                         </span>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
                                                         <div className="flex items-center justify-center gap-1">
-                                                            <User className="w-4 h-4 text-gray-400" />
+                                                            <User className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
                                                             {expense.spentBy}
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}> 
                                                         <div className="w-full text-right font-mono">
                                                             <span className="inline-block w-[100px] text-right text-base">
                                                                 {expense.amount.toFixed(2)}
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}> 
                                                         <div className="flex justify-center">
                                                             <button
                                                                 onClick={e => { e.stopPropagation(); handleDeleteExpense(expense._id, expense); }}
-                                                                className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
+                                                                className={`transition-colors p-1 rounded-full ${isDarkMode ? 'text-red-400 hover:text-red-300 hover:bg-red-900' : 'text-red-600 hover:text-red-800 hover:bg-red-50'}`}
                                                                 title="Delete expense"
                                                             >
                                                                 <TrashIcon className="w-5 h-5" />
@@ -785,7 +775,7 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+                        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/30'} backdrop-blur-sm z-40`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto z-50">
@@ -799,14 +789,14 @@ export function ExpensesDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                                     <div className="flex items-center justify-between mb-6">
-                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
+                                        <Dialog.Title as="h3" className={`text-xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>
                                             Add New Expense
                                         </Dialog.Title>
                                         <button
                                             onClick={() => setIsAddExpenseOpen(false)}
-                                            className="text-gray-400 hover:text-gray-500 transition-colors"
+                                            className={`transition-colors ${isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}
                                         >
                                             <X className="w-5 h-5" />
                                         </button>
@@ -814,14 +804,11 @@ export function ExpensesDashboard() {
 
                                     <div className="space-y-5">
                                         <div>
-                                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                <ClipboardList className="w-4 h-4 mr-2 text-yellow-500" />
-                                                Expense Type
-                                            </label>
+                                            <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <ClipboardList className="w-4 h-4 mr-2 text-yellow-500" /> Expense Type </label>
                                             <select
                                                 value={newExpense.expenseType}
                                                 onChange={(e) => setNewExpense({...newExpense, expenseType: e.target.value})}
-                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                             >
                                                 <option value="Watchman Night">Watchman Night</option>
                                                 <option value="Watchman Day">Watchman Day</option>
@@ -835,15 +822,12 @@ export function ExpensesDashboard() {
 
                                         {newExpense.expenseType === 'Miscellaneous' && (
                                             <div>
-                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                    <FileText className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Description
-                                                </label>
+                                                <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <FileText className="w-4 h-4 mr-2 text-yellow-500" /> Description </label>
                                                 <input
                                                     type="text"
                                                     value={newExpense.description}
                                                     onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
-                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 placeholder-yellow-400 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                                     placeholder="Enter expense description"
                                                     required
                                                 />
@@ -851,16 +835,13 @@ export function ExpensesDashboard() {
                                         )}
 
                                         <div>
-                                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                <Banknote className="w-4 h-4 mr-2 text-yellow-500" />
-                                                Amount
-                                            </label>
+                                            <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Banknote className="w-4 h-4 mr-2 text-yellow-500" /> Amount </label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
                                                     value={newExpense.amount}
                                                     onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
-                                                    className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                    className={`w-full pl-8 pr-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 placeholder-yellow-400 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                                     placeholder="0.00"
                                                     required
                                                 />
@@ -868,80 +849,51 @@ export function ExpensesDashboard() {
                                         </div>
 
                                         <div>
-                                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                <Wallet className="w-4 h-4 mr-2 text-yellow-500" />
-                                                Transaction Mode
-                                            </label>
+                                            <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Wallet className="w-4 h-4 mr-2 text-yellow-500" /> Transaction Mode </label>
                                             <div className="grid grid-cols-2 gap-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => setNewExpense({...newExpense, transactionMode: 'Cash'})}
-                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                        newExpense.transactionMode === 'Cash'
-                                                            ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    } transition-all`}
+                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${newExpense.transactionMode === 'Cash' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                 >
-                                                    <DollarSign className="w-4 h-4 mr-2" />
-                                                    Cash
+                                                    <DollarSign className="w-4 h-4 mr-2" /> Cash
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setNewExpense({...newExpense, transactionMode: 'UPI'})}
-                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                        newExpense.transactionMode === 'UPI'
-                                                            ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    } transition-all`}
+                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${newExpense.transactionMode === 'UPI' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                 >
-                                                    <CreditCard className="w-4 h-4 mr-2" />
-                                                    UPI
+                                                    <CreditCard className="w-4 h-4 mr-2" /> UPI
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                <Calendar className="w-4 h-4 mr-2 text-yellow-500" />
-                                                Date
-                                            </label>
+                                            <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Calendar className="w-4 h-4 mr-2 text-yellow-500" /> Date </label>
                                             <input
                                                 type="date"
                                                 value={newExpense.transactionDate}
                                                 onChange={(e) => setNewExpense({...newExpense, transactionDate: e.target.value})}
-                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                <Users className="w-4 h-4 mr-2 text-yellow-500" />
-                                                Spent By
-                                            </label>
+                                            <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Users className="w-4 h-4 mr-2 text-yellow-500" /> Spent By </label>
                                             <div className="grid grid-cols-2 gap-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => setNewExpense({...newExpense, spentBy: 'Balu'})}
-                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                        newExpense.spentBy === 'Balu'
-                                                            ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    } transition-all`}
+                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${newExpense.spentBy === 'Balu' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                 >
-                                                    <User className="w-4 h-4 mr-2" />
-                                                    Balu
+                                                    <User className="w-4 h-4 mr-2" /> Balu
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setNewExpense({...newExpense, spentBy: 'Mani'})}
-                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                        newExpense.spentBy === 'Mani'
-                                                            ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    } transition-all`}
+                                                    className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${newExpense.spentBy === 'Mani' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                 >
-                                                    <User className="w-4 h-4 mr-2" />
-                                                    Mani
+                                                    <User className="w-4 h-4 mr-2" /> Mani
                                                 </button>
                                             </div>
                                         </div>
@@ -950,7 +902,7 @@ export function ExpensesDashboard() {
                                     <div className="mt-8 flex justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={`px-4 py-2.5 rounded-lg border font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'border-gray-700 text-yellow-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             onClick={() => setIsAddExpenseOpen(false)}
                                             disabled={isAddingExpense}
                                         >
@@ -958,7 +910,7 @@ export function ExpensesDashboard() {
                                         </button>
                                         <button
                                             type="button"
-                                            className="px-6 py-2.5 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={`px-6 py-2.5 rounded-lg font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'bg-yellow-700 text-white hover:bg-yellow-800' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
                                             onClick={handleAddExpense}
                                             disabled={isAddingExpense}
                                         >
@@ -994,7 +946,7 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+                        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/30'} backdrop-blur-sm z-40`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto z-50">
@@ -1008,7 +960,7 @@ export function ExpensesDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                                     <div className="flex items-center justify-center mb-6">
                                         <div className="bg-red-100 rounded-full p-3">
                                             <AlertCircle className="h-6 w-6 text-red-600" />
@@ -1017,44 +969,34 @@ export function ExpensesDashboard() {
                                     
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold text-center text-gray-900 mb-4"
+                                        className={`text-lg font-bold text-center ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'} mb-4`}
                                     >
                                         Delete Expense
                                     </Dialog.Title>
 
-                                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                    <div className={`rounded-lg p-4 mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
                                         <div className="space-y-2">
-                                            <p className="text-sm text-gray-600">
-                                                <span className="font-medium">Type:</span> {expenseToDelete?.expenseType}
-                                            </p>
+                                            <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}> <span className="font-medium">Type:</span> {expenseToDelete?.expenseType} </p>
                                             {expenseToDelete?.description && (
-                                                <p className="text-sm text-gray-600">
-                                                    <span className="font-medium">Description:</span> {expenseToDelete.description}
-                                                </p>
+                                                <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}> <span className="font-medium">Description:</span> {expenseToDelete.description} </p>
                                             )}
-                                            <p className="text-sm text-gray-600">
-                                                <span className="font-medium">Amount:</span> {expenseToDelete?.amount.toFixed(2)}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <span className="font-medium">Date:</span> {new Date(expenseToDelete?.transactionDate).toLocaleDateString('en-GB')}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <span className="font-medium">Spent By:</span> {expenseToDelete?.spentBy}
-                                            </p>
+                                            <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}> <span className="font-medium">Amount:</span> {expenseToDelete?.amount.toFixed(2)} </p>
+                                            <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}> <span className="font-medium">Date:</span> {new Date(expenseToDelete?.transactionDate).toLocaleDateString('en-GB')} </p>
+                                            <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}> <span className="font-medium">Spent By:</span> {expenseToDelete?.spentBy} </p>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`inline-flex justify-center rounded-lg border font-medium transition-all focus:outline-none px-4 py-2 ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             onClick={() => setIsDeleteModalOpen(false)}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none"
+                                            className={`inline-flex justify-center rounded-lg border font-medium transition-all focus:outline-none px-4 py-2 ${isDarkMode ? 'bg-red-700 text-white border-transparent hover:bg-red-800' : 'bg-red-600 text-white border-transparent hover:bg-red-700'}`}
                                             onClick={confirmDelete}
                                         >
                                             Delete
@@ -1083,7 +1025,7 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+                        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/30'} backdrop-blur-sm z-40`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto z-50">
@@ -1097,49 +1039,49 @@ export function ExpensesDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold text-gray-900 mb-4"
+                                        className={`text-lg font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'} mb-4`}
                                     >
                                         Generate PDF Report
                                     </Dialog.Title>
                                     <div className="space-y-4">
                                         <button
                                             onClick={() => generateFilteredPDF()}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 rounded-lg border transition-colors flex items-center space-x-3 text-left ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
                                         >
                                             <Printer className="w-5 h-5 text-gray-600" />
-                                            <div>
-                                                <p className="font-medium text-gray-900">Complete Report</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with all expenses</p>
+                                            <div className="text-left">
+                                                <p className={`font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>Complete Report</p>
+                                                <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-500'}`}>Generate PDF with all expenses</p>
                                             </div>
                                         </button>
                                         <button
                                             onClick={() => generateFilteredPDF('Balu')}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 rounded-lg border transition-colors flex items-center space-x-3 text-left ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
                                         >
                                             <User className="w-5 h-5 text-yellow-600" />
-                                            <div>
-                                                <p className="font-medium text-gray-900">Balu's Expenses</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with Balu's expenses only</p>
+                                            <div className="text-left">
+                                                <p className={`font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>Balu's Expenses</p>
+                                                <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-500'}`}>Generate PDF with Balu's expenses only</p>
                                             </div>
                                         </button>
                                         <button
                                             onClick={() => generateFilteredPDF('Mani')}
-                                            className="w-full p-4 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                                            className={`w-full p-4 rounded-lg border transition-colors flex items-center space-x-3 text-left ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
                                         >
                                             <User className="w-5 h-5 text-yellow-600" />
-                                            <div>
-                                                <p className="font-medium text-gray-900">Mani's Expenses</p>
-                                                <p className="text-sm text-gray-500">Generate PDF with Mani's expenses only</p>
+                                            <div className="text-left">
+                                                <p className={`font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>Mani's Expenses</p>
+                                                <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-gray-500'}`}>Generate PDF with Mani's expenses only</p>
                                             </div>
                                         </button>
                                     </div>
                                     <div className="mt-6">
                                         <button
                                             type="button"
-                                            className="w-full inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`w-full inline-flex justify-center rounded-lg border font-medium transition-all focus:outline-none ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             onClick={() => setIsPdfModalOpen(false)}
                                         >
                                             Cancel
@@ -1164,7 +1106,7 @@ export function ExpensesDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+                        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/30'} backdrop-blur-sm z-40`} />
                     </Transition.Child>
                     <div className="fixed inset-0 overflow-y-auto z-50">
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
@@ -1177,14 +1119,14 @@ export function ExpensesDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-4 sm:p-6 text-left align-middle shadow-xl transition-all mx-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                                     <div className="flex items-center justify-between mb-6">
-                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
+                                        <Dialog.Title as="h3" className={`text-xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>
                                             Edit Expense
                                         </Dialog.Title>
                                         <button
                                             onClick={() => setIsEditExpenseOpen(false)}
-                                            className="text-gray-400 hover:text-gray-500 transition-colors"
+                                            className={`transition-colors ${isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-500'}`}
                                         >
                                             <X className="w-5 h-5" />
                                         </button>
@@ -1192,17 +1134,12 @@ export function ExpensesDashboard() {
                                     {editingExpense && (
                                         <div className="space-y-5">
                                             <div className="mb-2">
-                                                <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                                                    <ClipboardList className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Expense Type
-                                                </div>
-                                                <div className="px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 font-semibold">
-                                                    {editingExpense.expenseType}
-                                                </div>
+                                                <div className={`flex items-center text-sm font-medium mb-1 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <ClipboardList className="w-4 h-4 mr-2 text-yellow-500" /> Expense Type </div>
+                                                <div className={`px-4 py-2.5 rounded-lg border font-semibold ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700' : 'bg-gray-50 text-gray-800 border-gray-200'}`}>{editingExpense.expenseType}</div>
                                             </div>
                                             {editingExpense.expenseType === 'Miscellaneous' && (
                                                 <div className="mb-2">
-                                                    <div className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                                                    <div className="flex items-center text-sm font-medium mb-1">
                                                         <FileText className="w-4 h-4 mr-2 text-yellow-500" />
                                                         Description
                                                     </div>
@@ -1210,100 +1147,68 @@ export function ExpensesDashboard() {
                                                         type="text"
                                                         value={editExpenseForm.description ?? editingExpense.description ?? ''}
                                                         onChange={e => setEditExpenseForm({ ...editExpenseForm, description: e.target.value })}
-                                                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                        className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                                         placeholder="Enter expense description"
                                                     />
                                                 </div>
                                             )}
                                             <div>
-                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                    <Banknote className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Amount
-                                                </label>
+                                                <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Banknote className="w-4 h-4 mr-2 text-yellow-500" /> Amount </label>
                                                 <div className="relative">
                                                     <input
                                                         type="number"
                                                         value={editExpenseForm.amount}
                                                         onChange={e => setEditExpenseForm({ ...editExpenseForm, amount: e.target.value })}
-                                                        className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                        className={`w-full pl-8 pr-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                                         placeholder="0.00"
                                                         required
                                                     />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                    <Wallet className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Transaction Mode
-                                                </label>
+                                                <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Wallet className="w-4 h-4 mr-2 text-yellow-500" /> Transaction Mode </label>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditExpenseForm({ ...editExpenseForm, transactionMode: 'Cash' })}
-                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                            editExpenseForm.transactionMode === 'Cash'
-                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        } transition-all`}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${editExpenseForm.transactionMode === 'Cash' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                     >
-                                                        <DollarSign className="w-4 h-4 mr-2" />
-                                                        Cash
+                                                        <DollarSign className="w-4 h-4 mr-2" /> Cash
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditExpenseForm({ ...editExpenseForm, transactionMode: 'UPI' })}
-                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                            editExpenseForm.transactionMode === 'UPI'
-                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        } transition-all`}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${editExpenseForm.transactionMode === 'UPI' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                     >
-                                                        <CreditCard className="w-4 h-4 mr-2" />
-                                                        UPI
+                                                        <CreditCard className="w-4 h-4 mr-2" /> UPI
                                                     </button>
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                    <Calendar className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Date
-                                                </label>
+                                                <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Calendar className="w-4 h-4 mr-2 text-yellow-500" /> Date </label>
                                                 <input
                                                     type="date"
                                                     value={editExpenseForm.transactionDate}
                                                     onChange={e => setEditExpenseForm({ ...editExpenseForm, transactionDate: e.target.value })}
-                                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all focus:outline-none"
+                                                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                                 />
                                             </div>
                                             <div>
-                                                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                                    <Users className="w-4 h-4 mr-2 text-yellow-500" />
-                                                    Spent By
-                                                </label>
+                                                <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Users className="w-4 h-4 mr-2 text-yellow-500" /> Spent By </label>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditExpenseForm({ ...editExpenseForm, spentBy: 'Balu' })}
-                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                            editExpenseForm.spentBy === 'Balu'
-                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        } transition-all`}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${editExpenseForm.spentBy === 'Balu' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                     >
-                                                        <User className="w-4 h-4 mr-2" />
-                                                        Balu
+                                                        <User className="w-4 h-4 mr-2" /> Balu
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setEditExpenseForm({ ...editExpenseForm, spentBy: 'Mani' })}
-                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border ${
-                                                            editExpenseForm.spentBy === 'Mani'
-                                                                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
-                                                                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                        } transition-all`}
+                                                        className={`flex items-center justify-center px-4 py-2.5 rounded-lg border transition-all ${editExpenseForm.spentBy === 'Mani' ? isDarkMode ? 'bg-yellow-900 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-700' : isDarkMode ? 'bg-gray-800 border-gray-700 text-yellow-200 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                                     >
-                                                        <User className="w-4 h-4 mr-2" />
-                                                        Mani
+                                                        <User className="w-4 h-4 mr-2" /> Mani
                                                     </button>
                                                 </div>
                                             </div>
@@ -1312,14 +1217,14 @@ export function ExpensesDashboard() {
                                     <div className="mt-8 flex justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={`px-4 py-2.5 rounded-lg border font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'border-gray-700 text-yellow-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             onClick={() => setIsEditExpenseOpen(false)}
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="button"
-                                            className="px-6 py-2.5 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className={`px-6 py-2.5 rounded-lg font-medium transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'bg-yellow-700 text-white hover:bg-yellow-800' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
                                             onClick={handleSaveEditExpense}
                                         >
                                             Save

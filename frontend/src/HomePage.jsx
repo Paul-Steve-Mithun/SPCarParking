@@ -292,7 +292,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                                         : 'bg-green-100 text-green-800'
                                                                     : isDarkMode
                                                                         ? 'bg-red-900/30 text-red-300'
-                                                                        : 'bg-red-100 text-red-800'
+                                                                    : 'bg-red-100 text-red-800'
                                                         }`}>
                                                             {vehicle.rentalType === 'daily' && vehicle.status === 'inactive' 
                                                                 ? <span className="font-bold">Due: ₹{dueAmount}</span>

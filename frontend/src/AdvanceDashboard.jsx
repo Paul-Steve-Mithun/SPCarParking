@@ -20,8 +20,10 @@ import { toast, Toaster } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Dialog, Transition } from '@headlessui/react';
+import { useTheme } from './contexts/ThemeContext';
 
 export function AdvanceDashboard() {
+    const { isDarkMode } = useTheme();
     const [vehicles, setVehicles] = useState([]);
     const [filteredVehicles, setFilteredVehicles] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -469,13 +471,13 @@ export function AdvanceDashboard() {
     };
 
     return (
-        <div className="relative">
+        <div className={`relative ${isDarkMode ? 'bg-gray-900' : ''}`}>
             <Toaster position="bottom-right" />
             
-            <div className="min-h-screen bg-gray-50 p-2 sm:p-6 transition-all duration-300">
+            <div className={`min-h-screen p-2 sm:p-6 transition-all duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
                 <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                     {/* First Main Div - Header, Filters and Stats */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg overflow-hidden mb-6`}>
                         <div className="bg-gradient-to-r from-teal-500 to-teal-600 p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
@@ -487,14 +489,14 @@ export function AdvanceDashboard() {
                                             setShowPayAdvanceModal(true);
                                             fetchVehicles();
                                         }}
-                                        className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                        className={`w-full sm:w-auto px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${isDarkMode ? 'bg-gray-900 text-teal-400 hover:bg-gray-800' : 'bg-white text-teal-600 hover:bg-gray-50'}`}
                                     >
                                         <IndianRupee className="w-5 h-5" />
                                         <span className="font-semibold">Pay Advance</span>
                                     </button>
                                     <button 
                                         onClick={generatePDF} 
-                                        className="w-full sm:w-auto bg-white text-teal-600 px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-md"
+                                        className={`w-full sm:w-auto px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-md ${isDarkMode ? 'bg-gray-900 text-teal-400 hover:bg-gray-800' : 'bg-white text-teal-600 hover:bg-gray-50'}`}
                                     >
                                         <Printer className="w-5 h-5" />
                                         <span className="font-semibold">Export PDF</span>
@@ -507,96 +509,85 @@ export function AdvanceDashboard() {
                                     <select 
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white text-teal-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                        className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-teal-400 border-gray-700 hover:bg-gray-800' : 'bg-white text-teal-600 border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {monthNames.map((month, index) => (
                                             <option key={index} value={index}>{month}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-teal-600" />
+                                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`} />
                                 </div>
                                 <div className="relative w-full sm:w-32">
                                     <select 
                                         value={selectedYear}
                                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="w-full appearance-none bg-white text-teal-600 px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                        className={`w-full appearance-none px-4 py-3 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-medium shadow-md transition-colors duration-200 ${isDarkMode ? 'bg-gray-900 text-teal-400 border-gray-700 hover:bg-gray-800' : 'bg-white text-teal-600 border-gray-200 hover:bg-gray-50'}`}
                                     >
                                         {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
                                             <option key={year} value={year}>{year}</option>
                                         ))}
                                     </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-teal-600" />
+                                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`} />
                                 </div>
                             </div>
                         </div>
-
                         {/* Stats Cards */}
                         <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Monthly Advance Card */}
-                            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                            <div className={`${isDarkMode ? 'bg-gradient-to-br from-teal-900 to-teal-800 border-gray-800' : 'bg-gradient-to-br from-teal-50 to-teal-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
                                 <div className="flex items-center space-x-4">
-                                    <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <Calendar className="w-6 h-6 text-teal-600" />
+                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                        <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`} />
                                     </div>
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Monthly Advance (Net)</p>
-                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-600'}`}>Monthly Advance (Net)</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-400' : isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>
                                             {stats.monthlyAdvance < 0 ? '-' : ''}₹{Math.abs(stats.monthlyAdvance).toFixed(2)}
                                         </p>
                                     </div>
                                 </div>
                             </div>
-
                             {/* Total Advance Card */}
-                            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-4 sm:p-6 border border-white shadow-md hover:shadow-lg transition-all duration-200">
+                            <div className={`${isDarkMode ? 'bg-gradient-to-br from-cyan-900 to-cyan-800 border-gray-800' : 'bg-gradient-to-br from-cyan-50 to-cyan-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
                                 <div className="flex items-center space-x-4">
-                                    <div className="p-3 rounded-xl bg-white shadow-sm">
-                                        <DollarSign className="w-6 h-6 text-cyan-600" />
+                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                        <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-cyan-300' : 'text-cyan-600'}`} />
                                     </div>
                                     <div>
-                                        <p className="text-gray-600 text-sm font-medium">Total Advance (Till Date)</p>
-                                        <p className="text-lg sm:text-2xl font-bold text-gray-900">₹{stats.totalAdvance.toFixed(2)}</p>
+                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-cyan-200' : 'text-gray-600'}`}>Total Advance (Till Date)</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-cyan-100' : 'text-gray-900'}`}>₹{stats.totalAdvance.toFixed(2)}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     {/* Second Main Div - Transaction History and Table */}
-                    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg overflow-hidden`}>
                         <div className="p-4 sm:p-6">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center sm:text-left">
-                                Transaction History
-                            </h2>
-                            
+                            <h2 className={`text-xl font-bold mb-4 text-center sm:text-left ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>Transaction History</h2>
                             <div className="relative w-full mb-6">
                                 <input
                                     type="text"
                                     placeholder="Search transactions..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${isDarkMode ? 'bg-gray-900 text-teal-200 border-gray-700 placeholder-teal-400' : 'border-gray-300'}`}
                                 />
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-teal-400' : 'text-gray-400'}`} />
                             </div>
-
                             <div className="overflow-x-auto">
                                 <div className="inline-block min-w-full align-middle">
                                     <div className="overflow-hidden">
                                         {filteredVehicles.length === 0 ? (
-                                            <div className="text-center py-8 text-gray-500">
-                                                No transactions found matching your search
-                                            </div>
+                                            <div className={`text-center py-8 ${isDarkMode ? 'text-teal-300' : 'text-gray-500'}`}>No transactions found matching your search</div>
                                         ) : (
-                                            <table className="min-w-full divide-y divide-gray-200">
+                                            <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                                 <thead>
-                                                    <tr className="bg-gray-50">
-                                                        <th className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                                                            S.No
-                                                        </th>
+                                                    <tr className={isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}>
+                                                        <th className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>S.No</th>
                                                         <th 
                                                             onClick={() => handleSort('TransactionDate')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Date</span>
@@ -612,7 +603,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('vehicleNumber')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Vehicle</span>
@@ -622,7 +613,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('Description')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Description</span>
@@ -632,7 +623,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('lot')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Lot</span>
@@ -642,7 +633,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('parkingType')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Parking Type</span>
@@ -652,7 +643,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('receivedBy')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Received By</span>
@@ -662,7 +653,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('mode')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Mode</span>
@@ -672,7 +663,7 @@ export function AdvanceDashboard() {
                                                         </th>
                                                         <th 
                                                             onClick={() => handleSort('Amount')}
-                                                            className="px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                                            className={`px-4 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold uppercase tracking-wider cursor-pointer ${isDarkMode ? 'text-teal-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
                                                         >
                                                             <div className="flex items-center">
                                                                 <span className="hidden sm:inline">Amount</span>
@@ -682,45 +673,30 @@ export function AdvanceDashboard() {
                                                         </th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                <tbody className={`${isDarkMode ? 'bg-gray-900 divide-gray-800' : 'bg-white divide-gray-200'}`}>
                                                     {filteredVehicles.map((vehicle, index) => (
                                                         <tr 
                                                             key={vehicle._id} 
                                                             className={`transition-colors duration-150 ${
-                                                                vehicle.advanceRefund ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+                                                                vehicle.advanceRefund 
+                                                                    ? isDarkMode ? 'bg-red-900 hover:bg-red-800' : 'bg-red-50 hover:bg-red-100' 
+                                                                    : isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
                                                             }`}
                                                         >
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
-                                                                {index + 1}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
-                                                                {vehicle.advanceRefund 
+                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{index + 1}</td>
+                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.advanceRefund 
                                                                     ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
-                                                                    : new Date(vehicle.startDate).toLocaleDateString('en-GB')}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
-                                                                {vehicle.vehicleNumber}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
-                                                                {vehicle.vehicleDescription}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
-                                                                {vehicle.lotNumber || 'Open'}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
-                                                                {vehicle.parkingType === 'private' ? 'Private' : 'Open'}
-                                                            </td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
-                                                                <span className="inline-flex items-center gap-1">
-                                                                    <User className="w-4 h-4 text-gray-500" />
-                                                                    {vehicle.receivedBy || 'N/A'}
-                                                                </span>
-                                                            </td>
+                                                                    : new Date(vehicle.startDate).toLocaleDateString('en-GB')}</td>
+                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</td>
+                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.vehicleDescription}</td>
+                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.lotNumber || 'Open'}</td>
+                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.parkingType === 'private' ? 'Private' : 'Open'}</td>
+                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}><span className="inline-flex items-center gap-1"><User className={`w-4 h-4 ${isDarkMode ? 'text-teal-400' : 'text-gray-500'}`} />{vehicle.receivedBy || 'N/A'}</span></td>
                                                             <td className="px-3 sm:px-6 py-3 sm:py-4">
                                                                 <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
                                                                     vehicle.transactionMode === 'UPI' 
-                                                                        ? 'bg-blue-100 text-blue-800' 
-                                                                        : 'bg-green-100 text-green-800'
+                                                                        ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
+                                                                        : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
                                                                 }`}>
                                                                     {vehicle.transactionMode === 'UPI' ? (
                                                                         <>
@@ -735,9 +711,9 @@ export function AdvanceDashboard() {
                                                                     )}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium text-gray-900">
+                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? vehicle.advanceRefund ? 'text-red-400' : 'text-teal-100' : vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}`}>
                                                                 <div className="w-full text-right font-mono">
-                                                                    <span className={`inline-block w-[90px] text-left text-base ${vehicle.advanceRefund ? 'text-red-600' : ''}`}>
+                                                                    <span className={`inline-block w-[90px] text-left text-base`}>
                                                                         {vehicle.advanceRefund 
                                                                             ? `${vehicle.advanceRefund.toFixed(2)}`
                                                                             : vehicle.advanceAmount.toFixed(2)}
@@ -756,7 +732,7 @@ export function AdvanceDashboard() {
                     </div>
                 </div>
             </div>
-
+            {/* Pay Advance Modal */}
             <Transition appear show={showPayAdvanceModal} as={Fragment}>
                 <Dialog 
                     as="div" 
@@ -777,9 +753,8 @@ export function AdvanceDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/30'} backdrop-blur-sm`} />
                     </Transition.Child>
-
                     <div className="fixed inset-0 overflow-y-auto">
                         <div className="flex min-h-full items-center justify-center p-4">
                             <Transition.Child
@@ -791,8 +766,8 @@ export function AdvanceDashboard() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
-                                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                <Dialog.Panel className={`w-full max-w-2xl transform overflow-hidden rounded-2xl p-6 shadow-xl transition-all ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+                                    <Dialog.Title as="h3" className={`text-xl font-bold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>
                                         {selectedZeroAdvanceVehicle ? (
                                             <>
                                                 <Car className="w-6 h-6 text-blue-600" />
@@ -805,8 +780,7 @@ export function AdvanceDashboard() {
                                             </>
                                         )}
                                     </Dialog.Title>
-                                    <div className="h-0.5 bg-gray-200 w-full mb-4"></div>
-
+                                    <div className={`h-0.5 w-full mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
                                     {!selectedZeroAdvanceVehicle ? (
                                         <>
                                             <div className="relative mb-4">
@@ -815,33 +789,32 @@ export function AdvanceDashboard() {
                                                     placeholder="Search any vehicle..."
                                                     value={searchZeroAdvance}
                                                     onChange={(e) => setSearchZeroAdvance(e.target.value)}
-                                                    className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    className={`w-full px-4 py-2 pl-10 border rounded-lg focus:outline-none focus:border-transparent ${isDarkMode ? 'bg-gray-900 text-teal-200 border-gray-700 placeholder-teal-400 focus:ring-2 focus:ring-teal-500' : 'bg-white border-gray-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600'} `}
                                                 />
-                                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-teal-400' : 'text-gray-400'}`} />
                                             </div>
-
                                             <div className="max-h-[400px] overflow-y-auto">
                                                 {zeroAdvanceVehicles.map(vehicle => (
                                                     <button
                                                         key={vehicle._id}
                                                         onClick={() => setSelectedZeroAdvanceVehicle(vehicle)}
-                                                        className="w-full text-left p-4 hover:bg-gray-50 border-b flex items-center gap-4"
+                                                        className={`w-full text-left p-4 border-b flex items-center gap-4 transition-colors ${isDarkMode ? 'hover:bg-gray-800 border-gray-800' : 'hover:bg-gray-50 border-gray-200'}`}
                                                     >
-                                                        <div className="p-2 rounded-full bg-gray-100">
+                                                        <div className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
                                                             <Car className="text-blue-500 w-6 h-6" />
                                                         </div>
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
-                                                                <p className="font-medium">{vehicle.vehicleNumber}</p>
+                                                                <p className={`font-medium ${isDarkMode ? 'text-teal-100' : ''}`}>{vehicle.vehicleNumber}</p>
                                                                 {vehicle.advanceAmount > 0 && (
-                                                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                                                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                                                                         ₹{vehicle.advanceAmount} paid
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                                                            <p className={`text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-500'}`}>{vehicle.vehicleDescription}</p>
                                                         </div>
-                                                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                                                        <ChevronDown className={`w-5 h-5 ${isDarkMode ? 'text-teal-400' : 'text-gray-400'}`} />
                                                     </button>
                                                 ))}
                                             </div>
@@ -850,56 +823,55 @@ export function AdvanceDashboard() {
                                         <div className="space-y-6">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Vehicle Number</label>
+                                                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Vehicle Number</label>
                                                     <input
                                                         type="text"
                                                         value={selectedZeroAdvanceVehicle.vehicleNumber}
                                                         disabled
-                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                        className={`mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'bg-gray-800 text-teal-200 border-gray-700' : 'bg-gray-50 border-gray-300'} border`}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                                                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Description</label>
                                                     <input
                                                         type="text"
                                                         value={selectedZeroAdvanceVehicle.vehicleDescription}
                                                         disabled
-                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                        className={`mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'bg-gray-800 text-teal-200 border-gray-700' : 'bg-gray-50 border-gray-300'} border`}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Owner Name</label>
+                                                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Owner Name</label>
                                                     <input
                                                         type="text"
                                                         value={selectedZeroAdvanceVehicle.ownerName}
                                                         disabled
-                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                        className={`mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'bg-gray-800 text-teal-200 border-gray-700' : 'bg-gray-50 border-gray-300'} border`}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Lot Number</label>
+                                                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Lot Number</label>
                                                     <input
                                                         type="text"
                                                         value={selectedZeroAdvanceVehicle.lotNumber}
                                                         disabled
-                                                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                        className={`mt-1 block w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${isDarkMode ? 'bg-gray-800 text-teal-200 border-gray-700' : 'bg-gray-50 border-gray-300'} border`}
                                                     />
                                                 </div>
                                             </div>
-
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center">
                                                     <div className="flex items-center gap-2">
-                                                        <label className="block text-sm font-medium text-gray-700">Advance Amount</label>
+                                                        <label className={`block text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Advance Amount</label>
                                                         {selectedZeroAdvanceVehicle.advanceAmount > 0 && (
-                                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                                                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                                                                 ₹{selectedZeroAdvanceVehicle.advanceAmount} already paid
                                                             </span>
                                                         )}
                                                     </div>
                                                     <button
                                                         onClick={() => setIsEditingAdvance(!isEditingAdvance)}
-                                                        className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded-full transition-colors"
+                                                        className={`p-1 rounded-full transition-colors ${isDarkMode ? 'text-blue-400 hover:text-blue-300 hover:bg-blue-900' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
@@ -909,10 +881,9 @@ export function AdvanceDashboard() {
                                                     value={newAdvanceAmount}
                                                     onChange={(e) => setNewAdvanceAmount(e.target.value)}
                                                     disabled={!isEditingAdvance}
-                                                    className={`mt-1 block w-full px-3 py-2 ${!isEditingAdvance ? 'bg-gray-50' : 'bg-white'} border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!isEditingAdvance ? isDarkMode ? 'bg-gray-800 text-teal-200 border-gray-700' : 'bg-gray-50 border-gray-300' : isDarkMode ? 'bg-gray-900 text-teal-200 border-gray-700' : 'bg-white border-gray-300'}`}
                                                     placeholder="Enter additional advance amount"
                                                 />
-
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <button
                                                         type="button"
@@ -920,7 +891,7 @@ export function AdvanceDashboard() {
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'Cash'
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode ? 'bg-gray-800 text-teal-200 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-5 w-5 mr-2" />
@@ -935,7 +906,7 @@ export function AdvanceDashboard() {
                                                         className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                             advanceTransactionMode === 'UPI'
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : isDarkMode ? 'bg-gray-800 text-teal-200 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-5 w-5 mr-2" />
@@ -945,9 +916,8 @@ export function AdvanceDashboard() {
                                                         )}
                                                     </button>
                                                 </div>
-
                                                 <div className="mt-4">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Received By</label>
+                                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-teal-200' : 'text-gray-700'}`}>Received By</label>
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <button
                                                             type="button"
@@ -955,7 +925,7 @@ export function AdvanceDashboard() {
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Balu'
                                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                    : isDarkMode ? 'bg-gray-800 text-teal-200 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
@@ -970,7 +940,7 @@ export function AdvanceDashboard() {
                                                             className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                                 receivedBy === 'Mani'
                                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                    : isDarkMode ? 'bg-gray-800 text-teal-200 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                             }`}
                                                         >
                                                             <User className="h-5 w-5 mr-2" />
@@ -982,7 +952,6 @@ export function AdvanceDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div className="mt-6 flex justify-end gap-3">
                                                 <button
                                                     type="button"
@@ -991,14 +960,14 @@ export function AdvanceDashboard() {
                                                         setIsEditingAdvance(false);
                                                         setNewAdvanceAmount('');
                                                     }}
-                                                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                                                    className={`px-4 py-2 border rounded-md ${isDarkMode ? 'text-teal-200 border-gray-700 hover:bg-gray-800' : 'text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                                                 >
                                                     Cancel
                                                 </button>
                                                 <button
                                                     onClick={handlePayAdvance}
                                                     disabled={!isEditingAdvance || !newAdvanceAmount || isSavingAdvance}
-                                                    className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                                    className={`px-4 py-2 rounded-md flex items-center gap-2 ${isDarkMode ? 'bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed' : 'bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                                                 >
                                                     {isSavingAdvance ? (
                                                         <>

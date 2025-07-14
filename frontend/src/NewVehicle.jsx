@@ -281,7 +281,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             Own Board
@@ -297,7 +297,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             T Board
@@ -336,7 +336,7 @@ export function NewVehicle() {
                                     ? 'bg-blue-600 text-white' 
                                     : isDarkMode 
                                         ? 'bg-gray-600 text-gray-300' 
-                                        : 'bg-gray-100 text-gray-700'
+                                    : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             A Wing (A1-A20)
@@ -349,7 +349,7 @@ export function NewVehicle() {
                                     ? 'bg-blue-600 text-white' 
                                     : isDarkMode 
                                         ? 'bg-gray-600 text-gray-300' 
-                                        : 'bg-gray-100 text-gray-700'
+                                    : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             B Wing (B1-B20)
@@ -362,7 +362,7 @@ export function NewVehicle() {
                                     ? 'bg-blue-600 text-white' 
                                     : isDarkMode 
                                         ? 'bg-gray-600 text-gray-300' 
-                                        : 'bg-gray-100 text-gray-700'
+                                    : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             C Wing (C1-C22)
@@ -375,7 +375,7 @@ export function NewVehicle() {
                                     ? 'bg-blue-600 text-white' 
                                     : isDarkMode 
                                         ? 'bg-gray-600 text-gray-300' 
-                                        : 'bg-gray-100 text-gray-700'
+                                    : 'bg-gray-100 text-gray-700'
                             }`}
                         >
                             D Wing (D1-D20)
@@ -402,7 +402,7 @@ export function NewVehicle() {
                                     ? 'bg-green-600 text-white'
                                     : isDarkMode 
                                         ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50' 
-                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
                         >
                             Open
@@ -421,7 +421,7 @@ export function NewVehicle() {
                                         ? 'bg-blue-600 text-white'
                                         : isDarkMode 
                                             ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' 
-                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                 }`}
                             >
                                 {lot}
@@ -732,7 +732,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <Wallet className="h-5 w-5 mr-2" />
@@ -749,7 +749,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <CreditCard className="h-5 w-5 mr-2" />
@@ -775,7 +775,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <User className="h-5 w-5 mr-2" />
@@ -792,7 +792,7 @@ export function NewVehicle() {
                                                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                     : isDarkMode 
                                                         ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }`}
                                         >
                                             <User className="h-5 w-5 mr-2" />

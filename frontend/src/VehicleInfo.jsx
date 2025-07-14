@@ -1614,7 +1614,9 @@ export function VehicleInfo() {
                                                         }`}>
                                                             <div className="flex justify-between items-start">
                                                                 <div>
-                                                                    <div className="font-semibold text-blue-900">{filteredTxns[currentTxnIndex].transactionType}</div>
+                                                                    <div className={`font-semibold transition-colors duration-300 ${
+                                                                        isDarkMode ? 'text-blue-300' : 'text-blue-900'
+                                                                    }`}>{filteredTxns[currentTxnIndex].transactionType}</div>
                                                                 </div>
                                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
                                                                     filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
