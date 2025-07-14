@@ -290,7 +290,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                                                 : 'bg-blue-50 text-blue-600'
                                                             : isDarkMode
                                                                 ? 'text-gray-300 hover:bg-gray-800'
-                                                                : 'text-gray-600 hover:bg-gray-50'
+                                                            : 'text-gray-600 hover:bg-gray-50'
                                                         }
                                                     `}
                                                 >

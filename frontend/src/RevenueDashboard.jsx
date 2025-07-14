@@ -1551,7 +1551,7 @@ export function RevenueDashboard() {
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                 : isDarkMode 
                                                                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <Wallet className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1571,7 +1571,7 @@ export function RevenueDashboard() {
                                                                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                 : isDarkMode 
                                                                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1600,7 +1600,7 @@ export function RevenueDashboard() {
                                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                 : isDarkMode 
                                                                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <User className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1620,7 +1620,7 @@ export function RevenueDashboard() {
                                                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                 : isDarkMode 
                                                                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                         }`}
                                                     >
                                                         <User className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
@@ -1757,7 +1757,7 @@ export function RevenueDashboard() {
                                                                                         : 'bg-green-100 text-green-800'
                                                                                     : isDarkMode 
                                                                                         ? 'bg-red-900/30 text-red-300' 
-                                                                                        : 'bg-red-100 text-red-800'
+                                                                                    : 'bg-red-100 text-red-800'
                                                                             }`}>
                                                                                 {vehicle.status}
                                                                             </span>
@@ -1785,36 +1785,36 @@ export function RevenueDashboard() {
                                                         ? 'from-gray-700 to-gray-800 border-gray-600' 
                                                         : 'from-gray-50 to-gray-100 border-gray-200'
                                                 }`}>
-                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className="flex items-center gap-3 mb-4">
                                                         <div className={`p-2 rounded-lg shadow-sm transition-colors duration-300 ${
                                                             isDarkMode ? 'bg-gray-600' : 'bg-white'
                                                         }`}>
-                                                            <Car className="w-6 h-6 text-blue-600" />
-                                                        </div>
-                                                        <div>
+                                                                <Car className="w-6 h-6 text-blue-600" />
+                                                            </div>
+                                                            <div>
                                                             <h4 className={`text-sm font-semibold transition-colors duration-300 ${
                                                                 isDarkMode ? 'text-gray-400' : 'text-gray-400'
                                                             }`}>Vehicle Number</h4>
-                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex items-center gap-2">
                                                                 <p className={`text-lg font-bold transition-colors duration-300 ${
                                                                     isDarkMode ? 'text-gray-100' : 'text-gray-900'
                                                                 }`}>
-                                                                    {selectedVehicle.vehicleNumber}
-                                                                </p>
-                                                                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                                                    selectedVehicle.status === 'active' 
+                                                                        {selectedVehicle.vehicleNumber}
+                                                                    </p>
+                                                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                                                        selectedVehicle.status === 'active' 
                                                                         ? isDarkMode 
                                                                             ? 'bg-green-900/30 text-green-300' 
                                                                             : 'bg-green-100 text-green-800'
                                                                         : isDarkMode 
                                                                             ? 'bg-red-900/30 text-red-300' 
                                                                             : 'bg-red-100 text-red-800'
-                                                                }`}>
-                                                                    {capitalizeFirst(selectedVehicle.status || 'expired')}
-                                                                </span>
+                                                                    }`}>
+                                                                        {capitalizeFirst(selectedVehicle.status || 'expired')}
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
                                                         
                                                         <div className="grid grid-cols-2 gap-4">
                                                             <div className={`p-3 rounded-lg shadow-sm transition-colors duration-300 ${
@@ -1913,7 +1913,7 @@ export function RevenueDashboard() {
                                                                         ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                         : isDarkMode 
                                                                             ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <Wallet className="h-5 w-5 mr-2" />
@@ -1930,7 +1930,7 @@ export function RevenueDashboard() {
                                                                         ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
                                                                         : isDarkMode 
                                                                             ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <CreditCard className="h-5 w-5 mr-2" />
@@ -1957,7 +1957,7 @@ export function RevenueDashboard() {
                                                                         ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                         : isDarkMode 
                                                                             ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <User className="h-5 w-5 mr-2" />
@@ -1974,7 +1974,7 @@ export function RevenueDashboard() {
                                                                         ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
                                                                         : isDarkMode 
                                                                             ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                                 }`}
                                                             >
                                                                 <User className="h-5 w-5 mr-2" />
