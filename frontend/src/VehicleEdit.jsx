@@ -1,4 +1,5 @@
 import { useState, Fragment, useEffect } from 'react';
+import { useTheme } from './contexts/ThemeContext';
 import { XIcon, SaveIcon, Trash2Icon, PlusCircleIcon, PencilIcon, UploadIcon, Wallet, CreditCard, AlertCircle, Save, XCircle, CheckCircle, Car, User, Calendar, IndianRupee, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -13,6 +14,7 @@ const modalAnimation = {
 };
 
 const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
+    const { isDarkMode } = useTheme();
     const [updatedVehicle, setUpdatedVehicle] = useState({ 
         ...vehicle,
         vehicleType: vehicle.vehicleType || 'own'
@@ -268,8 +270,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-hidden">
-            <div className="relative w-full max-w-7xl max-h-[95vh] bg-white rounded-xl shadow-lg flex flex-col overflow-hidden">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden ${isDarkMode ? 'bg-black/80' : 'bg-black/50'}`}>
+            <div className={`relative w-full max-w-7xl max-h-[95vh] rounded-xl shadow-lg flex flex-col overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
@@ -312,40 +314,36 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Vehicle Information Column */}
                         <div className="space-y-4">
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Vehicle Information</h2>
+                            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
+                                <h2 className={`text-lg sm:text-xl font-semibold border-b pb-2 mb-4 ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-800 border-gray-200'}`}>Vehicle Information</h2>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Vehicle Number</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Number</label>
                                         <input 
                                             type="text"
                                             value={updatedVehicle.vehicleNumber}
                                             onChange={(e) => handleTextInput(e, 'vehicleNumber')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Vehicle Description</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Description</label>
                                         <input 
                                             type="text"
                                             value={updatedVehicle.vehicleDescription}
                                             onChange={(e) => handleTextInput(e, 'vehicleDescription')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Vehicle Board Type</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Board Type</label>
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 type="button"
                                                 onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'own'})}
-                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                    updatedVehicle.vehicleType === 'own'
-                                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
+                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${updatedVehicle.vehicleType === 'own' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
                                                 Own Board
@@ -356,11 +354,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             <button
                                                 type="button"
                                                 onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'tboard'})}
-                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                    updatedVehicle.vehicleType === 'tboard'
-                                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                } ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
+                                                className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${updatedVehicle.vehicleType === 'tboard' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
                                                 T Board
@@ -371,7 +365,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Lot Number</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Lot Number</label>
                                         <input 
                                             type="text"
                                             value={
@@ -379,7 +373,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                     ? 'Open'
                                                     : updatedVehicle.lotNumber || ''
                                             }
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}
                                             disabled={true}
                                         />
                                         
@@ -388,67 +382,22 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                 {/* Lot Type Selector */}
                                                 <div className="mt-2 mb-3">
                                                     <div className="flex flex-wrap gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedLotType('all')}
-                                                            className={`px-3 py-1 rounded-md ${
-                                                                selectedLotType === 'all' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                        >
-                                                            All Wings
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedLotType('a')}
-                                                            className={`px-3 py-1 rounded-md ${
-                                                                selectedLotType === 'a' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                        >
-                                                            A Wing (A1-A20)
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedLotType('b')}
-                                                            className={`px-3 py-1 rounded-md ${
-                                                                selectedLotType === 'b' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                        >
-                                                            B Wing (B1-B20)
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedLotType('c')}
-                                                            className={`px-3 py-1 rounded-md ${
-                                                                selectedLotType === 'c' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                        >
-                                                            C Wing (C1-C22)
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelectedLotType('d')}
-                                                            className={`px-3 py-1 rounded-md ${
-                                                                selectedLotType === 'd' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                        >
-                                                            D Wing (D1-D20)
-                                                        </button>
+                                                        {['all', 'a', 'b', 'c', 'd'].map(type => (
+                                                            <button
+                                                                key={type}
+                                                                type="button"
+                                                                onClick={() => setSelectedLotType(type)}
+                                                                className={`px-3 py-1 rounded-md ${selectedLotType === type ? 'bg-blue-600 text-white' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700'}`}
+                                                            >
+                                                                {type === 'all' ? 'All Wings' : `${type.toUpperCase()} Wing (${type.toUpperCase()}${type === 'c' ? 22 : 20})`}
+                                                            </button>
+                                                        ))}
                                                     </div>
                                                 </div>
 
                                                 {/* Available Lots Display */}
                                                 <div className="mt-2">
-                                                    <p className="text-sm text-gray-600 font-medium">Available Lots:</p>
+                                                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Available Lots:</p>
                                                     <div className="flex flex-wrap gap-2 mt-1 max-h-40 overflow-y-auto">
                                                         {getFilteredLots().map((lot) => (
                                                             <button
@@ -469,16 +418,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                         });
                                                                     }
                                                                 }}
-                                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                                                    (updatedVehicle.parkingType === 'open' && lot === 'Open') ||
-                                                                    updatedVehicle.lotNumber === lot
-                                                                        ? lot === 'Open'
-                                                                            ? 'bg-green-600 text-white'
-                                                                            : 'bg-blue-600 text-white'
-                                                                        : lot === 'Open'
-                                                                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                                                }`}
+                                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${((updatedVehicle.parkingType === 'open' && lot === 'Open') || updatedVehicle.lotNumber === lot) ? (lot === 'Open' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white') : lot === 'Open' ? (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200') : (isDarkMode ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')}`}
                                                             >
                                                                 {lot}
                                                             </button>
@@ -494,37 +434,37 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                         {/* Owner Details Column */}
                         <div className="space-y-4">
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Owner Details</h2>
+                            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
+                                <h2 className={`text-lg sm:text-xl font-semibold border-b pb-2 mb-4 ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-800 border-gray-200'}`}>Owner Details</h2>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Owner Name</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Owner Name</label>
                                         <input 
                                             type="text"
                                             value={updatedVehicle.ownerName}
                                             onChange={(e) => handleTextInput(e, 'ownerName')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Contact Number</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Contact Number</label>
                                         <input 
                                             type="text"
                                             value={updatedVehicle.contactNumber}
                                             onChange={(e) => handleTextInput(e, 'contactNumber')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         />
                                     </div>
 
                                     {/* Document Upload Section */}
                                     <div className="mt-6 space-y-4">
-                                        <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Document Upload</h3>
+                                        <h3 className={`text-xl font-semibold border-b pb-2 mb-4 ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-800 border-gray-200'}`}>Document Upload</h3>
                                         
                                         {/* Vehicle Image Upload */}
                                         <div className="space-y-2">
-                                            <label className="block text-gray-700 font-medium">Vehicle Photo</label>
+                                            <label className={`block font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Photo</label>
                                             <div className="flex items-center space-x-4">
                                                 <div className="flex-1">
                                                     <input
@@ -537,9 +477,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                     />
                                                     <label
                                                         htmlFor="vehicleImage"
-                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
-                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
-                                                        }`}
+                                                        className={`flex items-center justify-center px-4 py-2 border rounded-lg ${isEditMode ? (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 cursor-pointer hover:bg-gray-800' : 'border-gray-300 text-gray-700 cursor-pointer hover:bg-gray-50') : (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 opacity-70' : 'bg-gray-100 border-gray-300 text-gray-400 opacity-50')} ${!isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     >
                                                         <UploadIcon className="w-5 h-5 mr-2" />
                                                         Choose File
@@ -556,7 +494,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="block text-gray-700 font-medium">Aadhar Card</label>
+                                            <label className={`block font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Aadhar Card</label>
                                             <div className="flex items-center space-x-4">
                                                 <div className="flex-1">
                                                     <input
@@ -569,9 +507,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                     />
                                                     <label
                                                         htmlFor="document1Image"
-                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
-                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
-                                                        }`}
+                                                        className={`flex items-center justify-center px-4 py-2 border rounded-lg ${isEditMode ? (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 cursor-pointer hover:bg-gray-800' : 'border-gray-300 text-gray-700 cursor-pointer hover:bg-gray-50') : (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 opacity-70' : 'bg-gray-100 border-gray-300 text-gray-400 opacity-50')} ${!isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     >
                                                         <UploadIcon className="w-5 h-5 mr-2" />
                                                         Choose File
@@ -588,7 +524,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="block text-gray-700 font-medium">Rc/Driving License</label>
+                                            <label className={`block font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rc/Driving License</label>
                                             <div className="flex items-center space-x-4">
                                                 <div className="flex-1">
                                                     <input
@@ -601,9 +537,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                     />
                                                     <label
                                                         htmlFor="document2Image"
-                                                        className={`flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg ${
-                                                            isEditMode ? 'cursor-pointer hover:bg-gray-50' : 'opacity-50 cursor-not-allowed'
-                                                        }`}
+                                                        className={`flex items-center justify-center px-4 py-2 border rounded-lg ${isEditMode ? (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 cursor-pointer hover:bg-gray-800' : 'border-gray-300 text-gray-700 cursor-pointer hover:bg-gray-50') : (isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-300 opacity-70' : 'bg-gray-100 border-gray-300 text-gray-400 opacity-50')} ${!isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     >
                                                         <UploadIcon className="w-5 h-5 mr-2" />
                                                         Choose File
@@ -625,15 +559,15 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                         {/* Rental Details Column */}
                         <div className="space-y-4">
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <h2 className="text-lg sm:text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Rental Details</h2>
+                            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
+                                <h2 className={`text-lg sm:text-xl font-semibold border-b pb-2 mb-4 ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-800 border-gray-200'}`}>Rental Details</h2>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Parking Type</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parking Type</label>
                                         <select 
                                             value={updatedVehicle.parkingType}
                                             onChange={(e) => setUpdatedVehicle({...updatedVehicle, parkingType: e.target.value})}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         >
                                             <option value="private">Private Parking</option>
@@ -642,10 +576,10 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Rental Type</label>
+                                        <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rental Type</label>
                                         <select 
                                             value={updatedVehicle.rentalType}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                             disabled={true}
                                         >
                                             <option value="monthly">Monthly</option>
@@ -655,12 +589,12 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                                     {updatedVehicle.rentalType === 'daily' && (
                                         <div>
-                                            <label className="block text-gray-700 font-medium mb-2">Number of Days</label>
+                                            <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Number of Days</label>
                                             <input 
                                                 type="number"
                                                 value={updatedVehicle.numberOfDays}
                                                 onChange={(e) => handleNumberInput(e, 'numberOfDays')}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                                 placeholder="Enter number of days"
                                                 min="1"
                                                 disabled={true}
@@ -670,7 +604,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                                     <div>
                                         <div className="flex justify-between items-center">
-                                            <label className="block text-gray-700 font-medium mb-2">Rental Price (₹)</label>
+                                            <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rental Price (₹)</label>
                                             {updatedVehicle.rentalType === 'daily' && 
                                              updatedVehicle.numberOfDays && 
                                              updatedVehicle.rentPrice && (
@@ -683,7 +617,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             type="number"
                                             value={updatedVehicle.rentPrice}
                                             onChange={(e) => handleNumberInput(e, 'rentPrice')}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             placeholder="Enter rental price"
                                             min="0"
                                             disabled={!isEditMode}
@@ -692,11 +626,11 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                                     {updatedVehicle.rentalType === 'monthly' && (
                                         <div>
-                                            <label className="block text-gray-700 font-medium mb-2">Advance Amount (₹)</label>
+                                            <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Advance Amount (₹)</label>
                                             <input 
                                                 type="number"
                                                 value={updatedVehicle.advanceAmount}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                                 disabled={true}
                                             />
                                         </div>
@@ -708,7 +642,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="sticky bottom-0 p-4 sm:p-6 bg-white border-t">
+                <div className={`sticky bottom-0 p-4 sm:p-6 border-t ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <button 
                             onClick={handleSubmit}
@@ -750,7 +684,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         <div 
                             className={`fixed inset-0 backdrop-blur-sm bg-black/30 ${modalAnimation.enter} ${
                                 showDeleteConfirm ? 'bg-opacity-50' : 'bg-opacity-0'
-                            }`} 
+                            } ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`} 
                             aria-hidden="true"
                         ></div>
 
@@ -758,19 +692,19 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         <div 
                             className={`relative bg-white rounded-lg max-w-sm w-full mx-4 ${modalAnimation.enter} ${
                                 showDeleteConfirm ? modalAnimation.enterTo : modalAnimation.leaveTo
-                            }`}
+                            } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                         >
                             <div className="p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                                <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                                     End Contract
                                 </h3>
-                                <p className="text-gray-600 mb-6">
+                                <p className={`mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                     Are you sure you want to end the contract for this vehicle? This action cannot be undone.
                                 </p>
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => setShowDeleteConfirm(false)}
-                                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                        className={`flex-1 px-4 py-2 rounded-lg transition-colors ${isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                     >
                                         Cancel
                                     </button>
@@ -803,7 +737,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -817,22 +751,22 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                     <div className="text-center">
                                         <Save className="mx-auto h-12 w-12 text-blue-500 mb-4" />
-                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2">
+                                        <Dialog.Title as="h3" className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                                             Save Changes
                                         </Dialog.Title>
-                                        <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-3">
+                                        <div className={`mt-4 p-4 rounded-lg space-y-3 ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
                                             <div className="flex items-center gap-2">
                                                 <Car className="w-5 h-5 text-blue-600" />
-                                                <p className="text-sm text-gray-600 text-left">
+                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                     Vehicle: {vehicle.vehicleNumber} - {vehicle.vehicleDescription}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <User className="w-5 h-5 text-blue-600" />
-                                                <p className="text-sm text-gray-600 text-left">
+                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                     Owner: {vehicle.ownerName}
                                                 </p>
                                             </div>
@@ -843,7 +777,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <button
                                             type="button"
                                             onClick={() => setShowSaveModal(false)}
-                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium focus:outline-none ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-900' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             disabled={isLoading}
                                         >
                                             Cancel
@@ -851,7 +785,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <button
                                             type="button"
                                             onClick={handleSaveChanges}
-                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none disabled:opacity-50"
+                                            className={`inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-600 text-white hover:bg-green-700'}`}
                                             disabled={isLoading}
                                         >
                                             {isLoading ? (
@@ -890,7 +824,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -904,44 +838,33 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                     <div className="text-center">
-                                        <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-                                        <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 mb-2">
+                                        <Save className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+                                        <Dialog.Title as="h3" className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                                             End Contract
                                         </Dialog.Title>
-                                        <div className="mt-4 p-4 bg-red-50 rounded-lg space-y-3">
+                                        <div className={`mt-4 p-4 rounded-lg space-y-3 ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
                                             <div className="flex items-center gap-2">
-                                                <Car className="w-5 h-5 text-red-600" />
-                                                <p className="text-sm text-gray-600 text-left">
+                                                <Car className="w-5 h-5 text-blue-600" />
+                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                     Vehicle: {vehicle.vehicleNumber} - {vehicle.vehicleDescription}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Calendar className="w-5 h-5 text-red-600" />
-                                                <p className="text-sm text-gray-600 text-left">
-                                                    Contract End Date: {new Date().toLocaleDateString('en-GB')}
+                                                <User className="w-5 h-5 text-blue-600" />
+                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                    Owner: {vehicle.ownerName}
                                                 </p>
                                             </div>
-                                            {vehicle.advanceAmount > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    <IndianRupee className="w-5 h-5 text-red-600" />
-                                                    <p className="text-sm text-gray-600 text-left">
-                                                        Advance to Refund: ₹{vehicle.advanceAmount}
-                                                    </p>
-                                                </div>
-                                            )}
                                         </div>
-                                        <p className="mt-4 text-sm text-red-600">
-                                            This action cannot be undone. The vehicle will be removed from the system.
-                                        </p>
                                     </div>
 
                                     <div className="mt-6 flex justify-end gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setShowEndContractModal(false)}
-                                            className="inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                            className={`inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium focus:outline-none ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-900' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             disabled={isLoading}
                                         >
                                             Cancel
@@ -949,18 +872,18 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <button
                                             type="button"
                                             onClick={handleConfirmEndContract}
-                                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none disabled:opacity-50"
+                                            className="inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 bg-red-600 text-white hover:bg-red-700"
                                             disabled={isLoading}
                                         >
                                             {isLoading ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                    Processing...
+                                                    Ending...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <XCircle className="w-4 h-4 mr-2" />
-                                                    End Contract
+                                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                                    Confirm End Contract
                                                 </>
                                             )}
                                         </button>
@@ -975,4 +898,4 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     );
 };
 
-export default VehicleEdit; 
+export default VehicleEdit;

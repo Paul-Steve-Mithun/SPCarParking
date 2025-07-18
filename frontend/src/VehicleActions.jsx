@@ -4,9 +4,11 @@ import { toast } from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from './contexts/ThemeContext';
 
 const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
     const navigate = useNavigate();
+    const { isDarkMode } = useTheme();
     const [loading, setLoading] = useState(false);
     const [showExtendForm, setShowExtendForm] = useState(false);
     const [additionalDays, setAdditionalDays] = useState('');
@@ -116,7 +118,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+                        <div className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/80' : 'bg-black/50'}`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -130,7 +132,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="relative bg-white rounded-lg shadow-xl overflow-hidden w-96">
+                                <Dialog.Panel className={`relative rounded-lg shadow-xl overflow-hidden w-96 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                                     <div className="bg-gradient-to-r from-red-500 to-red-600 p-6">
                                         <div className="flex flex-col gap-1">
                                             <div className="flex justify-between items-center">
@@ -172,20 +174,16 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         </div>
                                     </div>
                                     <div className="p-6">
-                                        <p className="text-gray-600 mb-6">Select an action for this vehicle:</p>
+                                        <p className={`mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Select an action for this vehicle:</p>
                                         <div className="flex flex-col gap-3">
                                             {/* Transaction Mode Buttons */}
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 font-medium mb-2">Transaction Mode</label>
+                                                <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Transaction Mode</label>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <button
                                                         type="button"
                                                         onClick={() => setTransactionMode('Cash')}
-                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                            transactionMode === 'Cash'
-                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                        }`}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${transactionMode === 'Cash' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                                     >
                                                         <Wallet className="h-5 w-5 mr-2" />
                                                         Cash
@@ -196,11 +194,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     <button
                                                         type="button"
                                                         onClick={() => setTransactionMode('UPI')}
-                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                            transactionMode === 'UPI'
-                                                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                        }`}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${transactionMode === 'UPI' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                                     >
                                                         <CreditCard className="h-5 w-5 mr-2" />
                                                         UPI
@@ -213,16 +207,12 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
 
                                             {/* Received By Buttons */}
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 font-medium mb-2">Received By</label>
+                                                <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Received By</label>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <button
                                                         type="button"
                                                         onClick={() => setReceivedBy('Balu')}
-                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                            receivedBy === 'Balu'
-                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                        }`}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${receivedBy === 'Balu' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                                     >
                                                         <User className="h-5 w-5 mr-2" />
                                                         Balu
@@ -233,11 +223,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     <button
                                                         type="button"
                                                         onClick={() => setReceivedBy('Mani')}
-                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                                            receivedBy === 'Mani'
-                                                                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                        }`}
+                                                        className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${receivedBy === 'Mani' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                                     >
                                                         <User className="h-5 w-5 mr-2" />
                                                         Mani
@@ -254,7 +240,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                         <button
                                                             onClick={() => setShowExtendForm(true)}
                                                             disabled={loading}
-                                                            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                                                            className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-500 text-white hover:bg-green-600'}`}
                                                         >
                                                             <PlusCircleIcon className="w-5 h-5" />
                                                             <span className="font-medium">Extend Rental</span>
@@ -262,10 +248,10 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     ) : (
                                                         <div className="space-y-3">
                                                             <div className="flex justify-between items-center">
-                                                                <span className="text-sm font-medium text-gray-700">Extend Rental Period</span>
+                                                                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Extend Rental Period</span>
                                                                 <button
                                                                     onClick={() => setShowExtendForm(false)}
-                                                                    className="text-gray-500 hover:text-gray-700"
+                                                                    className={`transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
                                                                 >
                                                                     <XIcon className="w-5 h-5" />
                                                                 </button>
@@ -275,7 +261,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                                     type="number"
                                                                     value={additionalDays}
                                                                     onChange={(e) => setAdditionalDays(e.target.value)}
-                                                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                                    className={`flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                                                     placeholder="Number of days"
                                                                     min="1"
                                                                     disabled={loading}
@@ -283,7 +269,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                                 <button
                                                                     onClick={handleExtendRental}
                                                                     disabled={loading || !additionalDays}
-                                                                    className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-base font-medium flex items-center gap-2"
+                                                                    className={`rounded px-6 py-2 flex items-center gap-2 font-medium transition-colors disabled:opacity-50 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-500 text-white hover:bg-green-600'}`}
                                                                 >
                                                                     {loading ? (
                                                                         <>
@@ -301,9 +287,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                             ) : (
                                                 <div className="space-y-4">
                                                     <div className="relative">
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                            Rent Amount (Optional)
-                                                        </label>
+                                                        <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rent Amount (Optional)</label>
                                                         <div className="relative">
                                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                                 <IndianRupee className="h-5 w-5 text-gray-400" />
@@ -313,20 +297,18 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                                 value={customRentPrice}
                                                                 onChange={(e) => setCustomRentPrice(e.target.value)}
                                                                 placeholder={`Current: ₹${vehicle.rentPrice}`}
-                                                                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                className={`pl-10 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                                                 min="0"
                                                                 disabled={loading}
                                                             />
                                                         </div>
-                                                        <p className="mt-1 text-sm text-gray-500">
-                                                            Leave empty to use current rent price
-                                                        </p>
+                                                        <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Leave empty to use current rent price</p>
                                                     </div>
 
                                                     <button 
                                                         onClick={handlePaidRent}
                                                         disabled={loading}
-                                                        className="w-full flex items-center justify-center bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600 transition-colors disabled:opacity-50 text-base font-medium gap-2"
+                                                        className={`w-full flex items-center justify-center px-4 py-3 rounded transition-colors disabled:opacity-50 text-base font-medium gap-2 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-500 text-white hover:bg-green-600'}`}
                                                     >
                                                         {loading ? (
                                                             <>
@@ -367,7 +349,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                        <div className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -381,33 +363,33 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                     <div className="flex items-center justify-center mb-6">
-                                        <div className="bg-red-100 rounded-full p-3">
+                                        <div className={`rounded-full p-3 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'}`}> 
                                             <AlertCircle className="h-6 w-6 text-red-600" />
                                         </div>
                                     </div>
                                     
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-bold text-center text-gray-900 mb-4"
+                                        className={`text-lg font-bold text-center mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}
                                     >
                                         Confirm Extension
                                     </Dialog.Title>
 
-                                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                    <div className={`rounded-lg p-4 mb-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}> 
                                         <div className="space-y-2">
-                                            <p className="text-sm text-gray-600">
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                 <span className="font-medium">Vehicle:</span> {vehicle.vehicleNumber}
                                             </p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                 <span className="font-medium">Description:</span> {vehicle.vehicleDescription}
                                             </p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                 <span className="font-medium">Contact:</span>{' '}
                                                 <a 
                                                     href={`tel:${vehicle.contactNumber}`}
-                                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                    className={`hover:underline ${isDarkMode ? 'text-blue-400 hover:text-blue-200' : 'text-blue-600 hover:text-blue-800'}`}
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     {vehicle.contactNumber}
@@ -415,28 +397,28 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                             </p>
                                             {confirmationType === 'monthly' ? (
                                                 <>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Monthly Rent:</span> ₹{customRentPrice || vehicle.rentPrice}
                                                     </p>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Payment Mode:</span> {transactionMode}
                                                     </p>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Received By:</span> {receivedBy}
                                                     </p>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Days to Extend:</span> {additionalDays}
                                                     </p>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Amount:</span> ₹{vehicle.rentPrice * additionalDays}
                                                     </p>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Payment Mode:</span> {transactionMode}
                                                     </p>
-                                                    <p className="text-sm text-gray-600">
+                                                    <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                         <span className="font-medium">Received By:</span> {receivedBy}
                                                     </p>
                                                 </>
@@ -447,7 +429,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                     <div className="flex flex-col sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+                                            className={`inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-900' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             onClick={() => setShowConfirmModal(false)}
                                             disabled={loading}
                                         >
@@ -455,7 +437,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center items-center rounded-lg border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none disabled:opacity-50 gap-2"
+                                            className={`inline-flex justify-center items-center rounded-lg border border-transparent px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 gap-2 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-600 text-white hover:bg-green-700'}`}
                                             onClick={handleConfirmedSubmit}
                                             disabled={loading}
                                         >

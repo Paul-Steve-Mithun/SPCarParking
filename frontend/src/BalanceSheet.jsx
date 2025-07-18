@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from './contexts/ThemeContext';
 import { 
     DollarSign, 
     Calendar,
@@ -19,6 +20,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 export function BalanceSheet() {
+    const { isDarkMode } = useTheme();
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -556,15 +558,18 @@ export function BalanceSheet() {
     };
 
     const BalanceCard = ({ title, icon, value, bgGradient }) => (
-        <div className={`rounded-xl p-2 sm:p-3 bg-gradient-to-br ${bgGradient} border border-white/50 shadow-sm hover:shadow-md transition-all duration-200`}>
+        <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200 
+            ${isDarkMode 
+                ? 'border-gray-700 bg-gray-800/90' 
+                : `bg-gradient-to-br ${bgGradient} border-white/50`
+            }`
+        }>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-white/90 shadow-sm">
-                        {icon}
-                    </div>
+                    <div className={`p-1.5 sm:p-2 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white/90'}`}>{icon}</div>
                     <div>
-                        <p className="text-[10px] sm:text-xs text-gray-600 font-medium">{title}</p>
-                        <p className="text-sm sm:text-base font-bold text-gray-900">₹{value.toFixed(2)}</p>
+                        <p className={`text-[10px] sm:text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>
+                        <p className={`text-sm sm:text-base font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>₹{value.toFixed(2)}</p>
                     </div>
                 </div>
             </div>
@@ -578,19 +583,19 @@ export function BalanceSheet() {
             .reduce((sum, tr) => sum + Math.abs(tr.amount), 0);
         const transferTitle = user === 'Balu' ? 'Transfer to Mani' : 'Transfer to Balu';
         return (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className={`rounded-xl shadow-lg overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="p-3 sm:p-4">
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-3 sm:gap-0">
                         <div className="flex items-center gap-3">
-                            <div className={`rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold ${user === 'Balu' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{user[0]}</div>
-                            <span className="text-lg sm:text-xl font-extrabold tracking-wide">{user === 'Balu' ? 'Balu' : 'Mani'}</span>
+                            <div className={`rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold ${user === 'Balu' ? (isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700') : (isDarkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700')}`}>{user[0]}</div>
+                            <span className={`text-lg sm:text-xl font-extrabold tracking-wide ${isDarkMode ? 'text-gray-100' : ''}`}>{user === 'Balu' ? 'Balu' : 'Mani'}</span>
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                             <button
                                 onClick={() => generateDetailedPDF(user)}
                                 disabled={isLoading}
-                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
+                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
                                 title="Download Statement"
                             >
                                 <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -599,7 +604,7 @@ export function BalanceSheet() {
                             <button
                                 onClick={() => onTakeHome(user)}
                                 disabled={isLoading}
-                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
+                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
                                 title="Take Home"
                             >
                                 <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -608,7 +613,7 @@ export function BalanceSheet() {
                             <button
                                 onClick={() => handleTransfer(user)}
                                 disabled={isLoading}
-                                className="w-full sm:w-auto bg-blue-500 text-white px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 hover:bg-blue-600 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center"
+                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
                                 title="Transfer Cash"
                             >
                                 <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -679,12 +684,12 @@ export function BalanceSheet() {
     };
 
     return (
-        <div className="max-w-[1920px] mx-auto px-2 py-2 sm:px-4">
+        <div className={`max-w-[1920px] mx-auto px-2 py-2 sm:px-4 ${isDarkMode ? 'bg-gray-900 min-h-screen' : ''}`}>
             <Toaster position="top-right" />
             
             {/* Header Section */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
+            <div className={`rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className={`bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6`}>
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center sm:text-left">
                             Balance Sheet Dashboard
@@ -694,25 +699,25 @@ export function BalanceSheet() {
                                 <select 
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="w-full appearance-none bg-white text-blue-600 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                    className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 ${isDarkMode ? 'bg-gray-800 text-blue-300 border border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 hover:bg-gray-50'}`}
                                 >
                                     {monthNames.map((month, index) => (
-                                        <option key={index} value={index}>{month}</option>
+                                        <option key={index} value={index} className={isDarkMode ? 'bg-gray-800 text-blue-300' : 'bg-white text-blue-600'}>{month}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
+                                <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
                             </div>
                             <div className="relative w-full sm:w-32">
                                 <select 
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-full appearance-none bg-white text-blue-600 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-medium shadow-md hover:bg-gray-50 transition-colors duration-200"
+                                    className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 ${isDarkMode ? 'bg-gray-800 text-blue-300 border border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 hover:bg-gray-50'}`}
                                 >
                                     {Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i).map(year => (
-                                        <option key={year} value={year}>{year}</option>
+                                        <option key={year} value={year} className={isDarkMode ? 'bg-gray-800 text-blue-300' : 'bg-white text-blue-600'}>{year}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
+                                <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
                             </div>
                         </div>
                     </div>
@@ -738,45 +743,39 @@ export function BalanceSheet() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50">
                     <div 
-                        className="fixed inset-0 backdrop-blur-sm bg-black/30"
+                        className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/70' : 'bg-black/30'}`}
                         onClick={() => setIsModalOpen(false)}
                     />
                     <div className="fixed inset-0 flex items-center justify-center p-4">
                         <div 
-                            className="bg-white rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl"
+                            className={`rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                             onClick={e => e.stopPropagation()}
                         >
                             {/* Header */}
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-3">
-                                    <div className="p-2 bg-indigo-100 rounded-xl">
+                                    <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
                                         <Wallet className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            Withdraw Amount
-                                        </h3>
-                                        <p className="text-sm text-gray-500">
-                                            {selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}
-                                        </p>
+                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Withdraw Amount</h3>
+                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}</p>
                                     </div>
                                 </div>
                                 <button 
                                     onClick={() => setIsModalOpen(false)}
-                                    className="p-3 hover:bg-gray-100 rounded-full transition-colors"
+                                    className={`p-3 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                                 >
-                                    <X className="w-6 h-6 text-gray-500" />
+                                    <X className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                                 </button>
                             </div>
                             
                             {/* Amount Input */}
                             <div className="mb-8">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Enter Amount
-                                </label>
+                                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enter Amount</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <IndianRupee className="w-5 h-5 text-gray-400" />
+                                        <IndianRupee className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
                                     </div>
                                     <input
                                         type="text"
@@ -788,7 +787,7 @@ export function BalanceSheet() {
                                                 setTakeHomeAmount(value);
                                             }
                                         }}
-                                        className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-border-500 outline-none text-base transition-shadow"
+                                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
                                         placeholder="0.00"
                                         autoFocus
                                     />
@@ -799,7 +798,7 @@ export function BalanceSheet() {
                             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                    className={`w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
                                 >
                                     <X className="w-4 h-4" />
                                     Cancel
@@ -807,7 +806,7 @@ export function BalanceSheet() {
                                 <button
                                     onClick={handleSubmitTakeHome}
                                     disabled={isLoading || !takeHomeAmount}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                    className={`w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed' : 'text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                                 >
                                     {isLoading ? (
                                         <>
@@ -829,38 +828,31 @@ export function BalanceSheet() {
 
             {isTransferModalOpen && (
                 <div className="fixed inset-0 z-50">
-                    <div className="fixed inset-0 backdrop-blur-sm bg-black/30" onClick={() => setIsTransferModalOpen(false)} />
+                    <div className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/70' : 'bg-black/30'}`} onClick={() => setIsTransferModalOpen(false)} />
                     <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className={`rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
                             {/* Header */}
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center space-x-3">
-                                    <div className="p-2 bg-blue-100 rounded-xl">
+                                    <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                                         <ArrowRight className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            Transfer Cash
-                                        </h3>
-                                        <p className="text-sm text-gray-500">
-                                            Transfer between {transferFrom === 'Balu' ? 'Balu' : 'Mani'} and {transferTo === 'Balu' ? 'Balu' : 'Mani'} for {monthNames[selectedMonth]} {selectedYear}
-                                        </p>
+                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Transfer Cash</h3>
+                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Transfer between {transferFrom === 'Balu' ? 'Balu' : 'Mani'} and {transferTo === 'Balu' ? 'Balu' : 'Mani'} for {monthNames[selectedMonth]} {selectedYear}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsTransferModalOpen(false)} className="p-3 hover:bg-gray-100 rounded-full transition-colors">
-                                    <X className="w-6 h-6 text-gray-500" />
+                                <button onClick={() => setIsTransferModalOpen(false)} className={`p-3 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                                    <X className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                                 </button>
                             </div>
                             {/* From Dropdown */}
                             <div className="mb-4">
-                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                    <User className="w-4 h-4 text-blue-600" />
-                                    From
-                                </label>
+                                <label className={`text-sm font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> <User className="w-4 h-4 text-blue-600" /> From </label>
                                 <select
                                     value={transferFrom}
                                     onChange={e => setTransferFrom(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow"
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                 >
                                     <option value="Balu">Balu</option>
                                     <option value="Mani">Mani</option>
@@ -868,14 +860,11 @@ export function BalanceSheet() {
                             </div>
                             {/* To Dropdown */}
                             <div className="mb-4">
-                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-blue-600" />
-                                    To
-                                </label>
+                                <label className={`text-sm font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> <Users className="w-4 h-4 text-blue-600" /> To </label>
                                 <select
                                     value={transferTo}
                                     onChange={e => setTransferTo(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow"
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                 >
                                     <option value="Balu">Balu</option>
                                     <option value="Mani">Mani</option>
@@ -883,28 +872,22 @@ export function BalanceSheet() {
                             </div>
                             {/* Date Input */}
                             <div className="mb-4">
-                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                    <CalendarDays className="w-4 h-4 text-blue-600" />
-                                    Date
-                                </label>
+                                <label className={`text-sm font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> <CalendarDays className="w-4 h-4 text-blue-600" /> Date </label>
                                 <input
                                     type="date"
                                     value={transferDate}
                                     onChange={e => setTransferDate(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow bg-white text-gray-700"
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                     max={new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0]}
                                     min={new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0]}
                                 />
                             </div>
                             {/* Amount Input */}
                             <div className="mb-8">
-                                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                    <IndianRupee className="w-4 h-4 text-blue-600" />
-                                    Amount
-                                </label>
+                                <label className={`text-sm font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> <IndianRupee className="w-4 h-4 text-blue-600" /> Amount </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <IndianRupee className="w-5 h-5 text-gray-400" />
+                                        <IndianRupee className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
                                     </div>
                                     <input
                                         type="text"
@@ -914,7 +897,7 @@ export function BalanceSheet() {
                                             const value = e.target.value;
                                             if (value === '' || /^\d*\.?\d*$/.test(value)) setTransferAmount(value);
                                         }}
-                                        className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow"
+                                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -923,7 +906,7 @@ export function BalanceSheet() {
                             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
                                 <button
                                     onClick={() => setIsTransferModalOpen(false)}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                    className={`w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
                                 >
                                     <X className="w-4 h-4" />
                                     Cancel
@@ -961,7 +944,7 @@ export function BalanceSheet() {
                                         }
                                     }}
                                     disabled={!transferAmount || transferFrom === transferTo || !transferDate || isLoading}
-                                    className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                    className={`w-full sm:w-auto px-4 py-2.5 text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed' : 'text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                                 >
                                     {isLoading ? (
                                         <>
