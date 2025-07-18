@@ -6,12 +6,14 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from './contexts/ThemeContext';
 
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 export function ManageVehicles() {
+    const { isDarkMode } = useTheme();
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -718,7 +720,7 @@ export function ManageVehicles() {
         return (
             <div 
                 key={vehicle._id} 
-                className="p-4 hover:bg-gray-50 cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
+                className={`p-4 hover:shadow-md cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                 onClick={() => setSelectedVehicle(vehicle)}
             >
                 {/* Printer and Bell Buttons - Absolute positioned */}
@@ -751,7 +753,7 @@ export function ManageVehicles() {
                 {/* Card Content */}
                 <div className="flex-grow space-y-2 sm:space-y-1">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <p className="font-semibold text-gray-800">{vehicle.vehicleNumber}</p>
+                        <p className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{vehicle.vehicleNumber}</p>
                         <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
                             {vehicle.lotNumber || 'Open'}
                         </span>
@@ -803,15 +805,11 @@ export function ManageVehicles() {
 
         return (
             <div 
-                className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200 ${
-                    isClosing ? 'bg-black/0 backdrop-blur-none' : 'bg-black/50 backdrop-blur-sm'
-                }`}
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200 ${isClosing ? 'bg-black/0 backdrop-blur-none' : isDarkMode ? 'bg-black/80 backdrop-blur-sm' : 'bg-black/50 backdrop-blur-sm'}`}
                 onClick={handleClose}
             >
                 <div 
-                    className={`bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ${
-                        isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-                    }`}
+                    className={`rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                     onClick={e => e.stopPropagation()}
                     style={{
                         animation: isClosing ? 'none' : 'modal-popup 0.2s ease-out'
@@ -832,7 +830,7 @@ export function ManageVehicles() {
                         `}
                     </style>
                     {/* Gradient Header */}
-                    <div className="bg-gradient-to-r bg-red-600 p-4 rounded-t-xl">
+                    <div className={`bg-gradient-to-r from-red-700 to-orange-700 p-4 rounded-t-xl`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                                 <div className="bg-white/20 p-2 rounded-full">
@@ -853,7 +851,7 @@ export function ManageVehicles() {
                     </div>
 
                     {/* Vehicle Details */}
-                    <div className="p-4 border-b">
+                    <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                         <div className="flex justify-between items-start">
                             <div>
                                 <h4 className="font-medium text-gray-900">{vehicle.vehicleNumber}</h4>
@@ -870,12 +868,12 @@ export function ManageVehicles() {
                     <div className="p-4 space-y-4">
                         <div>
                             <p className="text-sm font-medium text-gray-700 mb-2">Message Preview</p>
-                            <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 border border-gray-200">
+                            <div className={`bg-gray-900 p-4 rounded-lg text-sm text-gray-300 border border-gray-700`}>
                                 {previewMessage}
                             </div>
                         </div>
 
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:space-x-3 space-y-2 sm:space-y-0">
+                        <div className={`bg-red-900/30 border border-red-700 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:space-x-3 space-y-2 sm:space-y-0`}>
                             <div className="text-red-500 mt-0.5">
                                 <Bell className="w-4 h-4" />
                             </div>
@@ -893,16 +891,16 @@ export function ManageVehicles() {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-b-xl">
+                    <div className={`flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-3 sm:p-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} rounded-b-xl`}>
                         <button
                             onClick={handleClose}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 w-full sm:w-auto"
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 w-full sm:w-auto ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}`}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={() => sendNotificationToOwner(vehicle)}
-                            className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-orange-600 rounded-lg hover:from-red-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] w-full sm:w-auto break-words"
+                            className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] w-full sm:w-auto break-words ${isDarkMode ? 'text-white bg-gradient-to-r from-red-600 to-orange-700 hover:from-red-700 hover:to-orange-800' : 'text-white bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700'}`}
                         >
                             <Send className="w-4 h-4 mr-2" />
                             Send Reminder
@@ -1193,7 +1191,7 @@ export function ManageVehicles() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className={`max-w-6xl mx-auto shadow-xl rounded-xl overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
             <Toaster position="top-right" />
             
             <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 sm:p-6">
@@ -1224,7 +1222,7 @@ export function ManageVehicles() {
                         placeholder="Search by vehicle number, description, owner name, or lot number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm sm:text-base"
+                        className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm sm:text-base ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
                     />
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 </div>
@@ -1234,21 +1232,13 @@ export function ManageVehicles() {
             <div className="sm:hidden border-b">
                 <div className="flex">
                     <button
-                        className={`flex-1 py-3 text-sm font-medium border-b-2 ${
-                            activeTab === 'monthly' 
-                                ? 'border-red-500 text-red-600' 
-                                : 'border-transparent text-gray-500'
-                        }`}
+                        className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'monthly' ? (isDarkMode ? 'border-red-400 text-red-300' : 'border-red-500 text-red-600') : (isDarkMode ? 'border-transparent text-gray-400' : 'border-transparent text-gray-500')}`}
                         onClick={() => setActiveTab('monthly')}
                     >
                         Monthly ({filteredMonthlyVehicles.length})
                     </button>
                     <button
-                        className={`flex-1 py-3 text-sm font-medium border-b-2 ${
-                            activeTab === 'daily' 
-                                ? 'border-red-500 text-red-600' 
-                                : 'border-transparent text-gray-500'
-                        }`}
+                        className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'daily' ? (isDarkMode ? 'border-red-400 text-red-300' : 'border-red-500 text-red-600') : (isDarkMode ? 'border-transparent text-gray-400' : 'border-transparent text-gray-500')}`}
                         onClick={() => setActiveTab('daily')}
                     >
                         Daily ({filteredDailyVehicles.length})
@@ -1267,7 +1257,7 @@ export function ManageVehicles() {
                                 {filteredMonthlyVehicles.length === 0 ? (
                                     <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                                 ) : (
-                                    <div className="divide-y divide-gray-200">
+                                    <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                         {filteredMonthlyVehicles.map(renderVehicleCard)}
                                     </div>
                                 )}
@@ -1277,7 +1267,7 @@ export function ManageVehicles() {
                                 {filteredDailyVehicles.length === 0 ? (
                                     <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                                 ) : (
-                                    <div className="divide-y divide-gray-200">
+                                    <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                         {filteredDailyVehicles.map(renderVehicleCard)}
                                     </div>
                                 )}
@@ -1287,26 +1277,26 @@ export function ManageVehicles() {
 
                     {/* Desktop View */}
                     <div className="hidden sm:grid sm:grid-cols-2 gap-4 p-4">
-                        <div className="bg-white shadow rounded-lg">
-                            <h2 className="text-xl font-semibold p-4 border-b">
+                        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg`}>
+                            <h2 className={`text-xl font-semibold p-4 border-b ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-900 border-gray-200'}`}>
                                 Monthly ({filteredMonthlyVehicles.length})
                             </h2>
                             {filteredMonthlyVehicles.length === 0 ? (
                                 <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                             ) : (
-                                <div className="divide-y divide-gray-200">
+                                <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                     {filteredMonthlyVehicles.map(renderVehicleCard)}
                                 </div>
                             )}
                         </div>
-                        <div className="bg-white shadow rounded-lg">
-                            <h2 className="text-xl font-semibold p-4 border-b">
+                        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg`}>
+                            <h2 className={`text-xl font-semibold p-4 border-b ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-900 border-gray-200'}`}>
                                 Daily ({filteredDailyVehicles.length})
                             </h2>
                             {filteredDailyVehicles.length === 0 ? (
                                 <div className="p-6 text-center text-gray-500">No expired vehicles</div>
                             ) : (
-                                <div className="divide-y divide-gray-200">
+                                <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                                     {filteredDailyVehicles.map(renderVehicleCard)}
                                 </div>
                             )}

@@ -5,12 +5,14 @@ import VehicleEdit from './VehicleEdit';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode'
+import { useTheme } from './contexts/ThemeContext';
 
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 export function AdminPanel() {
+    const { isDarkMode } = useTheme();
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -872,7 +874,7 @@ export function AdminPanel() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
+        <div className={`max-w-4xl mx-auto shadow-xl rounded-xl overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
             <Toaster position="top-right" />
             
             <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6 flex justify-between items-center">
@@ -901,38 +903,34 @@ export function AdminPanel() {
                         placeholder="Search by vehicle number, owner name, or lot number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
                     />
                     <SearchIcon className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
                 </div>
             </div>
 
             {loading ? (
-                <div className="p-6 text-center text-gray-500">Loading vehicles...</div>
+                <div className={`p-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading vehicles...</div>
             ) : filteredVehicles.length === 0 ? (
-                <div className="p-6 text-center text-gray-500">No vehicles found</div>
+                <div className={`p-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No vehicles found</div>
             ) : (
-                <div className="divide-y divide-gray-200">
+                <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                     {filteredVehicles.map(vehicle => (
                         <div 
                             key={vehicle._id} 
-                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
                         >
                             <div className="flex-grow cursor-pointer w-full" onClick={() => setSelectedVehicle(vehicle)}>
                                 {/* Top row with vehicle number and badges */}
                                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <p className="font-semibold text-gray-800 min-w-[120px]">{vehicle.vehicleNumber}</p>
+                                    <p className={`font-semibold min-w-[120px] ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{vehicle.vehicleNumber}</p>
                                     
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <span className={`px-2 py-1 rounded-full text-xs ${
-                                            vehicle.vehicleType === 'own' 
-                                                ? 'bg-purple-100 text-purple-600' 
-                                                : 'bg-orange-100 text-orange-600'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${vehicle.vehicleType === 'own' ? (isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-600') : (isDarkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-100 text-orange-600')}`}>
                                             {vehicle.vehicleType === 'own' ? 'Own' : 'T Board'}
                                         </span>
 
-                                        <span className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
+                                        <span className={`px-2 py-1 rounded-full text-xs ${isDarkMode ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
                                             {vehicle.lotNumber || 'Open'}
                                         </span>
 
@@ -941,18 +939,18 @@ export function AdminPanel() {
                                 </div>
 
                                 {/* Vehicle description */}
-                                <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{vehicle.vehicleDescription}</p>
 
                                 {/* Rental info */}
                                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <p className="text-sm text-gray-500">{renderRentalInfo(vehicle)}</p>
+                                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{renderRentalInfo(vehicle)}</p>
                                     {vehicle.rentalType === 'daily' && (
                                         <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
                                                 Total: ₹{vehicle.rentPrice * vehicle.numberOfDays}
                                             </span>
                                             {vehicle.status === 'inactive' && (
-                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs border border-red-200">
+                                                <span className={`px-2 py-0.5 rounded-full text-xs border font-bold ${isDarkMode ? 'bg-red-900/30 text-red-300 border-red-700' : 'bg-red-100 text-red-700 border-red-200'}`}>
                                                     <span className="font-bold">Due: ₹{calculateDueAmount(vehicle)}</span>
                                                 </span>
                                             )}
@@ -961,7 +959,7 @@ export function AdminPanel() {
                                 </div>
 
                                 {/* Remaining time */}
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                                     {getRemainingTime(vehicle.endDate)}
                                 </p>
                             </div>
@@ -976,7 +974,7 @@ export function AdminPanel() {
                                 </button>*/}
                                 <button 
                                     onClick={() => setSelectedVehicle(vehicle)}
-                                    className="text-gray-600 hover:text-blue-600 transition-colors p-2"
+                                    className={`transition-colors p-2 ${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
                                 >
                                     <UserCog2Icon className="w-5 h-5" />
                                 </button>
