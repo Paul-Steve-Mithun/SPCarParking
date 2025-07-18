@@ -12,12 +12,12 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        // Check localStorage first, then system preference
+        // Check localStorage first, otherwise default to light mode
         const saved = localStorage.getItem('spcarparking_theme');
         if (saved !== null) {
             return saved === 'dark';
         }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        return false; // Default to light mode
     });
 
     useEffect(() => {
