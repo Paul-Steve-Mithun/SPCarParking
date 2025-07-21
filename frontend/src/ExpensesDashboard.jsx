@@ -26,9 +26,35 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useTheme } from './contexts/ThemeContext';
 
+const ExpenseStatSkeleton = ({ isDarkMode }) => (
+    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md animate-pulse ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-center space-x-4">
+            <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} h-12 w-12`}></div>
+            <div>
+                <div className={`h-4 w-24 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                <div className={`h-7 w-32 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            </div>
+        </div>
+    </div>
+);
+
+const ExpenseTableRowSkeleton = ({ isDarkMode }) => (
+    <tr className="animate-pulse">
+        <td className="px-3 sm:px-6 py-4">
+            <div className={`h-4 w-8 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+        </td>
+        {Array.from({ length: 7 }).map((_, i) => (
+            <td key={i} className="px-3 sm:px-6 py-4">
+                <div className={`h-4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} ${i % 2 === 0 ? 'w-20' : 'w-28'}`}></div>
+            </td>
+        ))}
+    </tr>
+);
+
 export function ExpensesDashboard() {
     const { isDarkMode } = useTheme();
     const [expenses, setExpenses] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filteredData, setFilteredData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -86,6 +112,7 @@ export function ExpensesDashboard() {
     }, [searchQuery, expenses]);
 
     const fetchExpenses = async () => {
+        setIsLoading(true);
         try {
             const [expensesRes, statsRes] = await Promise.all([
                 fetch(`https://spcarparkingbknd.onrender.com/expenses?month=${selectedMonth}&year=${selectedYear}`),
@@ -110,6 +137,8 @@ export function ExpensesDashboard() {
 
         } catch (error) {
             toast.error('Failed to fetch expenses data');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -596,39 +625,49 @@ export function ExpensesDashboard() {
                 </div>
                 {/* Stats Cards */}
                 <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
-                        <div className="flex items-center space-x-4">
-                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
-                                <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
+                    {isLoading ? (
+                        <>
+                            <ExpenseStatSkeleton isDarkMode={isDarkMode} />
+                            <ExpenseStatSkeleton isDarkMode={isDarkMode} />
+                            <ExpenseStatSkeleton isDarkMode={isDarkMode} />
+                        </>
+                    ) : (
+                        <>
+                            <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
+                                <div className="flex items-center space-x-4">
+                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                        <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Total Expenses</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.totalExpenses.toFixed(2)}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Total Expenses</p>
-                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.totalExpenses.toFixed(2)}</p>
+                            <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
+                                <div className="flex items-center space-x-4">
+                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                        <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Balu's Expenses</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.baluExpenses.toFixed(2)}</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
-                        <div className="flex items-center space-x-4">
-                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
-                                <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
+                            <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
+                                <div className="flex items-center space-x-4">
+                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                        <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Mani's Expenses</p>
+                                        <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.maniExpenses.toFixed(2)}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Balu's Expenses</p>
-                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.baluExpenses.toFixed(2)}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200 ${isDarkMode ? 'bg-gradient-to-br from-yellow-900 to-yellow-800 border-gray-800' : 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-white'}`}> 
-                        <div className="flex items-center space-x-4">
-                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
-                                <User className={`w-6 h-6 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`} />
-                            </div>
-                            <div>
-                                <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-200' : 'text-gray-600'}`}>Mani's Expenses</p>
-                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{stats.maniExpenses.toFixed(2)}</p>
-                            </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
             {/* Transaction History section */}
@@ -691,69 +730,75 @@ export function ExpensesDashboard() {
                                             </tr>
                                         </thead>
                                         <tbody className={`${isDarkMode ? 'bg-gray-900 divide-gray-800' : 'bg-white divide-gray-200'}`}>
-                                            {filteredData.map((expense, index) => (
-                                                <tr key={expense._id} className={`${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`} onClick={e => {
-                                                    // Prevent edit modal if delete button is clicked
-                                                    if (e.target.closest('button')) return;
-                                                    handleEditExpense(expense);
-                                                }}>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{index + 1}</td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{new Date(expense.transactionDate).toLocaleDateString('en-GB')}</td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{expense.expenseType}</td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
-                                                        <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-' }>
-                                                            {expense.description ? (
-                                                                expense.description.length > 25 
-                                                                    ? `${expense.description.substring(0, 25)}...` 
-                                                                    : expense.description
-                                                            ) : '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                            expense.transactionMode === 'UPI' 
-                                                                ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
-                                                                : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
-                                                        }`}>
-                                                            {expense.transactionMode === 'UPI' ? (
-                                                                <>
-                                                                    <CreditCard className="w-3 h-3 mr-1" />
-                                                                    <span>UPI</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <DollarSign className="w-3 h-3 mr-1" />
-                                                                    <span>Cash</span>
-                                                                </>
-                                                            )}
-                                                        </span>
-                                                    </td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <User className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
-                                                            {expense.spentBy}
-                                                        </div>
-                                                    </td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}> 
-                                                        <div className="w-full text-right font-mono">
-                                                            <span className="inline-block w-[100px] text-right text-base">
-                                                                {expense.amount.toFixed(2)}
+                                            {isLoading ? (
+                                                Array.from({ length: 10 }).map((_, index) => (
+                                                    <ExpenseTableRowSkeleton key={index} isDarkMode={isDarkMode} />
+                                                ))
+                                            ) : (
+                                                filteredData.map((expense, index) => (
+                                                    <tr key={expense._id} className={`${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} cursor-pointer`} onClick={e => {
+                                                        // Prevent edit modal if delete button is clicked
+                                                        if (e.target.closest('button')) return;
+                                                        handleEditExpense(expense);
+                                                    }}>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{index + 1}</td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{new Date(expense.transactionDate).toLocaleDateString('en-GB')}</td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>{expense.expenseType}</td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+                                                            <div className="max-w-[150px] sm:max-w-[200px] overflow-hidden text-ellipsis" title={expense.description || '-' }>
+                                                                {expense.description ? (
+                                                                    expense.description.length > 25 
+                                                                        ? `${expense.description.substring(0, 25)}...` 
+                                                                        : expense.description
+                                                                ) : '-'}
+                                                            </div>
+                                                        </td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                expense.transactionMode === 'UPI' 
+                                                                    ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
+                                                                    : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                                                            }`}>
+                                                                {expense.transactionMode === 'UPI' ? (
+                                                                    <>
+                                                                        <CreditCard className="w-3 h-3 mr-1" />
+                                                                        <span>UPI</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <DollarSign className="w-3 h-3 mr-1" />
+                                                                        <span>Cash</span>
+                                                                    </>
+                                                                )}
                                                             </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}> 
-                                                        <div className="flex justify-center">
-                                                            <button
-                                                                onClick={e => { e.stopPropagation(); handleDeleteExpense(expense._id, expense); }}
-                                                                className={`transition-colors p-1 rounded-full ${isDarkMode ? 'text-red-400 hover:text-red-300 hover:bg-red-900' : 'text-red-600 hover:text-red-800 hover:bg-red-50'}`}
-                                                                title="Delete expense"
-                                                            >
-                                                                <TrashIcon className="w-5 h-5" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                        </td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <User className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
+                                                                {expense.spentBy}
+                                                            </div>
+                                                        </td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}> 
+                                                            <div className="w-full text-right font-mono">
+                                                                <span className="inline-block w-[100px] text-right text-base">
+                                                                    {expense.amount.toFixed(2)}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}> 
+                                                            <div className="flex justify-center">
+                                                                <button
+                                                                    onClick={e => { e.stopPropagation(); handleDeleteExpense(expense._id, expense); }}
+                                                                    className={`transition-colors p-1 rounded-full ${isDarkMode ? 'text-red-400 hover:text-red-300 hover:bg-red-900' : 'text-red-600 hover:text-red-800 hover:bg-red-50'}`}
+                                                                    title="Delete expense"
+                                                                >
+                                                                    <TrashIcon className="w-5 h-5" />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -837,6 +882,7 @@ export function ExpensesDashboard() {
                                         <div>
                                             <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Banknote className="w-4 h-4 mr-2 text-yellow-500" /> Amount </label>
                                             <div className="relative">
+                                                <span className={`absolute inset-y-0 left-0 flex items-center pl-3 font-bold ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`}>₹</span>
                                                 <input
                                                     type="number"
                                                     value={newExpense.amount}
@@ -1155,6 +1201,7 @@ export function ExpensesDashboard() {
                                             <div>
                                                 <label className={`flex items-center text-sm font-medium mb-2 ${isDarkMode ? 'text-yellow-200' : 'text-gray-700'}`}> <Banknote className="w-4 h-4 mr-2 text-yellow-500" /> Amount </label>
                                                 <div className="relative">
+                                                    <span className={`absolute inset-y-0 left-0 flex items-center pl-3 font-bold ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`}>₹</span>
                                                     <input
                                                         type="number"
                                                         value={editExpenseForm.amount}

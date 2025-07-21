@@ -854,11 +854,11 @@ export function ManageVehicles() {
                     <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                         <div className="flex justify-between items-start">
                             <div>
-                                <h4 className="font-medium text-gray-900">{vehicle.vehicleNumber}</h4>
-                                <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
+                                <h4 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</h4>
+                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{vehicle.vehicleDescription}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">Monthly Rent</p>
+                                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Monthly Rent</p>
                                 <p className="text-lg font-semibold text-red-600">₹{vehicle.rentPrice}</p>
                             </div>
                         </div>
@@ -867,23 +867,23 @@ export function ManageVehicles() {
                     {/* Message Preview */}
                     <div className="p-4 space-y-4">
                         <div>
-                            <p className="text-sm font-medium text-gray-700 mb-2">Message Preview</p>
-                            <div className={`bg-gray-900 p-4 rounded-lg text-sm text-gray-300 border border-gray-700`}>
+                            <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Message Preview</p>
+                            <div className={`p-4 rounded-lg text-sm border ${isDarkMode ? 'bg-gray-900 text-gray-300 border-gray-700' : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
                                 {previewMessage}
                             </div>
                         </div>
 
-                        <div className={`bg-red-900/30 border border-red-700 rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:space-x-3 space-y-2 sm:space-y-0`}>
-                            <div className="text-red-500 mt-0.5">
+                        <div className={`rounded-lg p-2 sm:p-3 flex flex-col sm:flex-row items-start sm:space-x-3 space-y-2 sm:space-y-0 border ${isDarkMode ? 'bg-red-900/30 border-red-700' : 'bg-red-100 border-red-200'}`}>
+                            <div className={`mt-0.5 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`}>
                                 <Bell className="w-4 h-4" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm text-red-800 break-words">
+                                <p className={`text-sm break-words ${isDarkMode ? 'text-red-200' : 'text-red-800'}`}>
                                     WhatsApp message will be sent to
                                     <br className="block sm:hidden" />
-                                    <span className="font-medium break-words"> {vehicle.contactNumber}</span>
+                                    <span className={`font-medium ${isDarkMode ? 'text-red-100' : 'text-red-900'}`}> {vehicle.contactNumber}</span>
                                 </p>
-                                <p className="text-xs text-red-600 mt-1">
+                                <p className={`text-xs mt-1 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                                     WhatsApp must be installed on your device
                                 </p>
                             </div>

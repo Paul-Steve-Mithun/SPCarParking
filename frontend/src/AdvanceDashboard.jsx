@@ -22,9 +22,36 @@ import 'jspdf-autotable';
 import { Dialog, Transition } from '@headlessui/react';
 import { useTheme } from './contexts/ThemeContext';
 
+const AdvanceStatSkeleton = ({ isDarkMode }) => (
+    <div className={`rounded-2xl p-4 sm:p-6 border shadow-md animate-pulse ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-center space-x-4">
+            <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} h-12 w-12`}></div>
+            <div>
+                <div className={`h-4 w-32 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                <div className={`h-7 w-24 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            </div>
+        </div>
+    </div>
+);
+
+const AdvanceTableRowSkeleton = ({ isDarkMode }) => (
+    <tr className="animate-pulse">
+        <td className="px-3 sm:px-6 py-4">
+            <div className={`h-4 w-8 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+        </td>
+        {Array.from({ length: 8 }).map((_, i) => (
+            <td key={i} className="px-3 sm:px-6 py-4">
+                <div className={`h-4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} ${i % 2 === 0 ? 'w-20' : 'w-28'}`}></div>
+            </td>
+        ))}
+    </tr>
+);
+
+
 export function AdvanceDashboard() {
     const { isDarkMode } = useTheme();
     const [vehicles, setVehicles] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filteredVehicles, setFilteredVehicles] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -61,6 +88,7 @@ export function AdvanceDashboard() {
     };
 
     const fetchData = async () => {
+        setIsLoading(true);
         try {
             // Get monthly data (for the selected month only)
             const monthlyResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances?month=${selectedMonth}&year=${selectedYear}`);
@@ -109,6 +137,8 @@ export function AdvanceDashboard() {
         } catch (error) {
             console.error('Failed to fetch data:', error);
             toast.error('Failed to fetch data');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -533,32 +563,41 @@ export function AdvanceDashboard() {
                         </div>
                         {/* Stats Cards */}
                         <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Monthly Advance Card */}
-                            <div className={`${isDarkMode ? 'bg-gradient-to-br from-teal-900 to-teal-800 border-gray-800' : 'bg-gradient-to-br from-teal-50 to-teal-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
-                                <div className="flex items-center space-x-4">
-                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
-                                        <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                            {isLoading ? (
+                                <>
+                                    <AdvanceStatSkeleton isDarkMode={isDarkMode} />
+                                    <AdvanceStatSkeleton isDarkMode={isDarkMode} />
+                                </>
+                            ) : (
+                                <>
+                                    {/* Monthly Advance Card */}
+                                    <div className={`${isDarkMode ? 'bg-gradient-to-br from-teal-900 to-teal-800 border-gray-800' : 'bg-gradient-to-br from-teal-50 to-teal-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
+                                        <div className="flex items-center space-x-4">
+                                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                                <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`} />
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-600'}`}>Monthly Advance (Net)</p>
+                                                <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-400' : isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>
+                                                    {stats.monthlyAdvance < 0 ? '-' : ''}₹{Math.abs(stats.monthlyAdvance).toFixed(2)}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-teal-200' : 'text-gray-600'}`}>Monthly Advance (Net)</p>
-                                        <p className={`text-lg sm:text-2xl font-bold ${stats.monthlyAdvance < 0 ? 'text-red-400' : isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>
-                                            {stats.monthlyAdvance < 0 ? '-' : ''}₹{Math.abs(stats.monthlyAdvance).toFixed(2)}
-                                        </p>
+                                    {/* Total Advance Card */}
+                                    <div className={`${isDarkMode ? 'bg-gradient-to-br from-cyan-900 to-cyan-800 border-gray-800' : 'bg-gradient-to-br from-cyan-50 to-cyan-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
+                                        <div className="flex items-center space-x-4">
+                                            <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
+                                                <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-cyan-300' : 'text-cyan-600'}`} />
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-medium ${isDarkMode ? 'text-cyan-200' : 'text-gray-600'}`}>Total Advance (Till Date)</p>
+                                                <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-cyan-100' : 'text-gray-900'}`}>₹{stats.totalAdvance.toFixed(2)}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            {/* Total Advance Card */}
-                            <div className={`${isDarkMode ? 'bg-gradient-to-br from-cyan-900 to-cyan-800 border-gray-800' : 'bg-gradient-to-br from-cyan-50 to-cyan-100 border-white'} rounded-2xl p-4 sm:p-6 border shadow-md hover:shadow-lg transition-all duration-200`}>
-                                <div className="flex items-center space-x-4">
-                                    <div className={`p-3 rounded-xl shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}> 
-                                        <DollarSign className={`w-6 h-6 ${isDarkMode ? 'text-cyan-300' : 'text-cyan-600'}`} />
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm font-medium ${isDarkMode ? 'text-cyan-200' : 'text-gray-600'}`}>Total Advance (Till Date)</p>
-                                        <p className={`text-lg sm:text-2xl font-bold ${isDarkMode ? 'text-cyan-100' : 'text-gray-900'}`}>₹{stats.totalAdvance.toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
                     {/* Second Main Div - Transaction History and Table */}
@@ -578,7 +617,7 @@ export function AdvanceDashboard() {
                             <div className="overflow-x-auto">
                                 <div className="inline-block min-w-full align-middle">
                                     <div className="overflow-hidden">
-                                        {filteredVehicles.length === 0 ? (
+                                        {filteredVehicles.length === 0 && !isLoading ? (
                                             <div className={`text-center py-8 ${isDarkMode ? 'text-teal-300' : 'text-gray-500'}`}>No transactions found matching your search</div>
                                         ) : (
                                             <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
@@ -674,54 +713,60 @@ export function AdvanceDashboard() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className={`${isDarkMode ? 'bg-gray-900 divide-gray-800' : 'bg-white divide-gray-200'}`}>
-                                                    {filteredVehicles.map((vehicle, index) => (
-                                                        <tr 
-                                                            key={vehicle._id} 
-                                                            className={`transition-colors duration-150 ${
-                                                                vehicle.advanceRefund 
-                                                                    ? isDarkMode ? 'bg-red-900 hover:bg-red-800' : 'bg-red-50 hover:bg-red-100' 
-                                                                    : isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
-                                                            }`}
-                                                        >
-                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{index + 1}</td>
-                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.advanceRefund 
-                                                                    ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
-                                                                    : new Date(vehicle.startDate).toLocaleDateString('en-GB')}</td>
-                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</td>
-                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.vehicleDescription}</td>
-                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.lotNumber || 'Open'}</td>
-                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.parkingType === 'private' ? 'Private' : 'Open'}</td>
-                                                            <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}><span className="inline-flex items-center gap-1"><User className={`w-4 h-4 ${isDarkMode ? 'text-teal-400' : 'text-gray-500'}`} />{vehicle.receivedBy || 'N/A'}</span></td>
-                                                            <td className="px-3 sm:px-6 py-3 sm:py-4">
-                                                                <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
-                                                                    vehicle.transactionMode === 'UPI' 
-                                                                        ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
-                                                                        : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
-                                                                }`}>
-                                                                    {vehicle.transactionMode === 'UPI' ? (
-                                                                        <>
-                                                                            <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                            <span>UPI</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                                                                            <span>Cash</span>
-                                                                        </>
-                                                                    )}
-                                                                </span>
-                                                            </td>
-                                                            <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? vehicle.advanceRefund ? 'text-red-400' : 'text-teal-100' : vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}`}>
-                                                                <div className="w-full text-right font-mono">
-                                                                    <span className={`inline-block w-[90px] text-left text-base`}>
-                                                                        {vehicle.advanceRefund 
-                                                                            ? `${vehicle.advanceRefund.toFixed(2)}`
-                                                                            : vehicle.advanceAmount.toFixed(2)}
+                                                    {isLoading ? (
+                                                        Array.from({ length: 10 }).map((_, index) => (
+                                                            <AdvanceTableRowSkeleton key={index} isDarkMode={isDarkMode} />
+                                                        ))
+                                                    ) : (
+                                                        filteredVehicles.map((vehicle, index) => (
+                                                            <tr 
+                                                                key={vehicle._id} 
+                                                                className={`transition-colors duration-150 ${
+                                                                    vehicle.advanceRefund 
+                                                                        ? isDarkMode ? 'bg-red-900 hover:bg-red-800' : 'bg-red-50 hover:bg-red-100' 
+                                                                        : isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{index + 1}</td>
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.advanceRefund 
+                                                                        ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
+                                                                        : new Date(vehicle.startDate).toLocaleDateString('en-GB')}</td>
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</td>
+                                                                <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.vehicleDescription}</td>
+                                                                <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.lotNumber || 'Open'}</td>
+                                                                <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}>{vehicle.parkingType === 'private' ? 'Private' : 'Open'}</td>
+                                                                <td className={`px-3 sm:px-6 py-3 sm:py-4 text-sm ${isDarkMode ? 'text-teal-300' : 'text-gray-600'}`}><span className="inline-flex items-center gap-1"><User className={`w-4 h-4 ${isDarkMode ? 'text-teal-400' : 'text-gray-500'}`} />{vehicle.receivedBy || 'N/A'}</span></td>
+                                                                <td className="px-3 sm:px-6 py-3 sm:py-4">
+                                                                    <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
+                                                                        vehicle.transactionMode === 'UPI' 
+                                                                            ? isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800' 
+                                                                            : isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'
+                                                                    }`}>
+                                                                        {vehicle.transactionMode === 'UPI' ? (
+                                                                            <>
+                                                                                <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                                <span>UPI</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                                                                                <span>Cash</span>
+                                                                            </>
+                                                                        )}
                                                                     </span>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                                </td>
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? vehicle.advanceRefund ? 'text-red-400' : 'text-teal-100' : vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}`}>
+                                                                    <div className="w-full text-right font-mono">
+                                                                        <span className={`inline-block w-[90px] text-left text-base`}>
+                                                                            {vehicle.advanceRefund 
+                                                                                ? `${vehicle.advanceRefund.toFixed(2)}`
+                                                                                : vehicle.advanceAmount.toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
                                                 </tbody>
                                             </table>
                                         )}
