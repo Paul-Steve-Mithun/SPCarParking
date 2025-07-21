@@ -28,8 +28,25 @@ import { useSpring, animated } from 'react-spring';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './contexts/ThemeContext';
 
+const StatCardSkeleton = ({ isDarkMode }) => (
+    <div className={`rounded-xl overflow-hidden shadow-sm animate-pulse ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className="relative p-6">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`h-12 w-12 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                <div className={`h-5 w-5 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            </div>
+            <div className={`h-5 w-3/4 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            <div className="flex items-center justify-between">
+                <div className={`h-8 w-1/4 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            </div>
+        </div>
+    </div>
+);
+
+
 export function HomePage({ isAuthenticated, onAuthentication }) {
     const [vehicles, setVehicles] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [filteredVehicles, setFilteredVehicles] = useState([]);
@@ -38,9 +55,16 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
     const { isDarkMode } = useTheme();
 
     useEffect(() => {
+        setIsLoading(true);
         fetch('https://spcarparkingbknd.onrender.com/vehicles')
             .then(res => res.json())
-            .then(data => setVehicles(data));
+            .then(data => {
+                setVehicles(data);
+            })
+            .catch(error => console.error('Error fetching vehicles:', error))
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, []);
 
     useEffect(() => {
@@ -739,18 +763,26 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     }}
                                     className="mt-12 perspective-1000"
                                 >
-                                    <animated.div 
-                                        className={`text-8xl font-black tracking-tight font-mono ${
-                                            isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                                        }`}
-                                        style={{
-                                            textShadow: isDarkMode 
-                                                ? '0 4px 12px rgba(96, 165, 250, 0.15)' 
-                                                : '0 4px 12px rgba(37, 99, 235, 0.15)'
-                                        }}
-                                    >
-                                        {number.to(n => Math.floor(n))}
-                                    </animated.div>
+                                    {isLoading ? (
+                                        <div className={`text-8xl font-black tracking-tight font-mono ${
+                                            isDarkMode ? 'text-gray-700' : 'text-gray-200'
+                                        }`}>
+                                            --
+                                        </div>
+                                    ) : (
+                                        <animated.div 
+                                            className={`text-8xl font-black tracking-tight font-mono ${
+                                                isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                            }`}
+                                            style={{
+                                                textShadow: isDarkMode 
+                                                    ? '0 4px 12px rgba(96, 165, 250, 0.15)' 
+                                                    : '0 4px 12px rgba(37, 99, 235, 0.15)'
+                                            }}
+                                        >
+                                            {number.to(n => Math.floor(n))}
+                                        </animated.div>
+                                    )}
                                 </motion.div>
                             </div>
                         </div>
@@ -759,14 +791,18 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                     {/* Main Stats Grid */}
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {stats.map((stat, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    onClick={() => handleCardClick(stat)}
-                                    className={`group relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ${
+                            {isLoading 
+                                ? Array.from({ length: 9 }).map((_, index) => (
+                                    <StatCardSkeleton key={index} isDarkMode={isDarkMode} />
+                                ))
+                                : stats.map((stat, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        onClick={() => handleCardClick(stat)}
+                                        className={`group relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ${
                                         isDarkMode ? 'bg-gray-800' : 'bg-white'
                                     }`}
                                 >

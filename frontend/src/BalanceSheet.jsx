@@ -42,7 +42,7 @@ export function BalanceSheet() {
             thisMonthTakeHome: 0
         }
     });
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
     const [transferFrom, setTransferFrom] = useState('Balu');
     const [transferTo, setTransferTo] = useState('Mani');
@@ -59,6 +59,7 @@ export function BalanceSheet() {
     }, [selectedMonth, selectedYear]);
 
     const fetchBalanceData = async () => {
+        setIsLoading(true);
         try {
             const [revenueRes, expensesRes, balanceSheetRes] = await Promise.all([
                 fetch(`https://spcarparkingbknd.onrender.com/revenue?month=${selectedMonth}&year=${selectedYear}`),
@@ -137,6 +138,8 @@ export function BalanceSheet() {
         } catch (error) {
             toast.error('Failed to fetch balance data');
             console.error('Error fetching balance data:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -557,24 +560,44 @@ export function BalanceSheet() {
         setIsTransferModalOpen(true);
     };
 
-    const BalanceCard = ({ title, icon, value, bgGradient }) => (
-        <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200 
-            ${isDarkMode 
-                ? 'border-gray-700 bg-gray-800/90' 
-                : `bg-gradient-to-br ${bgGradient} border-white/50`
-            }`
-        }>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                    <div className={`p-1.5 sm:p-2 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white/90'}`}>{icon}</div>
-                    <div>
-                        <p className={`text-[10px] sm:text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>
-                        <p className={`text-sm sm:text-base font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>₹{value.toFixed(2)}</p>
+    const BalanceCard = ({ title, icon, value, bgGradient, isLoading }) => {
+        if (isLoading) {
+            return (
+                <div className={`rounded-xl p-2 sm:p-3 border shadow-sm ${isDarkMode ? 'border-gray-700 bg-gray-800/90' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex animate-pulse">
+                        <div className="flex-shrink-0">
+                            <div className={`p-1.5 sm:p-2 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white/90'}`}>
+                                <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                            </div>
+                        </div>
+                        <div className="ml-1.5 sm:ml-2 w-full mt-1">
+                            <div className={`h-3 w-3/5 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                            <div className={`mt-2 h-4 w-4/5 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200 
+                ${isDarkMode 
+                    ? 'border-gray-700 bg-gray-800/90' 
+                    : `bg-gradient-to-br ${bgGradient} border-white/50`
+                }`
+            }>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                        <div className={`p-1.5 sm:p-2 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-white/90'}`}>{icon}</div>
+                        <div>
+                            <p className={`text-[10px] sm:text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>
+                            <p className={`text-sm sm:text-base font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>₹{value.toFixed(2)}</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const UserSection = ({ user, data, onTakeHome, isLoading }) => {
         // Calculate transfer out for this user (amounts sent to the other user)
@@ -632,6 +655,7 @@ export function BalanceSheet() {
                                         icon={<IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />}
                                         value={data.revenue}
                                         bgGradient="from-green-50 to-green-100"
+                                        isLoading={isLoading}
                                     />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -640,6 +664,7 @@ export function BalanceSheet() {
                                         icon={<Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />}
                                         value={data.expenses}
                                         bgGradient="from-red-50 to-red-100"
+                                        isLoading={isLoading}
                                     />
                                 </div>
                             </div>
@@ -650,6 +675,7 @@ export function BalanceSheet() {
                                 icon={<DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />}
                                 value={data.netProfit}
                                 bgGradient="from-indigo-50 to-indigo-100"
+                                isLoading={isLoading}
                             />
                         </div>
                         <div className="col-span-2">
@@ -658,6 +684,7 @@ export function BalanceSheet() {
                                 icon={<Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />}
                                 value={data.previousMonthTakeHome}
                                 bgGradient="from-purple-50 to-purple-100"
+                                isLoading={isLoading}
                             />
                         </div>
                         {/* New Transfer Out Card */}
@@ -667,6 +694,7 @@ export function BalanceSheet() {
                                 icon={<ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />}
                                 value={transferOut}
                                 bgGradient="from-blue-50 to-blue-100"
+                                isLoading={isLoading}
                             />
                         </div>
                         <div className="col-span-2">
@@ -675,6 +703,7 @@ export function BalanceSheet() {
                                 icon={<ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />}
                                 value={data.thisMonthTakeHome}
                                 bgGradient="from-emerald-50 to-emerald-100"
+                                isLoading={isLoading}
                             />
                         </div>
                     </div>
