@@ -931,6 +931,7 @@ export function ManageVehicles() {
     };
 
     const DailyInvoiceModal = ({ vehicle, onClose }) => {
+    const { isDarkMode } = useTheme(); // Use the theme hook directly
     const [isClosing, setIsClosing] = useState(false);
     const [inputDays, setInputDays] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -1031,51 +1032,40 @@ export function ManageVehicles() {
 
     return (
         <div 
-            className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 transition-all duration-300 ${isClosing ? 'bg-black/0 backdrop-blur-none' : isDarkMode ? 'bg-black/80 backdrop-blur-sm' : 'bg-black/50 backdrop-blur-sm'}`}
+            className={`fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 transition-all duration-300 ${
+                isClosing 
+                    ? 'bg-black/0' 
+                    : isDarkMode 
+                        ? 'bg-black/80 backdrop-blur-sm' 
+                        : 'bg-black/50 backdrop-blur-sm'
+            }`}
             onClick={handleClose}
         >
             <div 
-                className={`rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl lg:max-w-2xl max-h-[95vh] overflow-y-auto transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+                className={`w-full max-w-md md:max-w-5xl mx-auto rounded-lg shadow-xl max-h-[95vh] overflow-hidden transform transition-all duration-300 ${
+                    isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                } ${
+                    isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
                 onClick={e => e.stopPropagation()}
-                style={{
-                    animation: isClosing ? 'none' : 'modal-popup 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                }}
             >
-                <style>
-                    {`
-                        @keyframes modal-popup {
-                            from {
-                                transform: scale(0.9) translateY(-20px);
-                                opacity: 0;
-                            }
-                            to {
-                                transform: scale(1) translateY(0);
-                                opacity: 1;
-                            }
-                        }
-                    `}
-                </style>
-                
-                {/* Compact Header */}
-                <div className="bg-gradient-to-r from-red-500 to-orange-600 p-3 sm:p-4 relative overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 md:p-6 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-0 left-0 w-20 h-20 bg-white rounded-full -translate-x-10 -translate-y-10"></div>
-                        <div className="absolute bottom-0 right-0 w-16 h-16 bg-white rounded-full translate-x-8 translate-y-8"></div>
+                        <div className="absolute top-0 left-0 w-16 h-16 bg-white rounded-full -translate-x-8 -translate-y-8"></div>
+                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-white rounded-full translate-x-6 translate-y-6"></div>
                     </div>
                     
                     <div className="flex items-center justify-between relative z-10">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="flex items-center space-x-3">
                             <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg border border-white/30">
                                 <PrinterIcon className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h3 className="text-lg sm:text-xl font-bold text-white">Generate Invoice</h3>
-                                <p className="text-xs sm:text-sm text-white/90 font-medium hidden sm:block">Choose your preferred option</p>
-                            </div>
+                            <h2 className="text-lg md:text-xl font-semibold text-white">Generate Invoice</h2>
                         </div>
                         <button
                             onClick={handleClose}
-                            className="text-white/80 hover:text-white hover:bg-white/20 p-1.5 sm:p-2 rounded-full transition-all duration-200"
+                            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all duration-200"
                             disabled={isGenerating}
                         >
                             <X className="w-5 h-5" />
@@ -1083,244 +1073,335 @@ export function ManageVehicles() {
                     </div>
                 </div>
 
-                {/* Compact Vehicle Information */}
-                <div className={`p-3 sm:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <div className={`rounded-lg p-3 ${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200'}`}>
-                        {/* Mobile: Single column, Desktop: Two columns */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {/* Vehicle & Contact Info */}
+                {/* Content - Responsive Layout */}
+                <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
+                    {/* Mobile Layout */}
+                    <div className="md:hidden">
+                        {/* Vehicle Info - Mobile */}
+                        <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <h3 className={`font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
                             <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <div className="bg-gradient-to-r from-red-500 to-orange-600 p-1.5 rounded-md">
-                                        <Car className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-medium uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Vehicle</p>
-                                        <p className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</p>
-                                    </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Vehicle:</span>
+                                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</span>
                                 </div>
-                                
-                                <div className="flex items-center space-x-2">
-                                    <div className="bg-gradient-to-r from-red-500 to-orange-600 p-1.5 rounded-md">
-                                        <User className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-medium uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Owner</p>
-                                        <p className={`text-sm font-semibold truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{vehicle.ownerName}</p>
-                                    </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description:</span>
+                                    <span className={`font-medium text-right ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</span>
                                 </div>
-                            </div>
-
-                            {/* Rate & Parking Info */}
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <div className="bg-gradient-to-r from-red-500 to-orange-600 p-1.5 rounded-md">
-                                        <IndianRupee className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-medium uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Daily Rate</p>
-                                        <p className={`text-sm font-bold text-orange-600`}>₹{vehicle.rentPrice}/day</p>
-                                    </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Owner:</span>
+                                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</span>
                                 </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <div className="bg-gradient-to-r from-red-500 to-orange-600 p-1.5 rounded-md">
-                                        <MapPin className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-medium uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Parking</p>
-                                        <p className={`text-sm font-semibold truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{vehicle.lotNumber || 'Open'}</p>
-                                    </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Daily Rate:</span>
+                                    <span className="font-semibold text-orange-600">₹{vehicle.rentPrice}/day</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Invoice Options */}
-                <div className="p-3 sm:p-4 space-y-4">
-                    {/* Current Invoice Option */}
-                    <div className={`rounded-lg border-2 p-3 sm:p-4 space-y-3 transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'border-gray-700 bg-gray-900 hover:border-green-500/50' : 'border-gray-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:border-green-300'}`}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-1.5 rounded-md">
-                                    <Clock className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <h5 className={`text-sm sm:text-base font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Current Outstanding</h5>
-                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>Invoice for current due days</p>
-                                </div>
+                        {/* Current Outstanding - Mobile */}
+                        <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
+                                <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                                    {currentDueDays} days
+                                </span>
                             </div>
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
-                                CURRENT
-                            </span>
-                        </div>
-                        
-                        <div className={`grid grid-cols-3 gap-2 p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
-                            <div className="text-center">
-                                <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Days</p>
-                                <p className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{currentDueDays}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Rate</p>
-                                <p className={`text-sm font-bold text-orange-600`}>₹{vehicle.rentPrice}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</p>
-                                <p className="text-lg sm:text-xl font-bold text-green-600">₹{currentDueAmount}</p>
-                            </div>
-                        </div>
-                        
-                        <button
-                            onClick={handleGenerateCurrentInvoice}
-                            disabled={isGenerating}
-                            className="w-full flex items-center justify-center px-4 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl"
-                        >
-                            {isGenerating ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                                <PrinterIcon className="w-4 h-4 mr-2" />
-                            )}
-                            Generate Current Invoice
-                        </button>
-                    </div>
-
-                    {/* Custom Days Option */}
-                    <div className={`rounded-lg border-2 p-3 sm:p-4 space-y-3 transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'border-gray-700 bg-gray-900 hover:border-orange-500/50' : 'border-gray-200 bg-gradient-to-br from-orange-50 to-red-50 hover:border-orange-300'}`}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div className="bg-gradient-to-r from-red-500 to-orange-600 p-1.5 rounded-md">
-                                    <Calendar className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <h5 className={`text-sm sm:text-base font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Custom Invoice</h5>
-                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>Specify days or choose end date</p>
+                            <div className="text-center mb-4">
+                                <div className={`text-3xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
+                                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {currentDueDays} × ₹{vehicle.rentPrice}
                                 </div>
                             </div>
-                            <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-bold">
-                                CUSTOM
-                            </span>
-                        </div>
-
-                        {/* Input Mode Toggle */}
-                        <div className={`flex rounded-lg p-1 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-100 border border-gray-200'}`}>
                             <button
-                                onClick={() => handleModeSwitch('days')}
-                                className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-md transition-all duration-200 ${
-                                    inputMode === 'days'
-                                        ? 'bg-gradient-to-r from-red-500 to-orange-600 text-white shadow-sm'
-                                        : isDarkMode
-                                            ? 'text-gray-400 hover:text-gray-200'
-                                            : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                                onClick={handleGenerateCurrentInvoice}
+                                disabled={isGenerating}
+                                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
                             >
-                                <Hash className="w-3 h-3 mr-1" />
-                                Days
-                            </button>
-                            <button
-                                onClick={() => handleModeSwitch('date')}
-                                className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-md transition-all duration-200 ${
-                                    inputMode === 'date'
-                                        ? 'bg-gradient-to-r from-red-500 to-orange-600 text-white shadow-sm'
-                                        : isDarkMode
-                                            ? 'text-gray-400 hover:text-gray-200'
-                                            : 'text-gray-600 hover:text-gray-800'
-                                }`}
-                            >
-                                <CalendarDays className="w-3 h-3 mr-1" />
-                                Date
+                                {isGenerating ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <PrinterIcon className="w-4 h-4 mr-2" />
+                                )}
+                                Generate Current Invoice
                             </button>
                         </div>
-                        
-                        <div className="space-y-3">
-                            {/* Days Input */}
-                            {inputMode === 'days' && (
-                                <div>
-                                    <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+
+                        {/* Custom Invoice - Mobile */}
+                        <div className="p-4">
+                            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
+                            
+                            {/* Mode Toggle */}
+                            <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                <button
+                                    onClick={() => handleModeSwitch('days')}
+                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                                        inputMode === 'days'
+                                            ? isDarkMode 
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    Days
+                                </button>
+                                <button
+                                    onClick={() => handleModeSwitch('date')}
+                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                                        inputMode === 'date'
+                                            ? isDarkMode 
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    End Date
+                                </button>
+                            </div>
+
+                            {/* Input Fields */}
+                            {inputMode === 'days' ? (
+                                <div className="mb-4">
+                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         Number of Days
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="999"
-                                            value={inputDays}
-                                            onChange={(e) => setInputDays(e.target.value)}
-                                            placeholder="Enter days"
-                                            className={`w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm font-semibold transition-all duration-200 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>days</span>
-                                        </div>
-                                    </div>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="999"
+                                        value={inputDays}
+                                        onChange={(e) => setInputDays(e.target.value)}
+                                        placeholder="Enter days"
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                            isDarkMode 
+                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
+                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                                        }`}
+                                    />
                                 </div>
-                            )}
-
-                            {/* Date Picker */}
-                            {inputMode === 'date' && (
-                                <div>
-                                    <label className={`block text-xs font-bold mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            ) : (
+                                <div className="mb-4">
+                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                         Invoice End Date
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            min={getMinDate()}
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                            className={`w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm font-semibold transition-all duration-200 ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'}`}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                            <CalendarDays className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                                        </div>
-                                    </div>
+                                    <input
+                                        type="date"
+                                        min={getMinDate()}
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                            isDarkMode 
+                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
+                                                : 'border-gray-300 bg-white text-gray-900'
+                                        }`}
+                                    />
                                     {endDate && (
-                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                             Selected: {formatDate(endDate)}
                                         </p>
                                     )}
                                 </div>
                             )}
-                            
+
+                            {/* Calculation Display */}
                             {customDays > 0 && (
-                                <div className={`grid grid-cols-3 gap-2 p-3 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} transform transition-all duration-300 animate-in slide-in-from-top-2`}>
-                                    <div className="text-center">
-                                        <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Days</p>
-                                        <p className={`text-lg sm:text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{customDays}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Rate</p>
-                                        <p className={`text-sm font-bold text-orange-600`}>₹{vehicle.rentPrice}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</p>
-                                        <p className="text-lg sm:text-xl font-bold text-red-600">₹{customAmount}</p>
+                                <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
+                                    <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
+                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {customDays} × ₹{vehicle.rentPrice}
                                     </div>
                                 </div>
                             )}
+
+                            <button
+                                onClick={handleGenerateCustomInvoice}
+                                disabled={isGenerating || customDays <= 0}
+                                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <PrinterIcon className="w-4 h-4 mr-2" />
+                                )}
+                                Generate Custom Invoice
+                            </button>
                         </div>
-                        
-                        <button
-                            onClick={handleGenerateCustomInvoice}
-                            disabled={isGenerating || customDays <= 0}
-                            className="w-full flex items-center justify-center px-4 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl"
-                        >
-                            {isGenerating ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    </div>
+
+                    {/* Desktop Layout - 3 Columns */}
+                    <div className="hidden md:grid md:grid-cols-3 md:gap-6 md:p-6">
+                        {/* Column 1: Vehicle Details */}
+                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
+                            <div className="space-y-3">
+                                <div className="text-center">
+                                    <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>VEHICLE</div>
+                                    <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</div>
+                                </div>
+                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DESCRIPTION</div>
+                                    <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</div>
+                                </div>
+                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>OWNER</div>
+                                    <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</div>
+                                </div>
+                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DAILY RATE</div>
+                                    <div className="text-lg font-bold text-orange-600">₹{vehicle.rentPrice}/day</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Column 2: Current Outstanding */}
+                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <div className="text-center mb-4">
+                                <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
+                                <span className={`inline-block text-xs px-2 py-1 rounded mt-2 ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                                    {currentDueDays} days
+                                </span>
+                            </div>
+                            <div className="text-center mb-6">
+                                <div className={`text-4xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
+                                <div className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {currentDueDays} × ₹{vehicle.rentPrice}
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleGenerateCurrentInvoice}
+                                disabled={isGenerating}
+                                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <PrinterIcon className="w-4 h-4 mr-2" />
+                                )}
+                                Generate Invoice
+                            </button>
+                        </div>
+
+                        {/* Column 3: Custom Invoice */}
+                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
+                            
+                            {/* Mode Toggle */}
+                            <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                <button
+                                    onClick={() => handleModeSwitch('days')}
+                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                                        inputMode === 'days'
+                                            ? isDarkMode 
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    Days
+                                </button>
+                                <button
+                                    onClick={() => handleModeSwitch('date')}
+                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                                        inputMode === 'date'
+                                            ? isDarkMode 
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                >
+                                    End Date
+                                </button>
+                            </div>
+
+                            {/* Input Fields */}
+                            {inputMode === 'days' ? (
+                                <div className="mb-4">
+                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        Number of Days
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="999"
+                                        value={inputDays}
+                                        onChange={(e) => setInputDays(e.target.value)}
+                                        placeholder="Enter days"
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                            isDarkMode 
+                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
+                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                                        }`}
+                                    />
+                                </div>
                             ) : (
-                                <PrinterIcon className="w-4 h-4 mr-2" />
+                                <div className="mb-4">
+                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        Invoice End Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        min={getMinDate()}
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                                            isDarkMode 
+                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
+                                                : 'border-gray-300 bg-white text-gray-900'
+                                        }`}
+                                    />
+                                    {endDate && (
+                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Selected: {formatDate(endDate)}
+                                        </p>
+                                    )}
+                                </div>
                             )}
-                            Generate Custom Invoice
-                        </button>
+
+                            {/* Calculation Display */}
+                            {customDays > 0 && (
+                                <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
+                                    <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
+                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {customDays} × ₹{vehicle.rentPrice}
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleGenerateCustomInvoice}
+                                disabled={isGenerating || customDays <= 0}
+                                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <PrinterIcon className="w-4 h-4 mr-2" />
+                                )}
+                                Generate Custom Invoice
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Compact Footer */}
-                <div className={`flex justify-end gap-2 p-3 sm:p-4 ${isDarkMode ? 'bg-gray-900 border-t border-gray-700' : 'bg-gray-50 border-t border-gray-200'}`}>
+                {/* Footer */}
+                <div className={`flex justify-end p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'}`}>
                     <button
                         onClick={handleClose}
                         disabled={isGenerating}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'text-gray-300 hover:bg-gray-800 border border-gray-600' : 'text-gray-700 hover:bg-gray-100 border border-gray-300'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            isDarkMode 
+                                ? 'text-gray-300 hover:bg-gray-700'
+                                : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                     >
                         Cancel
                     </button>
