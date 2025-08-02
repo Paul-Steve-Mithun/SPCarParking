@@ -47,11 +47,12 @@ export function NewVehicle() {
 
     // Generate all possible lots
     const generateAllLots = () => {
-        const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
-        const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
+        const aLots = Array.from({ length: 19 }, (_, i) => `A${i + 1}`);
+        const bLots = Array.from({ length: 21 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`); // C1-C22
-        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`); // D1-D20
-        return [...aLots, ...bLots, ...cLots, ...dLots];
+        const dLots = Array.from({ length: 10 }, (_, i) => `D${i + 1}`); // D1-D10
+        const eLots = Array.from({ length: 10 }, (_, i) => `E${i + 1}`); // E1-D20
+        return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots];
     };
 
     const allLots = generateAllLots();
@@ -88,7 +89,9 @@ export function NewVehicle() {
                 return availableLots.filter(lot => lot.startsWith('C'));
             case 'd':
                 return availableLots.filter(lot => lot.startsWith('D'));
-            default:
+            case 'e':
+                return availableLots.filter(lot => lot.startsWith('E'));
+                default:
                 return availableLots;
         }
     };
@@ -339,7 +342,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            A Wing (A1-A20)
+                            A Wing (A1-A19)
                         </button>
                         <button
                             type="button"
@@ -352,7 +355,7 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            B Wing (B1-B20)
+                            B Wing (B1-B21)
                         </button>
                         <button
                             type="button"
@@ -378,7 +381,20 @@ export function NewVehicle() {
                                     : 'bg-gray-100 text-gray-700'
                             }`}
                         >
-                            D Wing (D1-D20)
+                            D Wing (D1-D10)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedLotType('e')}
+                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                selectedLotType === 'e' 
+                                    ? 'bg-blue-600 text-white' 
+                                    : isDarkMode 
+                                        ? 'bg-gray-600 text-gray-300' 
+                                    : 'bg-gray-100 text-gray-700'
+                            }`}
+                        >
+                            E Wing (D1-D10)
                         </button>
                     </div>
                 </div>
