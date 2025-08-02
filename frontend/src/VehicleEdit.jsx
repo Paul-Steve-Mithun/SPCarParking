@@ -213,11 +213,12 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     };
 
     const generateAllLots = () => {
-        const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
-        const bLots = Array.from({ length: 20 }, (_, i) => `B${i + 1}`);
+        const aLots = Array.from({ length: 19 }, (_, i) => `A${i + 1}`);
+        const bLots = Array.from({ length: 21 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
-        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
-        return [...aLots, ...bLots, ...cLots, ...dLots];
+        const dLots = Array.from({ length: 10 }, (_, i) => `D${i + 1}`);
+        const eLots = Array.from({ length: 10 }, (_, i) => `E${i + 1}`);
+        return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots];
     };
 
     useEffect(() => {
@@ -264,6 +265,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('C'))];
             case 'd':
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('D'))];
+            case 'e':
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('E'))];
             default:
                 return [...openButton, ...filteredAvailableLots]; // Show all non-empty lots
         }
@@ -382,7 +385,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                 {/* Lot Type Selector */}
                                                 <div className="mt-2 mb-3">
                                                     <div className="flex flex-wrap gap-2">
-                                                        {['all', 'a', 'b', 'c', 'd'].map(type => (
+                                                        {['all', 'a', 'b', 'c', 'd', 'e'].map(type => (
                                                             <button
                                                                 key={type}
                                                                 type="button"
