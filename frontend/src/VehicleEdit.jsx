@@ -384,17 +384,72 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             <>
                                                 {/* Lot Type Selector */}
                                                 <div className="mt-2 mb-3">
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {['all', 'a', 'b', 'c', 'd', 'e'].map(type => (
-                                                            <button
-                                                                key={type}
-                                                                type="button"
-                                                                onClick={() => setSelectedLotType(type)}
-                                                                className={`px-3 py-1 rounded-md ${selectedLotType === type ? 'bg-blue-600 text-white' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700'}`}
-                                                            >
-                                                                {type === 'all' ? 'All Wings' : `${type.toUpperCase()} Wing (${type.toUpperCase()}${type === 'c' ? 22 : 20})`}
-                                                            </button>
-                                                        ))}
+                                                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('a')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                                                selectedLotType === 'a' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : isDarkMode 
+                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            A Wing (A1-A19)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('b')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                                                selectedLotType === 'b' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : isDarkMode 
+                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            B Wing (B1-B21)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('c')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                                                selectedLotType === 'c' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : isDarkMode 
+                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            C Wing (C1-C22)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('d')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                                                selectedLotType === 'd' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : isDarkMode 
+                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            D Wing (D1-D10)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('e')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
+                                                                selectedLotType === 'e' 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : isDarkMode 
+                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                        >
+                                                            E Wing (E1-E10)
+                                                        </button>
                                                     </div>
                                                 </div>
 
