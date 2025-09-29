@@ -690,6 +690,8 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         const [chartData, setChartData] = useState([]);
         const [advances, setAdvances] = useState([]);
         const [isLoading, setIsLoading] = useState(true);
+        const [selectedYear, setSelectedYear] = useState('All');
+        const [filteredCounts, setFilteredCounts] = useState({ new: 0, exits: 0 });
 
         const monthNames = [
             'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -701,6 +703,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                 fetchAdvancesData();
             }
         }, [vehicles]);
+
+        // Recompute when selected year changes
+        useEffect(() => {
+            if (advances.length > 0) {
+                processRegistrationData(advances);
+            }
+        }, [selectedYear]);
 
         const fetchAdvancesData = async () => {
             try {
@@ -717,20 +726,29 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         const processRegistrationData = (advancesData = []) => {
             setIsLoading(true);
             
-            // Filter only monthly rentals for the graph
-            const monthlyVehicles = vehicles.filter(vehicle => vehicle.rentalType === 'monthly');
-            
+            // Build monthly registrations FROM advances (positive advanceAmount)
+            let registrationAdvances = advancesData.filter(advance => 
+                advance.advanceAmount && advance.advanceAmount > 0 && advance.startDate
+            );
+
             // Filter advances with refund data (vehicles that left)
-            const refundAdvances = advancesData.filter(advance => 
+            let refundAdvances = advancesData.filter(advance => 
                 advance.advanceRefund && advance.advanceRefund > 0 && advance.refundDate
             );
+
+            // Apply year filter if not "All"
+            if (selectedYear !== 'All') {
+                const yearNum = Number(selectedYear);
+                registrationAdvances = registrationAdvances.filter(a => new Date(a.startDate).getFullYear() === yearNum);
+                refundAdvances = refundAdvances.filter(a => new Date(a.refundDate).getFullYear() === yearNum);
+            }
             
             // Group monthly vehicles by registration period
             const groupedData = {};
 
-            // Process monthly registrations
-            monthlyVehicles.forEach(vehicle => {
-                const startDate = new Date(vehicle.startDate);
+            // Process monthly registrations using advances' startDate
+            registrationAdvances.forEach(advance => {
+                const startDate = new Date(advance.startDate);
                 const periodKey = `${monthNames[startDate.getMonth()]} ${startDate.getFullYear()}`;
 
                 if (!groupedData[periodKey]) {
@@ -744,7 +762,6 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                 }
 
                 groupedData[periodKey].monthly++;
-                groupedData[periodKey].total++;
             });
 
             // Process refunds (vehicles that left)
@@ -765,9 +782,17 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                 groupedData[periodKey].refunds++;
             });
 
+            // Compute totals for each period
+            Object.keys(groupedData).forEach(key => {
+                groupedData[key].total = groupedData[key].monthly + groupedData[key].refunds;
+            });
+
             // Convert to array and sort by date
             const sortedData = Object.values(groupedData).sort((a, b) => a.date - b.date);
             setChartData(sortedData);
+
+            // Update counts for summary cards
+            setFilteredCounts({ new: registrationAdvances.length, exits: refundAdvances.length });
 
             setIsLoading(false);
         };
@@ -783,20 +808,16 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                         <p className={`font-semibold mb-2 transition-colors duration-300 ${
                             isDarkMode ? 'text-gray-100' : 'text-gray-900'
                         }`}>{label}</p>
-                        {payload.map((entry, index) => (
-                            <p key={index} className={`text-sm transition-colors duration-300 ${
-                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                            }`} style={{ color: entry.color }}>
-                                {entry.dataKey}: {entry.value}
-                            </p>
-                        ))}
-                        <p className={`text-sm font-medium mt-1 pt-1 border-t transition-colors duration-300 ${
-                            isDarkMode 
-                                ? 'text-gray-100 border-gray-600' 
-                                : 'text-gray-900 border-gray-200'
-                        }`}>
-                            Total: {payload.reduce((sum, entry) => sum + entry.value, 0)}
-                        </p>
+                        {payload.map((entry, index) => {
+                            const labelText = entry.dataKey === 'monthly' ? 'New' : 'Exits';
+                            return (
+                                <p key={index} className={`text-sm transition-colors duration-300 ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                }`} style={{ color: entry.color }}>
+                                    {labelText}: {entry.value}
+                                </p>
+                            );
+                        })}
                     </div>
                 );
             }
@@ -823,25 +844,83 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             </div>
                         </div>
                         <div className="p-4 sm:p-6 lg:p-8">
+                            {/* Chart Skeleton */}
                             <div className={`rounded-xl sm:rounded-2xl border p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 ${
                                 isDarkMode 
                                     ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700' 
                                     : 'bg-gradient-to-br from-gray-50/50 to-white border-gray-200'
                             }`}>
-                                <div className="h-64 sm:h-80 lg:h-96 rounded-lg animate-pulse bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700"></div>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+                                    <div className="flex-1">
+                                        <div className={`h-6 w-48 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                        <div className={`h-4 w-64 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                    </div>
+                                    <div className={`h-6 w-20 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                </div>
+                                
+                                {/* Chart Area Skeleton */}
+                                <div className="relative h-64 sm:h-80 lg:h-96 w-full rounded-lg overflow-hidden">
+                                    {/* Grid Lines */}
+                                    <div className="absolute inset-0">
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <div key={i} className={`absolute w-full h-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} 
+                                                 style={{ top: `${i * 20}%` }}></div>
+                                        ))}
+                                        {Array.from({ length: 8 }).map((_, i) => (
+                                            <div key={i} className={`absolute h-full w-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} 
+                                                 style={{ left: `${i * 14.28}%` }}></div>
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Animated Chart Lines */}
+                                    <div className="absolute inset-0 flex items-end justify-between px-2 sm:px-4">
+                                        {Array.from({ length: 7 }).map((_, i) => (
+                                            <div key={i} className="flex flex-col items-center space-y-1 sm:space-y-2">
+                                                {/* Blue bars (New registrations) */}
+                                                <div className={`w-6 sm:w-8 md:w-10 rounded-t-lg bg-gradient-to-t from-blue-500/20 to-blue-400/30 animate-pulse`}
+                                                     style={{ 
+                                                         height: `${Math.random() * 60 + 20}%`,
+                                                         animationDelay: `${i * 0.1}s`,
+                                                         animationDuration: '2s'
+                                                     }}></div>
+                                                {/* Red bars (Exits) */}
+                                                <div className={`w-6 sm:w-8 md:w-10 rounded-t-lg bg-gradient-to-t from-red-500/20 to-red-400/30 animate-pulse`}
+                                                     style={{ 
+                                                         height: `${Math.random() * 40 + 10}%`,
+                                                         animationDelay: `${i * 0.1 + 0.5}s`,
+                                                         animationDuration: '2s'
+                                                     }}></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Legend Skeleton */}
+                                <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 mt-4">
+                                    <div className="flex items-center space-x-2">
+                                        <div className={`w-3 h-3 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                        <div className={`h-4 w-20 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <div className={`w-3 h-3 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                        <div className={`h-4 w-24 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Summary Cards Skeleton */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                                 {Array.from({ length: 3 }).map((_, index) => (
-                                    <div key={index} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border animate-pulse ${
+                                    <div key={index} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 ${
                                         isDarkMode 
                                             ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700' 
                                             : 'bg-gradient-to-br from-gray-50/50 to-white border-gray-200'
                                     }`}>
                                         <div className="flex items-center space-x-3 sm:space-x-4">
-                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
                                             <div className="flex-1">
-                                                <div className={`h-3 sm:h-4 w-20 sm:w-24 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
-                                                <div className={`h-6 sm:h-8 w-12 sm:w-16 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+                                                <div className={`h-4 w-24 sm:w-28 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+                                                <div className={`h-6 sm:h-8 w-16 sm:w-20 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
                                             </div>
                                         </div>
                                     </div>
@@ -868,7 +947,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                     {/* Header */}
                     <div className="relative bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6 lg:p-8 overflow-hidden">
                         {/* Background Pattern */}
-                        <div className="absolute inset-0 opacity-10">
+                        <div className="absolute inset-0 opacity-10 pointer-events-none">
                             <div className="absolute inset-0" style={{
                                 backgroundImage: `radial-gradient(circle at 20% 50%, white 2px, transparent 2px),
                                                 radial-gradient(circle at 80% 20%, white 1px, transparent 1px),
@@ -877,13 +956,31 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             }} />
                         </div>
                         
-                        <div className="flex items-center space-x-3">
-                            <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
-                                <BarChart3 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                                    <BarChart3 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className="text-base sm:text-2xl font-bold text-white leading-tight">Monthly Registration Analytics</h2>
+                                    <p className="hidden sm:block text-blue-100 text-xs sm:text-sm">Track your business growth over time</p>
+                                </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h2 className="text-lg sm:text-2xl font-bold text-white mb-1 truncate">Monthly Registration Analytics</h2>
-                                <p className="text-blue-100 text-xs sm:text-sm">Track your business growth over time</p>
+                            {/* Year filter buttons - mobile friendly horizontal scroll */}
+                            <div className="-mx-1 px-1 overflow-x-auto whitespace-nowrap flex items-center gap-2 pb-1">
+                                {['All', 2023, 2024, 2025, 2026].map(y => (
+                                    <button
+                                        key={y}
+                                        onClick={() => setSelectedYear(y)}
+                                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold border transition-colors shrink-0 ${
+                                            selectedYear === y
+                                                ? 'bg-white text-blue-700 border-white'
+                                                : 'bg-blue-500/30 text-white border-white/40 hover:bg-blue-500/40'
+                                        }`}
+                                    >
+                                        {y}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -913,11 +1010,11 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         ? 'bg-blue-900/30 text-blue-300 border border-blue-800' 
                                         : 'bg-blue-100 text-blue-700 border border-blue-200'
                                 }`}>
-                                    {chartData.length} Months
+                                    {selectedYear === 'All' ? 'All Years' : selectedYear}
                                 </div>
                             </div>
                             
-                            <div className="h-64 sm:h-80 lg:h-96">
+                            <div className="h-64 sm:h-80 lg:h-96 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
                                         <defs>
@@ -938,19 +1035,22 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         <XAxis 
                                             dataKey="period" 
                                             stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
-                                            fontSize={10}
+                                            fontSize={window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10}
                                             fontWeight={500}
                                             tickLine={false}
                                             axisLine={false}
                                             interval="preserveStartEnd"
+                                            angle={window.innerWidth < 640 ? -45 : 0}
+                                            textAnchor={window.innerWidth < 640 ? 'end' : 'middle'}
+                                            height={window.innerWidth < 640 ? 60 : 40}
                                         />
                                         <YAxis 
                                             stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
-                                            fontSize={10}
+                                            fontSize={window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10}
                                             fontWeight={500}
                                             tickLine={false}
                                             axisLine={false}
-                                            width={30}
+                                            width={window.innerWidth < 640 ? 25 : window.innerWidth < 1024 ? 28 : 30}
                                         />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Area
@@ -958,30 +1058,48 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             dataKey="monthly"
                                             stroke="#3B82F6"
                                             fill="url(#colorGradient)"
-                                            strokeWidth={2}
-                                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
-                                            activeDot={{ r: 5, stroke: '#3B82F6', strokeWidth: 2, fill: '#ffffff' }}
+                                            strokeWidth={window.innerWidth < 640 ? 1.5 : 2}
+                                            dot={{ 
+                                                fill: '#3B82F6', 
+                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2, 
+                                                r: window.innerWidth < 640 ? 2 : 3 
+                                            }}
+                                            activeDot={{ 
+                                                r: window.innerWidth < 640 ? 4 : 5, 
+                                                stroke: '#3B82F6', 
+                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2, 
+                                                fill: '#ffffff' 
+                                            }}
                                         />
                                         <Area
                                             type="monotone"
                                             dataKey="refunds"
                                             stroke="#EF4444"
                                             fill="url(#refundGradient)"
-                                            strokeWidth={2}
-                                            dot={{ fill: '#EF4444', strokeWidth: 2, r: 3 }}
-                                            activeDot={{ r: 5, stroke: '#EF4444', strokeWidth: 2, fill: '#ffffff' }}
+                                            strokeWidth={window.innerWidth < 640 ? 1.5 : 2}
+                                            dot={{ 
+                                                fill: '#EF4444', 
+                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2, 
+                                                r: window.innerWidth < 640 ? 2 : 3 
+                                            }}
+                                            activeDot={{ 
+                                                r: window.innerWidth < 640 ? 4 : 5, 
+                                                stroke: '#EF4444', 
+                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2, 
+                                                fill: '#ffffff' 
+                                            }}
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                             
                             {/* Legend */}
-                            <div className="flex items-center justify-center space-x-6 mt-4">
+                            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 mt-4">
                                 <div className="flex items-center space-x-2">
                                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                                     <span className={`text-xs font-medium transition-colors duration-300 ${
                                         isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                    }`}>Registrations</span>
+                                    }`}>New</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -1027,6 +1145,37 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     </div>
                                 </div>
                             </motion.div>
+                            {/* Total Registrations */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.25 }}
+                                className={`group p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-105 ${
+                                    isDarkMode 
+                                        ? 'bg-gradient-to-br from-indigo-900/30 to-indigo-800/20 border-indigo-700/50 hover:border-indigo-600/70' 
+                                        : 'bg-gradient-to-br from-indigo-50 to-indigo-100/70 border-indigo-200 hover:border-indigo-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3 sm:space-x-4">
+                                    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 group-hover:from-indigo-400 group-hover:to-indigo-500' 
+                                            : 'bg-gradient-to-br from-indigo-500 to-indigo-600 group-hover:from-indigo-400 group-hover:to-indigo-500'
+                                    }`}>
+                                        <LogIn className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs sm:text-sm font-medium mb-1 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
+                                        }`}>Total Registrations</p>
+                                        <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
+                                            isDarkMode ? 'text-white' : 'text-gray-900'
+                                        }`}>
+                                            {filteredCounts.new}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
 
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -1053,42 +1202,12 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
                                             isDarkMode ? 'text-white' : 'text-gray-900'
                                         }`}>
-                                            {advances.filter(advance => advance.advanceRefund && advance.advanceRefund > 0).length}
+                                            {filteredCounts.exits}
                                         </p>
                                     </div>
                                 </div>
                             </motion.div>
-
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                                className={`group p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-105 sm:col-span-2 lg:col-span-1 ${
-                                    isDarkMode 
-                                        ? 'bg-gradient-to-br from-purple-900/30 to-purple-800/20 border-purple-700/50 hover:border-purple-600/70' 
-                                        : 'bg-gradient-to-br from-purple-50 to-purple-100/70 border-purple-200 hover:border-purple-300'
-                                }`}
-                            >
-                                <div className="flex items-center space-x-3 sm:space-x-4">
-                                    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 ${
-                                        isDarkMode 
-                                            ? 'bg-gradient-to-br from-purple-500 to-purple-600 group-hover:from-purple-400 group-hover:to-purple-500' 
-                                            : 'bg-gradient-to-br from-purple-500 to-purple-600 group-hover:from-purple-400 group-hover:to-purple-500'
-                                    }`}>
-                                        <Growth className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`text-xs sm:text-sm font-medium mb-1 transition-colors duration-300 ${
-                                            isDarkMode ? 'text-purple-300' : 'text-purple-600'
-                                        }`}>Net Growth</p>
-                                        <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
-                                            isDarkMode ? 'text-white' : 'text-gray-900'
-                                        }`}>
-                                            {vehicles.filter(v => v.rentalType === 'monthly').length - advances.filter(advance => advance.advanceRefund && advance.advanceRefund > 0).length}
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
+                            {/* Net Growth removed as requested */}
                         </div>
                     </div>
                 </motion.div>
