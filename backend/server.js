@@ -362,6 +362,16 @@ app.get('/vehicles', checkVehicleStatus, async (req, res) => {
     }
 });
 
+// Get All Advances for Analytics
+app.get('/advances/all', async (req, res) => {
+    try {
+        const advances = await Advance.find();
+        res.json(advances);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Update the delete vehicle endpoint
 app.delete('/removeVehicle/:id', async (req, res) => {
     try {

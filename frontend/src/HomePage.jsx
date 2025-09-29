@@ -21,12 +21,25 @@ import {
     Lock,
     LogIn,
     Eye,
-    EyeOff
+    EyeOff,
+    BarChart3,
+    TrendingDown,
+    LogOut,
+    TrendingUp as Growth
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSpring, animated } from 'react-spring';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './contexts/ThemeContext';
+import { 
+    AreaChart, 
+    Area, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer
+} from 'recharts';
 
 const StatCardSkeleton = ({ isDarkMode }) => (
     <div className={`rounded-xl overflow-hidden shadow-sm animate-pulse ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -123,13 +136,15 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                 const startDate = new Date(v.startDate);
                 const currentDate = new Date();
                 return startDate.getMonth() === currentDate.getMonth() && 
-                       startDate.getFullYear() === currentDate.getFullYear();
+                       startDate.getFullYear() === currentDate.getFullYear() &&
+                       v.rentalType === 'monthly';
             }).length,
             filter: () => vehicles.filter(v => {
                 const startDate = new Date(v.startDate);
                 const currentDate = new Date();
                 return startDate.getMonth() === currentDate.getMonth() && 
-                       startDate.getFullYear() === currentDate.getFullYear();
+                       startDate.getFullYear() === currentDate.getFullYear() &&
+                       v.rentalType === 'monthly';
             }),
             color: 'from-emerald-500 to-emerald-600'
         },
@@ -670,6 +685,478 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         });
     };
 
+    // Registration Analytics Component
+    const RegistrationAnalytics = () => {
+        const [chartData, setChartData] = useState([]);
+        const [advances, setAdvances] = useState([]);
+        const [isLoading, setIsLoading] = useState(true);
+
+        const monthNames = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        useEffect(() => {
+            if (vehicles.length > 0) {
+                fetchAdvancesData();
+            }
+        }, [vehicles]);
+
+        const fetchAdvancesData = async () => {
+            try {
+                const response = await fetch('https://spcarparkingbknd.onrender.com/advances/all');
+                const advancesData = await response.json();
+                setAdvances(advancesData);
+                processRegistrationData(advancesData);
+            } catch (error) {
+                console.error('Error fetching advances:', error);
+                processRegistrationData([]);
+            }
+        };
+
+        const processRegistrationData = (advancesData = []) => {
+            setIsLoading(true);
+            
+            // Filter only monthly rentals for the graph
+            const monthlyVehicles = vehicles.filter(vehicle => vehicle.rentalType === 'monthly');
+            
+            // Filter advances with refund data (vehicles that left)
+            // Based on AdvanceDashboard logic: advanceRefund > 0 AND refundDate exists
+            const refundAdvances = advancesData.filter(advance => 
+                advance.advanceRefund && 
+                advance.advanceRefund > 0 && 
+                advance.refundDate
+            );
+            
+            // Debug logging
+            console.log('Total advances data:', advancesData.length);
+            console.log('Refund advances found:', refundAdvances.length);
+            if (refundAdvances.length > 0) {
+                console.log('Sample refund advance:', refundAdvances[0]);
+            }
+            
+            // Specific debugging for March 2025 refunds
+            const marchRefunds = refundAdvances.filter(advance => {
+                const refundDate = new Date(advance.refundDate);
+                return refundDate.getMonth() === 2 && refundDate.getFullYear() === 2025; // March = 2 (0-indexed)
+            });
+            console.log('March 2025 refunds found:', marchRefunds.length);
+            console.log('March 2025 refund details:', marchRefunds.map(r => ({
+                vehicle: r.vehicleNumber,
+                amount: r.advanceRefund,
+                date: r.refundDate
+            })));
+            
+            // Group monthly vehicles by registration period
+            const groupedData = {};
+
+            // Process monthly registrations
+            monthlyVehicles.forEach(vehicle => {
+                const startDate = new Date(vehicle.startDate);
+                const periodKey = `${monthNames[startDate.getMonth()]} ${startDate.getFullYear()}`;
+
+                if (!groupedData[periodKey]) {
+                    groupedData[periodKey] = {
+                        period: periodKey,
+                        monthly: 0,
+                        refunds: 0,
+                        total: 0,
+                        date: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+                        refundVehicles: []
+                    };
+                }
+
+                groupedData[periodKey].monthly++;
+                groupedData[periodKey].total++;
+            });
+
+            // Process refunds (vehicles that left)
+            refundAdvances.forEach(advance => {
+                const refundDate = new Date(advance.refundDate);
+                const periodKey = `${monthNames[refundDate.getMonth()]} ${refundDate.getFullYear()}`;
+
+                if (!groupedData[periodKey]) {
+                    groupedData[periodKey] = {
+                        period: periodKey,
+                        monthly: 0,
+                        refunds: 0,
+                        total: 0,
+                        date: new Date(refundDate.getFullYear(), refundDate.getMonth(), 1),
+                        refundVehicles: [] // Store refund vehicle details for tooltip
+                    };
+                } else if (!groupedData[periodKey].refundVehicles) {
+                    groupedData[periodKey].refundVehicles = [];
+                }
+
+                groupedData[periodKey].refunds++;
+                groupedData[periodKey].refundVehicles.push({
+                    vehicleNumber: advance.vehicleNumber,
+                    refundAmount: advance.advanceRefund,
+                    refundDate: advance.refundDate
+                });
+                
+                console.log(`Added refund to ${periodKey}:`, advance.vehicleNumber, 'Refund amount:', advance.advanceRefund, 'Refund date:', advance.refundDate);
+            });
+
+            // Convert to array and sort by date
+            const sortedData = Object.values(groupedData).sort((a, b) => a.date - b.date);
+            console.log('Final chart data with refunds:', sortedData);
+            
+            // Debug March specifically
+            const marchData = sortedData.find(item => item.period === 'Mar 2025');
+            if (marchData) {
+                console.log('March 2025 final data:', {
+                    period: marchData.period,
+                    refunds: marchData.refunds,
+                    refundVehicles: marchData.refundVehicles
+                });
+            }
+            
+            setChartData(sortedData);
+
+            setIsLoading(false);
+        };
+
+        const CustomTooltip = ({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+                // Find the data point for this label
+                const dataPoint = chartData.find(item => item.period === label);
+                
+                return (
+                    <div className={`rounded-lg border shadow-lg p-4 max-w-sm transition-colors duration-300 ${
+                        isDarkMode 
+                            ? 'bg-gray-800 border-gray-600' 
+                            : 'bg-white border-gray-200'
+                    }`}>
+                        <p className={`font-semibold mb-2 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                        }`}>{label}</p>
+                        {payload.map((entry, index) => (
+                            <p key={index} className={`text-sm transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`} style={{ color: entry.color }}>
+                                {entry.dataKey}: {entry.value}
+                            </p>
+                        ))}
+                        
+                        {/* Show refund vehicle details */}
+                        {dataPoint && dataPoint.refundVehicles && dataPoint.refundVehicles.length > 0 && (
+                            <div className={`mt-3 pt-2 border-t transition-colors duration-300 ${
+                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
+                            }`}>
+                                <p className={`text-xs font-medium mb-1 transition-colors duration-300 ${
+                                    isDarkMode ? 'text-red-300' : 'text-red-600'
+                                }`}>Refunded Vehicles:</p>
+                                <div className="max-h-32 overflow-y-auto">
+                                    {dataPoint.refundVehicles.map((vehicle, idx) => (
+                                        <div key={idx} className={`text-xs transition-colors duration-300 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                        }`}>
+                                            {vehicle.vehicleNumber} - ₹{vehicle.refundAmount} ({new Date(vehicle.refundDate).toLocaleDateString('en-GB')})
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+            return null;
+        };
+
+        if (isLoading) {
+            return (
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12">
+                    <div className={`rounded-3xl shadow-2xl overflow-hidden border transition-all duration-300 ${
+                        isDarkMode 
+                            ? 'bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 border-gray-700 shadow-gray-900/50' 
+                            : 'bg-gradient-to-br from-white via-gray-50 to-white border-gray-200 shadow-gray-200/50'
+                    }`}>
+                        <div className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-4 sm:p-6 lg:p-8 overflow-hidden">
+                            <div className="flex items-center space-x-4">
+                                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                                    <BarChart3 className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-1">Monthly Registration Analytics</h2>
+                                    <p className="text-blue-100 text-sm">Track your business growth over time</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 sm:p-6 lg:p-8">
+                            <div className={`rounded-xl sm:rounded-2xl border p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 ${
+                                isDarkMode 
+                                    ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700' 
+                                    : 'bg-gradient-to-br from-gray-50/50 to-white border-gray-200'
+                            }`}>
+                                <div className="h-64 sm:h-80 lg:h-96 rounded-lg animate-pulse bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700"></div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                {Array.from({ length: 3 }).map((_, index) => (
+                                    <div key={index} className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border animate-pulse ${
+                                        isDarkMode 
+                                            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700' 
+                                            : 'bg-gradient-to-br from-gray-50/50 to-white border-gray-200'
+                                    }`}>
+                                        <div className="flex items-center space-x-3 sm:space-x-4">
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+                                            <div className="flex-1">
+                                                <div className={`h-3 sm:h-4 w-20 sm:w-24 rounded mb-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+                                                <div className={`h-6 sm:h-8 w-12 sm:w-16 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className={`rounded-3xl shadow-2xl overflow-hidden border transition-all duration-300 ${
+                        isDarkMode 
+                            ? 'bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 border-gray-700 shadow-gray-900/50' 
+                            : 'bg-gradient-to-br from-white via-gray-50 to-white border-gray-200 shadow-gray-200/50'
+                    }`}
+                >
+                    {/* Header */}
+                    <div className="relative bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6 lg:p-8 overflow-hidden">
+                        {/* Background Pattern */}
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute inset-0" style={{
+                                backgroundImage: `radial-gradient(circle at 20% 50%, white 2px, transparent 2px),
+                                                radial-gradient(circle at 80% 20%, white 1px, transparent 1px),
+                                                radial-gradient(circle at 40% 80%, white 1px, transparent 1px)`,
+                                backgroundSize: '50px 50px, 30px 30px, 40px 40px'
+                            }} />
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                                <BarChart3 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-lg sm:text-2xl font-bold text-white mb-1 truncate">Monthly Registration Analytics</h2>
+                                <p className="text-blue-100 text-xs sm:text-sm">Track your business growth over time</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-4 sm:p-6 lg:p-8">
+                        {/* Chart Section */}
+                        <div className={`rounded-xl sm:rounded-2xl border p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 ${
+                            isDarkMode 
+                                ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700' 
+                                : 'bg-gradient-to-br from-gray-50/50 to-white border-gray-200'
+                        }`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+                                <div className="flex-1">
+                                    <h3 className={`text-lg sm:text-xl font-bold mb-1 sm:mb-2 transition-colors duration-300 ${
+                                        isDarkMode ? 'text-white' : 'text-gray-900'
+                                    }`}>
+                                        Registration & Exit Trends
+                                    </h3>
+                                    <p className={`text-xs sm:text-sm transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                    }`}>
+                                        Monthly rentals: registrations vs exits
+                                    </p>
+                                </div>
+                                <div className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-medium self-start ${
+                                    isDarkMode 
+                                        ? 'bg-blue-900/30 text-blue-300 border border-blue-800' 
+                                        : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                }`}>
+                                    {chartData.length} Months
+                                </div>
+                            </div>
+                            
+                            <div className="h-64 sm:h-80 lg:h-96">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
+                                        <defs>
+                                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                                            </linearGradient>
+                                            <linearGradient id="refundGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.1}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid 
+                                            strokeDasharray="3 3" 
+                                            stroke={isDarkMode ? '#374151' : '#E5E7EB'} 
+                                            opacity={0.5}
+                                        />
+                                        <XAxis 
+                                            dataKey="period" 
+                                            stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                                            fontSize={10}
+                                            fontWeight={500}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            interval="preserveStartEnd"
+                                        />
+                                        <YAxis 
+                                            stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                                            fontSize={10}
+                                            fontWeight={500}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            width={30}
+                                        />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="monthly"
+                                            stroke="#3B82F6"
+                                            fill="url(#colorGradient)"
+                                            strokeWidth={2}
+                                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 3 }}
+                                            activeDot={{ r: 5, stroke: '#3B82F6', strokeWidth: 2, fill: '#ffffff' }}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="refunds"
+                                            stroke="#EF4444"
+                                            fill="url(#refundGradient)"
+                                            strokeWidth={2}
+                                            dot={{ fill: '#EF4444', strokeWidth: 2, r: 3 }}
+                                            activeDot={{ r: 5, stroke: '#EF4444', strokeWidth: 2, fill: '#ffffff' }}
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                            
+                            {/* Legend */}
+                            <div className="flex items-center justify-center space-x-6 mt-4">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <span className={`text-xs font-medium transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                    }`}>Registrations</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <span className={`text-xs font-medium transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                    }`}>Exits (Refunds)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Summary Stats */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className={`group p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-105 ${
+                                    isDarkMode 
+                                        ? 'bg-gradient-to-br from-blue-900/30 to-blue-800/20 border-blue-700/50 hover:border-blue-600/70' 
+                                        : 'bg-gradient-to-br from-blue-50 to-blue-100/70 border-blue-200 hover:border-blue-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3 sm:space-x-4">
+                                    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 group-hover:from-blue-400 group-hover:to-blue-500' 
+                                            : 'bg-gradient-to-br from-blue-500 to-blue-600 group-hover:from-blue-400 group-hover:to-blue-500'
+                                    }`}>
+                                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs sm:text-sm font-medium mb-1 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                                        }`}>Peak Month</p>
+                                        <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 truncate ${
+                                            isDarkMode ? 'text-white' : 'text-gray-900'
+                                        }`}>
+                                            {chartData.length > 0 
+                                                ? chartData.reduce((max, current) => current.total > max.total ? current : max, chartData[0]).period
+                                                : 'N/A'
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className={`group p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-105 ${
+                                    isDarkMode 
+                                        ? 'bg-gradient-to-br from-emerald-900/30 to-emerald-800/20 border-emerald-700/50 hover:border-emerald-600/70' 
+                                        : 'bg-gradient-to-br from-emerald-50 to-emerald-100/70 border-emerald-200 hover:border-emerald-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3 sm:space-x-4">
+                                    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 group-hover:from-emerald-400 group-hover:to-emerald-500' 
+                                            : 'bg-gradient-to-br from-emerald-500 to-emerald-600 group-hover:from-emerald-400 group-hover:to-emerald-500'
+                                    }`}>
+                                        <LogOut className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs sm:text-sm font-medium mb-1 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-emerald-300' : 'text-emerald-600'
+                                        }`}>Total Exits</p>
+                                        <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
+                                            isDarkMode ? 'text-white' : 'text-gray-900'
+                                        }`}>
+                                            {advances.filter(advance => advance.advanceRefund && advance.advanceRefund > 0).length}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className={`group p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-105 sm:col-span-2 lg:col-span-1 ${
+                                    isDarkMode 
+                                        ? 'bg-gradient-to-br from-purple-900/30 to-purple-800/20 border-purple-700/50 hover:border-purple-600/70' 
+                                        : 'bg-gradient-to-br from-purple-50 to-purple-100/70 border-purple-200 hover:border-purple-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-3 sm:space-x-4">
+                                    <div className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gradient-to-br from-purple-500 to-purple-600 group-hover:from-purple-400 group-hover:to-purple-500' 
+                                            : 'bg-gradient-to-br from-purple-500 to-purple-600 group-hover:from-purple-400 group-hover:to-purple-500'
+                                    }`}>
+                                        <Growth className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs sm:text-sm font-medium mb-1 transition-colors duration-300 ${
+                                            isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                                        }`}>Net Growth</p>
+                                        <p className={`text-lg sm:text-2xl font-bold transition-colors duration-300 ${
+                                            isDarkMode ? 'text-white' : 'text-gray-900'
+                                        }`}>
+                                            {vehicles.filter(v => v.rentalType === 'monthly').length - advances.filter(advance => advance.advanceRefund && advance.advanceRefund > 0).length}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    };
+
     return (
         <div className={`min-h-screen transition-colors duration-300 ${
             isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
@@ -836,6 +1323,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             ))}
                         </div>
                     </div>
+
+                    {/* Registration Analytics */}
+                    <RegistrationAnalytics />
                 </>
             )}
             
