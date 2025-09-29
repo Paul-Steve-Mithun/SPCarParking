@@ -766,24 +766,34 @@ app.get('/advances', async (req, res) => {
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
 
-        const advances = await Advance.find({
+        // Get advance payments made in this month (startDate within month, no refund)
+        const advancePayments = await Advance.find({
+            startDate: {
+                $gte: startOfMonth,
+                $lte: endOfMonth
+            },
+            advanceAmount: { $gt: 0 }, // Only positive advance amounts
             $or: [
-                {
-                    startDate: {
-                        $gte: startOfMonth,
-                        $lte: endOfMonth
-                    }
-                },
-                {
-                    refundDate: {
-                        $gte: startOfMonth,
-                        $lte: endOfMonth
-                    }
-                }
-            ]
+                { advanceRefund: { $exists: false } },
+                { advanceRefund: null },
+                { advanceRefund: 0 }
+            ] // Exclude refund records
         });
 
-        res.json(advances);
+        // Get refunds made in this month (refundDate within month)
+        const refunds = await Advance.find({
+            refundDate: {
+                $gte: startOfMonth,
+                $lte: endOfMonth
+            },
+            advanceRefund: { $gt: 0 }, // Only records with refund amounts
+            refundDate: { $exists: true } // Ensure refund date exists
+        });
+
+        // Combine both sets of records
+        const allRecords = [...advancePayments, ...refunds];
+
+        res.json(allRecords);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
