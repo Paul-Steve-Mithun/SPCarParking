@@ -766,19 +766,23 @@ app.get('/advances', async (req, res) => {
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
 
+        // IMPORTANT:
+        // We intentionally separate "advance payments" and "refunds" so that
+        // refund documents are ONLY included in the month of the refund, and
+        // not also in the month of the original startDate. Refund documents
+        // carry the original startDate for traceability, so filtering by
+        // startDate alone would incorrectly surface them in the original month.
         const advances = await Advance.find({
             $or: [
+                // Include positive advance payments whose startDate falls in the month
                 {
-                    startDate: {
-                        $gte: startOfMonth,
-                        $lte: endOfMonth
-                    }
+                    advanceAmount: { $gt: 0 },
+                    startDate: { $gte: startOfMonth, $lte: endOfMonth }
                 },
+                // Include refunds whose refundDate falls in the month
                 {
-                    refundDate: {
-                        $gte: startOfMonth,
-                        $lte: endOfMonth
-                    }
+                    advanceRefund: { $gt: 0 },
+                    refundDate: { $gte: startOfMonth, $lte: endOfMonth }
                 }
             ]
         });
