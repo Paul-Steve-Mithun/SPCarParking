@@ -721,31 +721,9 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             const monthlyVehicles = vehicles.filter(vehicle => vehicle.rentalType === 'monthly');
             
             // Filter advances with refund data (vehicles that left)
-            // Based on AdvanceDashboard logic: advanceRefund > 0 AND refundDate exists
             const refundAdvances = advancesData.filter(advance => 
-                advance.advanceRefund && 
-                advance.advanceRefund > 0 && 
-                advance.refundDate
+                advance.advanceRefund && advance.advanceRefund > 0 && advance.refundDate
             );
-            
-            // Debug logging
-            console.log('Total advances data:', advancesData.length);
-            console.log('Refund advances found:', refundAdvances.length);
-            if (refundAdvances.length > 0) {
-                console.log('Sample refund advance:', refundAdvances[0]);
-            }
-            
-            // Specific debugging for March 2025 refunds
-            const marchRefunds = refundAdvances.filter(advance => {
-                const refundDate = new Date(advance.refundDate);
-                return refundDate.getMonth() === 2 && refundDate.getFullYear() === 2025; // March = 2 (0-indexed)
-            });
-            console.log('March 2025 refunds found:', marchRefunds.length);
-            console.log('March 2025 refund details:', marchRefunds.map(r => ({
-                vehicle: r.vehicleNumber,
-                amount: r.advanceRefund,
-                date: r.refundDate
-            })));
             
             // Group monthly vehicles by registration period
             const groupedData = {};
@@ -761,8 +739,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                         monthly: 0,
                         refunds: 0,
                         total: 0,
-                        date: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
-                        refundVehicles: []
+                        date: new Date(startDate.getFullYear(), startDate.getMonth(), 1)
                     };
                 }
 
@@ -781,37 +758,15 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                         monthly: 0,
                         refunds: 0,
                         total: 0,
-                        date: new Date(refundDate.getFullYear(), refundDate.getMonth(), 1),
-                        refundVehicles: [] // Store refund vehicle details for tooltip
+                        date: new Date(refundDate.getFullYear(), refundDate.getMonth(), 1)
                     };
-                } else if (!groupedData[periodKey].refundVehicles) {
-                    groupedData[periodKey].refundVehicles = [];
                 }
 
                 groupedData[periodKey].refunds++;
-                groupedData[periodKey].refundVehicles.push({
-                    vehicleNumber: advance.vehicleNumber,
-                    refundAmount: advance.advanceRefund,
-                    refundDate: advance.refundDate
-                });
-                
-                console.log(`Added refund to ${periodKey}:`, advance.vehicleNumber, 'Refund amount:', advance.advanceRefund, 'Refund date:', advance.refundDate);
             });
 
             // Convert to array and sort by date
             const sortedData = Object.values(groupedData).sort((a, b) => a.date - b.date);
-            console.log('Final chart data with refunds:', sortedData);
-            
-            // Debug March specifically
-            const marchData = sortedData.find(item => item.period === 'Mar 2025');
-            if (marchData) {
-                console.log('March 2025 final data:', {
-                    period: marchData.period,
-                    refunds: marchData.refunds,
-                    refundVehicles: marchData.refundVehicles
-                });
-            }
-            
             setChartData(sortedData);
 
             setIsLoading(false);
@@ -819,11 +774,8 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
 
         const CustomTooltip = ({ active, payload, label }) => {
             if (active && payload && payload.length) {
-                // Find the data point for this label
-                const dataPoint = chartData.find(item => item.period === label);
-                
                 return (
-                    <div className={`rounded-lg border shadow-lg p-4 max-w-sm transition-colors duration-300 ${
+                    <div className={`rounded-lg border shadow-lg p-4 transition-colors duration-300 ${
                         isDarkMode 
                             ? 'bg-gray-800 border-gray-600' 
                             : 'bg-white border-gray-200'
@@ -838,26 +790,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                 {entry.dataKey}: {entry.value}
                             </p>
                         ))}
-                        
-                        {/* Show refund vehicle details */}
-                        {dataPoint && dataPoint.refundVehicles && dataPoint.refundVehicles.length > 0 && (
-                            <div className={`mt-3 pt-2 border-t transition-colors duration-300 ${
-                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                            }`}>
-                                <p className={`text-xs font-medium mb-1 transition-colors duration-300 ${
-                                    isDarkMode ? 'text-red-300' : 'text-red-600'
-                                }`}>Refunded Vehicles:</p>
-                                <div className="max-h-32 overflow-y-auto">
-                                    {dataPoint.refundVehicles.map((vehicle, idx) => (
-                                        <div key={idx} className={`text-xs transition-colors duration-300 ${
-                                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                        }`}>
-                                            {vehicle.vehicleNumber} - ₹{vehicle.refundAmount} ({new Date(vehicle.refundDate).toLocaleDateString('en-GB')})
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <p className={`text-sm font-medium mt-1 pt-1 border-t transition-colors duration-300 ${
+                            isDarkMode 
+                                ? 'text-gray-100 border-gray-600' 
+                                : 'text-gray-900 border-gray-200'
+                        }`}>
+                            Total: {payload.reduce((sum, entry) => sum + entry.value, 0)}
+                        </p>
                     </div>
                 );
             }
