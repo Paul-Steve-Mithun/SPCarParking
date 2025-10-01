@@ -726,14 +726,17 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         const processRegistrationData = (advancesData = []) => {
             setIsLoading(true);
             
-            // Build monthly registrations FROM advances (positive advanceAmount)
+            // Build monthly registrations FROM advances (including zero advance amounts, but excluding refund records)
             let registrationAdvances = advancesData.filter(advance => 
-                advance.advanceAmount && advance.advanceAmount > 0 && advance.startDate
+                advance.advanceAmount !== undefined && 
+                advance.advanceAmount >= 0 && 
+                advance.startDate &&
+                !advance.refundDate  // Exclude refund records from new registrations
             );
 
-            // Filter advances with refund data (vehicles that left)
+            // Filter advances with refund data (vehicles that left, including zero refunds)
             let refundAdvances = advancesData.filter(advance => 
-                advance.advanceRefund && advance.advanceRefund > 0 && advance.refundDate
+                advance.advanceRefund !== undefined && advance.advanceRefund >= 0 && advance.refundDate
             );
 
             // Apply year filter if not "All"

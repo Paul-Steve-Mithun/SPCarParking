@@ -99,12 +99,8 @@ export function AdvanceDashboard() {
             const allAdvancesResponse = await fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${endDate.toISOString()}`);
             const allAdvancesData = await allAdvancesResponse.json();
 
-            // Filter and sort transactions for display
-            const nonZeroTransactions = monthlyData.filter(v => 
-                v.advanceAmount > 0 || v.advanceRefund > 0
-            );
-
-            const sortedData = nonZeroTransactions.sort((a, b) => {
+            // Sort transactions for display (including zero advance entries)
+            const sortedData = monthlyData.sort((a, b) => {
                 const dateA = new Date(a.refundDate || a.startDate);
                 const dateB = new Date(b.refundDate || b.startDate);
                 return dateB - dateA;
@@ -149,11 +145,9 @@ export function AdvanceDashboard() {
     useEffect(() => {
         const filtered = vehicles
             .filter(vehicle => 
-                // First filter out zero advance transactions
-                (vehicle.advanceAmount > 0 || vehicle.advanceRefund > 0) &&
-                // Then apply search filter
-                (vehicle.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (vehicle.vehicleDescription || '').toLowerCase().includes(searchQuery.toLowerCase()))
+                // Apply search filter (including zero advance transactions)
+                vehicle.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (vehicle.vehicleDescription || '').toLowerCase().includes(searchQuery.toLowerCase())
             );
         setFilteredVehicles(filtered);
     }, [searchQuery, vehicles]);
@@ -270,7 +264,7 @@ export function AdvanceDashboard() {
                 return dateA - dateB;
             })
             .map((vehicle, index) => {
-                const isRefund = !!vehicle.advanceRefund;
+                const isRefund = vehicle.refundDate != null && vehicle.advanceRefund !== undefined;
                 const amount = isRefund ? vehicle.advanceRefund : (vehicle.advanceAmount || 0);
 
                 return {
@@ -280,7 +274,7 @@ export function AdvanceDashboard() {
                     lot: vehicle.lotNumber || 'Open',
                     mode: vehicle.transactionMode || 'Cash',
                     receivedBy: vehicle.receivedBy || 'N/A',
-                    date: formatDateForPDF(vehicle.refundDate || vehicle.startDate),
+                    date: formatDateForPDF(isRefund ? vehicle.refundDate : vehicle.startDate),
                     amount: formatAmount(amount, isRefund),
                     isRefund: isRefund,
                     rawAmount: isRefund ? -amount : amount
@@ -718,17 +712,19 @@ export function AdvanceDashboard() {
                                                             <AdvanceTableRowSkeleton key={index} isDarkMode={isDarkMode} />
                                                         ))
                                                     ) : (
-                                                        filteredVehicles.map((vehicle, index) => (
+                                                        filteredVehicles.map((vehicle, index) => {
+                                                                    const isRefund = vehicle.refundDate != null && vehicle.advanceRefund !== undefined;
+                                                                    return (
                                                             <tr 
                                                                 key={vehicle._id} 
                                                                 className={`transition-colors duration-150 ${
-                                                                    vehicle.advanceRefund 
+                                                                    isRefund
                                                                         ? isDarkMode ? 'bg-red-900 hover:bg-red-800' : 'bg-red-50 hover:bg-red-100' 
                                                                         : isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
                                                                 }`}
                                                             >
                                                                 <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{index + 1}</td>
-                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.advanceRefund 
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{isRefund
                                                                         ? new Date(vehicle.refundDate).toLocaleDateString('en-GB')
                                                                         : new Date(vehicle.startDate).toLocaleDateString('en-GB')}</td>
                                                                 <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? 'text-teal-100' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</td>
@@ -755,17 +751,18 @@ export function AdvanceDashboard() {
                                                                         )}
                                                                     </span>
                                                                 </td>
-                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? vehicle.advanceRefund ? 'text-red-400' : 'text-teal-100' : vehicle.advanceRefund ? 'text-red-600' : 'text-gray-900'}`}>
+                                                                <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium ${isDarkMode ? isRefund ? 'text-red-400' : 'text-teal-100' : isRefund ? 'text-red-600' : 'text-gray-900'}`}>
                                                                     <div className="w-full text-right font-mono">
                                                                         <span className={`inline-block w-[90px] text-left text-base`}>
-                                                                            {vehicle.advanceRefund 
+                                                                            {isRefund
                                                                                 ? `${vehicle.advanceRefund.toFixed(2)}`
                                                                                 : vehicle.advanceAmount.toFixed(2)}
                                                                         </span>
                                                                     </div>
                                                                 </td>
                                                             </tr>
-                                                        ))
+                                                                    );
+                                                        })
                                                     )}
                                                 </tbody>
                                             </table>

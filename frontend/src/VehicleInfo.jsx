@@ -133,11 +133,16 @@ export function VehicleInfo() {
             // Find latest advance and refund info for this vehicle (monthly rental only)
             let advanceInfo = null, refundInfo = null;
             if (Array.isArray(advances) && latest.rentalType === 'monthly') {
+                // Get the original advance record (has advanceAmount and no refundDate)
                 advanceInfo = advances
-                    .filter(a => a.vehicleNumber === latest.vehicleNumber && a.advanceAmount > 0)
+                    .filter(a => a.vehicleNumber === latest.vehicleNumber && 
+                                a.advanceAmount !== undefined && 
+                                a.advanceAmount >= 0 &&
+                                !a.refundDate)
                     .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+                // Get the refund record (has refundDate, regardless of refund amount)
                 refundInfo = advances
-                    .filter(a => a.vehicleNumber === latest.vehicleNumber && a.advanceRefund > 0)
+                    .filter(a => a.vehicleNumber === latest.vehicleNumber && a.refundDate)
                     .sort((a, b) => new Date(b.refundDate) - new Date(a.refundDate))[0];
             }
             return {
@@ -973,12 +978,14 @@ export function VehicleInfo() {
                                         <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${
                                             selectedVehicle.status === 'active' 
                                                 ? 'bg-emerald-500/80 text-white border-emerald-400/50' 
-                                                : 'bg-red-500/80 text-white border-red-400/50'
+                                                : selectedVehicle.status === 'archived'
+                                                    ? 'bg-yellow-500/80 text-white border-yellow-400/50'
+                                                    : 'bg-red-500/80 text-white border-red-400/50'
                                         }`}>
-                                            {selectedVehicle.status === 'active' ? 'Active' : 'Expired'}
+                                            {selectedVehicle.status === 'active' ? 'Active' : selectedVehicle.status === 'archived' ? 'Archived' : 'Expired'}
                                         </span>
-                                        {/* Premium Badge for Monthly Rental Vehicles */}
-                                        {selectedVehicle.rentalType === 'monthly' && isPremiumCustomer(selectedVehicle, transactions) && (
+                                        {/* Premium Badge for Monthly Rental Vehicles (not archived) */}
+                                        {selectedVehicle.rentalType === 'monthly' && !selectedVehicle.isArchived && isPremiumCustomer(selectedVehicle, transactions) && (
                                             <span className="px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border bg-yellow-400 text-white border-yellow-300 flex items-center gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.873 6.9-1.002L12 2.25l3.093 6.997 6.9 1.002-5 4.873 1.179 6.873z" /></svg>
                                                 Premium
@@ -1205,53 +1212,38 @@ export function VehicleInfo() {
                                         </div>
                                         {selectedVehicle.isArchived && selectedVehicle.rentalType === 'monthly' && (
                                             <>
-                                                <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                                    isDarkMode 
-                                                        ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                        : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                                }`}>
-                                                    <div className="bg-emerald-100 p-2 rounded-full">
-                                                        <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                                {/* Only show Refund Amount card when advance > 0 */}
+                                                {selectedVehicle.advanceAmount > 0 && (
+                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
+                                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                                    }`}>
+                                                        <div className="bg-emerald-100 p-2 rounded-full">
+                                                            <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className={`text-xs transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>Refund Amount</p>
+                                                            <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
+                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                            }`}>
+                                                                {(() => {
+                                                                    // Find latest revenue transaction for this vehicle
+                                                                    const latestRevenue = allRevenue
+                                                                        .filter(r => r.vehicleNumber === selectedVehicle.vehicleNumber && r.revenueAmount > 0)
+                                                                        .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+                                                                    const advanceAmt = selectedVehicle.advanceAmount || 0;
+                                                                    const paidAmt = latestRevenue ? latestRevenue.revenueAmount : 0;
+                                                                    const refundAmt = advanceAmt - paidAmt;
+                                                                    return `₹${refundAmt.toLocaleString('en-IN')}`;
+                                                                })()}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <p className={`text-xs transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>Refund Amount</p>
-                                                        <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                        }`}>
-                                                            {(() => {
-                                                                // Find latest revenue transaction for this vehicle
-                                                                const latestRevenue = allRevenue
-                                                                    .filter(r => r.vehicleNumber === selectedVehicle.vehicleNumber && r.revenueAmount > 0)
-                                                                    .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
-                                                                const advanceAmt = selectedVehicle.advanceAmount || 0;
-                                                                const paidAmt = latestRevenue ? latestRevenue.revenueAmount : 0;
-                                                                const refundAmt = advanceAmt - paidAmt;
-                                                                return `₹${refundAmt.toLocaleString('en-IN')}`;
-                                                            })()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                                    isDarkMode 
-                                                        ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                        : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                                }`}>
-                                                    <div className="bg-emerald-100 p-2 rounded-full">
-                                                        <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className={`text-xs transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>Start Date</p>
-                                                        <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                        }`}>
-                                                            {selectedVehicle.startDate ? new Date(selectedVehicle.startDate).toLocaleDateString('en-GB') : '-'}
-                                                        </p>
-                                                    </div>
-                                                </div>
+                                                )}
+                                                {/* Always show Refund Date if it exists */}
                                                 {selectedVehicle.refundDate && (
                                                     <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
                                                         isDarkMode 
