@@ -478,6 +478,10 @@ app.put('/updateVehicle/:id', upload.fields([
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
+        // Check if vehicle number is being changed
+        const isVehicleNumberChanged = vehicleData.vehicleNumber && 
+                                       vehicleData.vehicleNumber !== currentVehicle.vehicleNumber;
+
         // Handle image updates
         if (req.files) {
             // Vehicle Image
@@ -530,6 +534,26 @@ app.put('/updateVehicle/:id', upload.fields([
                 vehicleData.document2Image = null;
             }
             delete vehicleData.removeImages;
+        }
+
+        // If vehicle number is changed, update all related advance and revenue records
+        if (isVehicleNumberChanged) {
+            const oldVehicleNumber = currentVehicle.vehicleNumber;
+            const newVehicleNumber = vehicleData.vehicleNumber;
+
+            // Update all advance records
+            await Advance.updateMany(
+                { vehicleNumber: oldVehicleNumber },
+                { $set: { vehicleNumber: newVehicleNumber } }
+            );
+
+            // Update all revenue records
+            await Revenue.updateMany(
+                { vehicleNumber: oldVehicleNumber },
+                { $set: { vehicleNumber: newVehicleNumber } }
+            );
+
+            console.log(`Updated vehicle number from ${oldVehicleNumber} to ${newVehicleNumber} in all related records`);
         }
 
         // Remove startDate and endDate from the update data to preserve original dates
@@ -731,16 +755,20 @@ app.get('/advances/allUpToDate', async (req, res) => {
         const { date } = req.query;
         const queryDate = new Date(date);
 
-        // First, get all advance payments made up to the query date
+        // First, get all advance payments made up to the query date (excluding refund records)
         const advances = await Advance.find({
             startDate: { $lte: queryDate },
-            advanceAmount: { $gt: 0 }  // Only get positive advance amounts
+            advanceAmount: { $gte: 0 },  // Get all advance amounts including zero
+            $or: [
+                { advanceRefund: null },
+                { advanceRefund: { $exists: false } }
+            ]
         });
 
         // Then, get all refunds made up to the query date
         const refunds = await Advance.find({
             refundDate: { $lte: queryDate },
-            advanceRefund: { $gt: 0 }  // Only get refunds
+            advanceRefund: { $gte: 0 }  // Get all refunds including zero
         });
 
         // Combine both sets of records
@@ -774,14 +802,18 @@ app.get('/advances', async (req, res) => {
         // startDate alone would incorrectly surface them in the original month.
         const advances = await Advance.find({
             $or: [
-                // Include positive advance payments whose startDate falls in the month
+                // Include advance payments (including zero amounts) whose startDate falls in the month (but not refund records)
                 {
-                    advanceAmount: { $gt: 0 },
-                    startDate: { $gte: startOfMonth, $lte: endOfMonth }
+                    advanceAmount: { $gte: 0 },
+                    startDate: { $gte: startOfMonth, $lte: endOfMonth },
+                    $or: [
+                        { advanceRefund: null },
+                        { advanceRefund: { $exists: false } }
+                    ]
                 },
-                // Include refunds whose refundDate falls in the month
+                // Include refunds (including zero amounts) whose refundDate falls in the month
                 {
-                    advanceRefund: { $gt: 0 },
+                    advanceRefund: { $gte: 0 },
                     refundDate: { $gte: startOfMonth, $lte: endOfMonth }
                 }
             ]
