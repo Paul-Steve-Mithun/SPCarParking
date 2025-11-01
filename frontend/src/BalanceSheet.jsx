@@ -48,6 +48,12 @@ export function BalanceSheet() {
     const [transferTo, setTransferTo] = useState('Mani');
     const [transferAmount, setTransferAmount] = useState('');
     const [transferDate, setTransferDate] = useState('');
+    const [totalSummary, setTotalSummary] = useState({
+        totalRevenue: 0,
+        totalExpense: 0,
+        netIncome: 0,
+        totalAdvance: 0
+    });
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June', 
@@ -61,15 +67,20 @@ export function BalanceSheet() {
     const fetchBalanceData = async () => {
         setIsLoading(true);
         try {
-            const [revenueRes, expensesRes, balanceSheetRes] = await Promise.all([
+            // Get end date for advance calculation (last day of selected month)
+            const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+            
+            const [revenueRes, expensesRes, balanceSheetRes, advanceRes] = await Promise.all([
                 fetch(`https://spcarparkingbknd.onrender.com/revenue?month=${selectedMonth}&year=${selectedYear}`),
                 fetch(`https://spcarparkingbknd.onrender.com/expenses?month=${selectedMonth}&year=${selectedYear}`),
-                fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${selectedMonth}&year=${selectedYear}`)
+                fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${selectedMonth}&year=${selectedYear}`),
+                fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${endDate.toISOString()}`)
             ]);
 
             const revenueData = await revenueRes.json();
             const expensesData = await expensesRes.json();
             const balanceSheetData = await balanceSheetRes.json();
+            const advanceData = await advanceRes.json();
 
             // Calculate totals for Balu
             const baluRevenue = revenueData
@@ -117,6 +128,19 @@ export function BalanceSheet() {
             const baluThisMonthTakeHome = baluPreviousMonthTakeHome + baluNetProfit + baluTransfers;
             const maniThisMonthTakeHome = maniPreviousMonthTakeHome + maniNetProfit + maniTransfers;
 
+            // Calculate total revenue and expense (Balu + Mani)
+            const totalRevenue = baluRevenue + maniRevenue;
+            const totalExpense = baluExpenses + maniExpenses;
+            const netIncome = totalRevenue - totalExpense;
+
+            // Calculate total advance till date
+            const totalAdvance = advanceData.reduce((total, vehicle) => {
+                if (vehicle.advanceRefund) {
+                    return total - vehicle.advanceRefund;
+                }
+                return total + (vehicle.advanceAmount || 0);
+            }, 0);
+
             setBalanceData({
                 balu: {
                     revenue: baluRevenue,
@@ -134,6 +158,13 @@ export function BalanceSheet() {
                     thisMonthTakeHome: maniThisMonthTakeHome,
                     transfers: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'transfer')
                 }
+            });
+
+            setTotalSummary({
+                totalRevenue: totalRevenue || 0,
+                totalExpense: totalExpense || 0,
+                netIncome: netIncome || 0,
+                totalAdvance: totalAdvance || 0
             });
         } catch (error) {
             toast.error('Failed to fetch balance data');
@@ -749,6 +780,126 @@ export function BalanceSheet() {
                                 <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Total Summary Section */}
+            <div className={`rounded-2xl shadow-xl overflow-hidden mb-3 sm:mb-4 md:mb-6 ${isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-800/90 border border-gray-700' : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'}`}>
+                <div className="p-3 sm:p-4 md:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                        <div className={`p-1.5 sm:p-2 md:p-3 rounded-xl ${isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-indigo-600" />
+                        </div>
+                        <div>
+                            <h2 className={`text-base sm:text-lg md:text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                Monthly Summary
+                            </h2>
+                            <p className={`text-[10px] sm:text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {monthNames[selectedMonth]} {selectedYear} - Total Overview
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
+                        {/* Total Revenue */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-green-900/20 to-green-800/10 border-green-700/30' : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-green-700/50' : 'bg-green-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-green-700/30' : 'bg-green-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-green-700/40' : 'bg-green-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'bg-gradient-to-br from-green-900/20 to-green-800/10 border-green-700/30' : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                                        <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-600" />
+                                    </div>
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Revenue</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+                                    ₹{totalSummary.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Total Expense */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-red-900/20 to-red-800/10 border-red-700/30' : 'bg-gradient-to-br from-red-50 to-red-100/50 border-red-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-red-700/50' : 'bg-red-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-red-700/30' : 'bg-red-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-red-700/40' : 'bg-red-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'bg-gradient-to-br from-red-900/20 to-red-800/10 border-red-700/30' : 'bg-gradient-to-br from-red-50 to-red-100/50 border-red-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'}`}>
+                                        <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-red-600" />
+                                    </div>
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Expense</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>
+                                    ₹{totalSummary.totalExpense.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Net Income */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 border-indigo-700/30' : 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-indigo-700/50' : 'bg-indigo-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-indigo-700/30' : 'bg-indigo-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-indigo-700/40' : 'bg-indigo-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 border-indigo-700/30' : 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
+                                        <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-indigo-600" />
+                                    </div>
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Income</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? totalSummary.netIncome >= 0 ? 'text-indigo-300' : 'text-red-300' : totalSummary.netIncome >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
+                                    ₹{totalSummary.netIncome.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Advance Amount */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-amber-900/20 to-amber-800/10 border-amber-700/30' : 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-amber-700/50' : 'bg-amber-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-amber-700/30' : 'bg-amber-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-amber-700/40' : 'bg-amber-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg ${isDarkMode ? 'bg-gradient-to-br from-amber-900/20 to-amber-800/10 border-amber-700/30' : 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100'}`}>
+                                        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-amber-600" />
+                                    </div>
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Advance Till Date</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+                                    ₹{totalSummary.totalAdvance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
