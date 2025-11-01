@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon, ArrowLeft, Receipt } from 'lucide-react';
+import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon, ArrowLeft, Receipt, FileText, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -844,6 +844,476 @@ export function VehicleInfo() {
         }
     };
 
+    const handleDownloadFullReport = async (vehicle) => {
+        try {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 12;
+            const leftColWidth = 85;
+            const rightColWidth = 85;
+            const colGap = 8;
+            
+            let currentY = margin;
+            const lineHeight = 6;
+            const sectionSpacing = 8;
+
+            // ========== PROFESSIONAL HEADER ==========
+            // Top border line
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 3;
+
+            // Logo and Company Info on Left
+            const logoUrl = 'SP_Car_Parking_bg.png';
+            try {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(logoBlob);
+                });
+                doc.addImage(logoBase64, 'PNG', margin, currentY, 22, 22);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
+
+            // Company details - Left side
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(15);
+            doc.setTextColor(30, 58, 138);
+            doc.text('SP Car Parking', margin + 26, currentY + 7);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 13);
+            doc.text('Madurai (Opposite to Our Lady School)', margin + 26, currentY + 19);
+
+            // Check if vehicle image exists (but load it later, after divider line)
+            const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
+
+            // Report title and date - Right side (with proper spacing from vehicle image)
+            const now = new Date();
+            const reportDate = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+            const reportTime = now.toLocaleTimeString('en-GB', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            // Position text to the left of vehicle image with proper spacing
+            const rightTextX = vehicleImgLoaded ? (pageWidth - margin - 40) : (pageWidth - margin);
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(30, 58, 138);
+            doc.text('Vehicle Report', rightTextX, currentY + 7, { align: 'right' });
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text(`Generated: ${reportDate} ${reportTime}`, rightTextX, currentY + 13, { align: 'right' });
+            doc.text(`Vehicle: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, { align: 'right' });
+
+            // Calculate where to draw the divider line (below the header content)
+            const headerBottomY = currentY + 28;
+            
+            // Draw divider line before adding image so image appears on top
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            
+            // If vehicle image exists, draw line up to where image starts, then continue after image
+            if (vehicleImgLoaded) {
+                const imgSize = 35;
+                const imgX = pageWidth - margin - imgSize;
+                // Draw line from left margin to before the image
+                doc.line(margin, headerBottomY, imgX - 2, headerBottomY);
+                // Draw line after the image (continue from right edge of image)
+                doc.line(imgX + imgSize + 2, headerBottomY, pageWidth - margin, headerBottomY);
+            } else {
+                // If no image, draw full line
+                doc.line(margin, headerBottomY, pageWidth - margin, headerBottomY);
+            }
+
+            // Now add vehicle image AFTER the line so it appears on top
+            if (vehicleImgLoaded && vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+                    
+                    const imgSize = 35;
+                    const imgX = pageWidth - margin - imgSize;
+                    const imgY = currentY;
+                    
+                    // Add subtle border around image
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.3);
+                    doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
+                    
+                    // Draw image on top
+                    doc.addImage(imgBase64, 'JPEG', imgX, imgY, imgSize, imgSize);
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
+            }
+
+            currentY = headerBottomY + sectionSpacing;
+
+            // Store the starting Y position for both columns to align them
+            const contentStartY = currentY;
+
+            // ========== VEHICLE DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('VEHICLE INFORMATION', margin, currentY);
+            currentY += lineHeight;
+
+            const vehicleDetails = [
+                ['Vehicle Number', vehicle.vehicleNumber],
+                ['Description', vehicle.vehicleDescription || 'N/A'],
+                ['Lot Number', vehicle.lotNumber || 'Open'],
+                ['Rental Type', capitalizeFirst(vehicle.rentalType || 'N/A')],
+                ['Status', vehicle.status === 'active' ? 'Active' : vehicle.status === 'archived' ? 'Archived' : 'Expired'],
+            ];
+
+            doc.autoTable({
+                startY: currentY,
+                head: [],
+                body: vehicleDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
+                }
+            });
+
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== OWNER DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('OWNER INFORMATION', margin, currentY);
+            currentY += lineHeight;
+
+            const ownerDetails = [
+                ['Owner Name', vehicle.ownerName || 'N/A'],
+                ['Contact', vehicle.contactNumber || 'N/A'],
+                ['Address', (vehicle.ownerAddress || 'N/A').substring(0, 50) + ((vehicle.ownerAddress && vehicle.ownerAddress.length > 50) ? '...' : '')],
+                ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
+            ];
+
+            doc.autoTable({
+                startY: currentY,
+                head: [],
+                body: ownerDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
+                }
+            });
+
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== RENTAL DETAILS - Right Column ==========
+            // Use the same starting Y as left column for proper alignment
+            let rightColY = contentStartY;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('RENTAL INFORMATION', margin + leftColWidth + colGap, rightColY);
+            rightColY += lineHeight;
+
+            const rentalDetails = [
+                ['Rental Type', capitalizeFirst(vehicle.rentalType || 'N/A')],
+                ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
+            ];
+
+            if (vehicle.rentalType === 'monthly') {
+                rentalDetails.push(['Advance Amount', `Rs. ${(vehicle.advanceAmount || 0).toLocaleString('en-IN')}`]);
+                
+                if (vehicle.isArchived && vehicle.advanceAmount > 0) {
+                    const latestRevenue = allRevenue
+                        .filter(r => r.vehicleNumber === vehicle.vehicleNumber && r.revenueAmount > 0)
+                        .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+                    const advanceAmt = vehicle.advanceAmount || 0;
+                    const paidAmt = latestRevenue ? latestRevenue.revenueAmount : 0;
+                    const refundAmt = advanceAmt - paidAmt;
+                    if (refundAmt > 0) {
+                        rentalDetails.push(['Refund Amount', `Rs. ${refundAmt.toLocaleString('en-IN')}`]);
+                    }
+                }
+                
+                if (vehicle.refundDate) {
+                    rentalDetails.push(['Refund Date', new Date(vehicle.refundDate).toLocaleDateString('en-GB')]);
+                }
+            } else if (vehicle.rentalType === 'daily') {
+                rentalDetails.push(['Number of Days', `${vehicle.numberOfDays} days`]);
+                rentalDetails.push(['Total Amount', `Rs. ${(vehicle.rentPrice * vehicle.numberOfDays).toLocaleString('en-IN')}`]);
+                if (vehicle.endDate) {
+                    rentalDetails.push(['End Date', new Date(vehicle.endDate).toLocaleDateString('en-GB')]);
+                }
+            }
+
+            doc.autoTable({
+                startY: rightColY,
+                head: [],
+                body: rentalDetails,
+                margin: { left: margin + leftColWidth + colGap, right: margin },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
+                }
+            });
+
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== PAYMENT SUMMARY - Right Column ==========
+            const filteredTransactions = transactions
+                .filter(t => t.revenueAmount > 0)
+                .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
+
+            if (filteredTransactions.length > 0) {
+                const totalPaid = filteredTransactions.reduce((sum, t) => sum + t.revenueAmount, 0);
+                const totalPayments = filteredTransactions.length;
+                const lastPayment = filteredTransactions[0];
+                const upiCount = filteredTransactions.filter(t => t.transactionMode === 'UPI').length;
+                const cashCount = filteredTransactions.filter(t => t.transactionMode === 'Cash').length;
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(30, 58, 138);
+                doc.text('PAYMENT SUMMARY', margin + leftColWidth + colGap, rightColY);
+                rightColY += lineHeight;
+
+                const summaryDetails = [
+                    ['Total Paid', `Rs. ${totalPaid.toLocaleString('en-IN')}`],
+                    ['Total Payments', totalPayments.toString()],
+                    ['Last Payment', `Rs. ${lastPayment.revenueAmount.toLocaleString('en-IN')}`],
+                    ['Last Payment Date', new Date(lastPayment.transactionDate).toLocaleDateString('en-GB')],
+                    ['UPI', upiCount.toString()],
+                    ['Cash', cashCount.toString()],
+                ];
+
+                doc.autoTable({
+                    startY: rightColY,
+                    head: [],
+                    body: summaryDetails,
+                    margin: { left: margin + leftColWidth + colGap, right: margin },
+                    theme: 'plain',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: { top: 2.5, bottom: 2.5, left: 0, right: 4 },
+                        font: 'helvetica',
+                        lineWidth: 0,
+                        textColor: [55, 65, 81],
+                    },
+                    columnStyles: {
+                        0: { 
+                            fontStyle: 'bold',
+                            textColor: [75, 85, 99],
+                            cellWidth: 45
+                        },
+                        1: { 
+                            textColor: [22, 163, 74],
+                            fontStyle: 'bold',
+                            cellWidth: 'auto'
+                        }
+                    }
+                });
+
+                rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+            }
+
+            // ========== TRANSACTION HISTORY - Full Width ==========
+            // Use max Y position from both columns
+            const startTxnY = Math.max(currentY, rightColY) + sectionSpacing;
+
+            // Draw divider before transaction history
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, startTxnY - 4, pageWidth - margin, startTxnY - 4);
+            
+            let txnY = startTxnY;
+
+            if (filteredTransactions.length > 0) {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(30, 58, 138);
+                doc.text('RECENT TRANSACTIONS', margin, txnY);
+                txnY += lineHeight + 1;
+
+                // Show only last 8 transactions to fit on page
+                const displayTransactions = filteredTransactions.slice(0, 8);
+                const transactionTableData = displayTransactions.map((txn, index) => [
+                    (index + 1).toString(),
+                    new Date(txn.transactionDate).toLocaleDateString('en-GB'),
+                    txn.transactionMode || 'Cash',
+                    `Rs. ${txn.revenueAmount.toLocaleString('en-IN')}`
+                ]);
+
+                // Calculate full width for transaction table
+                const tableMargin = margin;
+                const availableWidth = pageWidth - (tableMargin * 2);
+                
+                doc.autoTable({
+                    startY: txnY,
+                    head: [['#', 'Date', 'Mode', 'Amount']],
+                    body: transactionTableData,
+                    margin: { left: tableMargin, right: tableMargin },
+                    theme: 'striped',
+                    tableWidth: availableWidth,
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 4,
+                        font: 'helvetica',
+                        lineColor: [241, 245, 249],
+                        lineWidth: 0.3,
+                        textColor: [55, 65, 81],
+                    },
+                    headStyles: {
+                        fillColor: [30, 58, 138],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center',
+                        fontSize: 8.5,
+                        cellPadding: 4,
+                    },
+                    columnStyles: {
+                        0: { 
+                            cellWidth: availableWidth * 0.08, 
+                            halign: 'center', 
+                            fontStyle: 'bold' 
+                        },
+                        1: { 
+                            cellWidth: availableWidth * 0.35, 
+                            halign: 'center' 
+                        },
+                        2: { 
+                            cellWidth: availableWidth * 0.27, 
+                            halign: 'center' 
+                        },
+                        3: { 
+                            cellWidth: availableWidth * 0.30, 
+                            halign: 'right', 
+                            fontStyle: 'bold', 
+                            textColor: [22, 163, 74] 
+                        }
+                    },
+                    alternateRowStyles: {
+                        fillColor: [249, 250, 251]
+                    }
+                });
+
+                if (filteredTransactions.length > 8) {
+                    const remainingCount = filteredTransactions.length - 8;
+                    txnY = doc.autoTable.previous.finalY + 2;
+                    doc.setFont("helvetica", "italic");
+                    doc.setFontSize(7);
+                    doc.setTextColor(107, 114, 128);
+                    doc.text(`+ ${remainingCount} more transaction(s)`, margin, txnY);
+                }
+            } else {
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(10);
+                doc.setTextColor(30, 58, 138);
+                doc.text('TRANSACTION HISTORY', margin, txnY);
+                txnY += lineHeight + 3;
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(107, 114, 128);
+                doc.text('No transactions found for this vehicle.', margin, txnY);
+            }
+
+            // ========== PROFESSIONAL FOOTER ==========
+            const footerY = pageHeight - 12;
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
+            
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.setFont("helvetica", "normal");
+            doc.text('SP Car Parking - Comprehensive Vehicle Report', pageWidth/2, footerY, { align: 'center' });
+            
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 138);
+            doc.setFontSize(7);
+            doc.text('JESUS LEADS YOU', margin, footerY);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(107, 114, 128);
+            doc.text(`"Your Car Is Under Safe Hands"`, pageWidth - margin, footerY, { align: 'right' });
+
+            doc.save(`SP_Vehicle_Report_${vehicle.vehicleNumber}_${reportDate.replace(/\//g, '-')}.pdf`);
+            toast.success('Full report downloaded successfully! 🎉');
+        } catch (error) {
+            console.error('Error generating full report:', error);
+            toast.error('Failed to generate report');
+        }
+    };
+
     // Helper to determine if a vehicle is premium (for monthly rental vehicles)
     const isPremiumCustomer = (vehicle, transactions) => {
         if (!vehicle || vehicle.rentalType !== 'monthly' || !transactions.length) return false;
@@ -997,6 +1467,14 @@ export function VehicleInfo() {
                                             title="Print Receipt"
                                         >
                                             <PrinterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDownloadFullReport(selectedVehicle)}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-600 rounded-lg text-white transition-colors border border-emerald-400/50 backdrop-blur-sm shadow-lg"
+                                            title="Download Full Report"
+                                        >
+                                            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                                            <span className="hidden sm:inline text-sm font-semibold">Full Report</span>
                                         </button>
                                     </div>
                                 </div>
