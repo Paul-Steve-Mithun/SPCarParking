@@ -64,7 +64,7 @@ export function ExpensesDashboard() {
     const [expenseToDelete, setExpenseToDelete] = useState(null);
     const [isAddingExpense, setIsAddingExpense] = useState(false);
     const [newExpense, setNewExpense] = useState({
-        expenseType: 'Watchman Night',
+        expenseType: 'Watchman 1',
         spentBy: 'Balu',
         description: '',
         amount: '',
@@ -159,7 +159,7 @@ export function ExpensesDashboard() {
             await fetchExpenses();
             setIsAddExpenseOpen(false);
             setNewExpense({
-                expenseType: 'Watchman Night',
+                expenseType: 'Watchman 1',
                 spentBy: 'Balu',
                 description: '',
                 amount: '',
@@ -855,12 +855,13 @@ export function ExpensesDashboard() {
                                                 onChange={(e) => setNewExpense({...newExpense, expenseType: e.target.value})}
                                                 className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none transition-all ${isDarkMode ? 'bg-gray-800 text-yellow-200 border-gray-700 focus:border-yellow-600 focus:ring-2 focus:ring-yellow-700' : 'bg-white border-gray-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200'}`}
                                             >
-                                                <option value="Watchman Night">Watchman Night</option>
-                                                <option value="Watchman Day">Watchman Day</option>
+                                                <option value="Watchman 1">Watchman 1</option>
+                                                <option value="Watchman 2">Watchman 2</option>
                                                 <option value="Electricity Bill">Electricity Bill</option>
                                                 <option value="Wi-Fi">Wi-Fi</option>
                                                 <option value="Sweeper">Sweeper</option>
                                                 <option value="Telephone">Telephone</option>
+                                                <option value="Water">Water</option>
                                                 <option value="Miscellaneous">Miscellaneous</option>
                                             </select>
                                         </div>
