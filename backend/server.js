@@ -122,7 +122,16 @@ const AdvanceSchema = new mongoose.Schema({
 const ExpenseSchema = new mongoose.Schema({
     expenseType: { 
         type: String, 
-        enum: ['Watchman Night', 'Watchman Day', 'Electricity Bill', 'Wi-Fi', 'Sweeper', 'Telephone', 'Miscellaneous'],
+        enum: [
+            'Watchman 1',
+            'Watchman 2',
+            'Electricity Bill',
+            'Wi-Fi',
+            'Sweeper',
+            'Telephone',
+            'Water',
+            'Miscellaneous'
+        ],
         required: true 
     },
     spentBy: {
