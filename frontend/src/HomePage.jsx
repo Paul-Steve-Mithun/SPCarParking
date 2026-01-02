@@ -278,11 +278,6 @@ const SpeedometerCounter = ({ value = 0, maxValue = 140, isDarkMode = false }) =
             </div>
         </div>
         
-        {/* Status indicator skeleton */}
-        <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
-          <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-400'} animate-pulse`}></div>
-        </div>
-        
         {/* Loading text */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
           <div className={`text-xs sm:text-sm font-semibold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} tracking-wider`}>
