@@ -166,8 +166,7 @@ const SpeedometerCounter = ({ value = 0, maxValue = 140, isDarkMode = false }) =
               fill="#ef4444"
               filter="url(#glow)"
             />
-            {/* Needle tip */}
-            <circle cx="200" cy="75" r="4" fill="#dc2626" />
+
           </animated.g>
           
           {/* Center bolt */}
