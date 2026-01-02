@@ -41,6 +41,258 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
+const SpeedometerCounter = ({ value = 0, maxValue = 140, isDarkMode = false }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+    
+    const needleAnimation = useSpring({
+      from: { rotation: -135 },
+      to: { rotation: -135 + (value / maxValue) * 270 },
+      config: { tension: 20, friction: 20 },
+    });
+  
+    const counterAnimation = useSpring({
+      from: { number: 0 },
+      to: { number: value },
+      config: { duration: 2000 },
+      onChange: ({ value }) => {
+        setDisplayValue(Math.floor(value.number));
+      },
+    });
+  
+    const generateTicks = () => {
+      const ticks = [];
+      // Generate ticks for 0, 20, 40, 60, 80, 100, 120, 140
+      const tickValues = [0, 20, 40, 60, 80, 100, 120, 140];
+      const totalTicks = 28; // 270 degrees / ~9.6 degrees per tick = 28 ticks
+      
+      for (let i = 0; i <= totalTicks; i++) {
+        const angle = -135 + (i * (270 / totalTicks));
+        const isLarge = i % 4 === 0; // Every 4th tick is large (roughly every 20 units)
+        const showNumber = i % 4 === 0; // Show numbers at large ticks
+        const tickValue = Math.round((i / totalTicks) * maxValue);
+        
+        // Only show numbers that match our desired values
+        const displayNumber = tickValues.find(val => Math.abs(val - tickValue) <= 2);
+        
+        ticks.push(
+          <g key={i} transform={`rotate(${angle} 200 200)`}>
+            <line
+              x1="200"
+              y1="50"
+              x2="200"
+              y2={isLarge ? "70" : "60"}
+              stroke={isDarkMode ? "#64748b" : "#94a3b8"}
+              strokeWidth={isLarge ? "2" : "1"}
+            />
+            {showNumber && displayNumber !== undefined && (
+              <text
+                x="200"
+                y="90"
+                fill={isDarkMode ? "#94a3b8" : "#64748b"}
+                fontSize="14"
+                fontWeight="600"
+                textAnchor="middle"
+                transform={`rotate(${-angle} 200 90)`}
+              >
+                {displayNumber}
+              </text>
+            )}
+          </g>
+        );
+      }
+      return ticks;
+    };
+  
+    return (
+      <div className={`relative w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-0 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl`}>
+        <svg viewBox="0 0 400 280" className="w-full h-auto">
+          {/* Outer ring */}
+          <circle
+            cx="200"
+            cy="200"
+            r="160"
+            fill="none"
+            stroke={isDarkMode ? "#1e293b" : "#e2e8f0"}
+            strokeWidth="8"
+          />
+          
+          <defs>
+            <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#10b981" />
+              <stop offset="50%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#ef4444" />
+            </linearGradient>
+            
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          {/* Colored arc */}
+          <path
+            d="M 62.3 257.7 A 150 150 0 1 1 337.7 257.7"
+            fill="none"
+            stroke="url(#speedGradient)"
+            strokeWidth="12"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          
+          {/* Tick marks */}
+          {generateTicks()}
+          
+          {/* Center circle base */}
+          <circle cx="200" cy="200" r="20" fill={isDarkMode ? "#334155" : "#475569"} />
+          <circle cx="200" cy="200" r="12" fill={isDarkMode ? "#1e293b" : "#1e293b"} />
+          
+          {/* Animated needle */}
+          <animated.g
+            transform={needleAnimation.rotation.to(r => `rotate(${r} 200 200)`)}
+          >
+            {/* Shadow */}
+            <polygon
+              points="200,200 198,85 202,85"
+              fill="#000000"
+              opacity="0.2"
+              transform="translate(2, 2)"
+            />
+            {/* Main needle */}
+            <polygon
+              points="200,200 196,85 200,75 204,85"
+              fill="#ef4444"
+              filter="url(#glow)"
+            />
+            {/* Needle tip */}
+            <circle cx="200" cy="75" r="4" fill="#dc2626" />
+          </animated.g>
+          
+          {/* Center bolt */}
+          <circle cx="200" cy="200" r="8" fill={isDarkMode ? "#64748b" : "#94a3b8"} />
+        </svg>
+        
+        
+        {/* Digital display - Circular */}
+        <div className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 text-center">
+          <div className={`${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 shadow-inner flex items-center justify-center`}>
+            <div className={`text-2xl sm:text-4xl font-bold font-mono tracking-wider ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+              {displayValue.toString().padStart(3, '0')}
+            </div>
+          </div>
+        </div>
+    </div>
+        );
+  };
+
+  const SpeedometerSkeleton = ({ isDarkMode }) => {
+    return (
+      <div className={`relative w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-0 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl animate-pulse`}>
+        <svg viewBox="0 0 400 280" className="w-full h-auto">
+          {/* Outer ring skeleton */}
+          <circle
+            cx="200"
+            cy="200"
+            r="160"
+            fill="none"
+            stroke={isDarkMode ? "#1e293b" : "#e2e8f0"}
+            strokeWidth="8"
+            opacity="0.3"
+          />
+          
+          {/* Gradient arc skeleton */}
+          <path
+            d="M 62.3 257.7 A 150 150 0 1 1 337.7 257.7"
+            fill="none"
+            stroke={isDarkMode ? "#374151" : "#d1d5db"}
+            strokeWidth="12"
+            strokeLinecap="round"
+            opacity="0.3"
+          />
+          
+          {/* Tick marks skeleton - simplified */}
+          {Array.from({ length: 8 }).map((_, i) => {
+            const angle = -135 + (i * (270 / 7));
+            return (
+              <g key={i} transform={`rotate(${angle} 200 200)`}>
+                <line
+                  x1="200"
+                  y1="50"
+                  x2="200"
+                  y2="70"
+                  stroke={isDarkMode ? "#374151" : "#d1d5db"}
+                  strokeWidth="2"
+                  opacity="0.3"
+                />
+              </g>
+            );
+          })}
+          
+          {/* Center circle skeleton */}
+          <circle cx="200" cy="200" r="20" fill={isDarkMode ? "#1e293b" : "#e5e7eb"} opacity="0.5" />
+          <circle cx="200" cy="200" r="12" fill={isDarkMode ? "#0f172a" : "#d1d5db"} opacity="0.5" />
+          
+          {/* Static needle in starting position */}
+          <g transform="rotate(-135 200 200)">
+            <polygon
+              points="200,200 198,85 202,85"
+              fill={isDarkMode ? "#374151" : "#d1d5db"}
+              opacity="0.4"
+            />
+            <circle cx="200" cy="75" r="4" fill={isDarkMode ? "#4b5563" : "#d1d5db"} opacity="0.4" />
+          </g>
+          
+          {/* Center bolt skeleton */}
+          <circle cx="200" cy="200" r="8" fill={isDarkMode ? "#4b5563" : "#9ca3af"} opacity="0.5" />
+          
+          {/* Animated scanning line effect */}
+          <g>
+            <animateTransform
+              attributeName="transform"
+              attributeType="XML"
+              type="rotate"
+              from="-135 200 200"
+              to="135 200 200"
+              dur="2s"
+              repeatCount="indefinite"
+            />
+            <line
+              x1="200"
+              y1="200"
+              x2="200"
+              y2="60"
+              stroke={isDarkMode ? "#3b82f6" : "#60a5fa"}
+              strokeWidth="2"
+              opacity="0.6"
+            />
+            <circle cx="200" cy="60" r="4" fill={isDarkMode ? "#3b82f6" : "#60a5fa"} opacity="0.8" />
+          </g>
+        </svg>
+        
+        {/* Digital display skeleton - Circular */}
+        <div className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 text-center">
+            <div className={`${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-100 border-gray-300'} w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 shadow-inner flex items-center justify-center`}>
+            <div className={`h-6 sm:h-10 w-14 sm:w-20 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} animate-pulse`}></div>
+            </div>
+        </div>
+        
+        {/* Status indicator skeleton */}
+        <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+          <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-400'} animate-pulse`}></div>
+        </div>
+        
+        {/* Loading text */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+          <div className={`text-xs sm:text-sm font-semibold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} tracking-wider`}>
+            LOADING...
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 const StatCardSkeleton = ({ isDarkMode }) => (
     <div className={`rounded-xl overflow-hidden shadow-sm animate-pulse ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="relative p-6">
@@ -1299,39 +1551,28 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     </motion.p>
                                 </motion.div>
 
-                                {/* Animated Counter */}
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.5, rotateX: -45 }}
-                                    animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                                    transition={{ 
-                                        duration: 0.8, 
-                                        delay: 0.3,
-                                        type: "spring",
-                                        stiffness: 100
-                                    }}
-                                    className="mt-12 perspective-1000"
-                                >
-                                    {isLoading ? (
-                                        <div className={`text-8xl font-black tracking-tight font-mono ${
-                                            isDarkMode ? 'text-gray-700' : 'text-gray-200'
-                                        }`}>
-                                            --
-                                        </div>
-                                    ) : (
-                                        <animated.div 
-                                            className={`text-8xl font-black tracking-tight font-mono ${
-                                                isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                                            }`}
-                                            style={{
-                                                textShadow: isDarkMode 
-                                                    ? '0 4px 12px rgba(96, 165, 250, 0.15)' 
-                                                    : '0 4px 12px rgba(37, 99, 235, 0.15)'
-                                            }}
-                                        >
-                                            {number.to(n => Math.floor(n))}
-                                        </animated.div>
-                                    )}
-                                </motion.div>
+                                {/* Speedometer Counter */}
+<motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ 
+        duration: 0.8, 
+        delay: 0.3,
+        type: "spring",
+        stiffness: 100
+    }}
+    className="mt-6 sm:mt-5"
+>
+{isLoading ? (
+    <SpeedometerSkeleton isDarkMode={isDarkMode} />
+) : (
+    <SpeedometerCounter 
+        value={vehicles.length} 
+        maxValue={140}
+        isDarkMode={isDarkMode} 
+    />
+)}
+</motion.div>
                             </div>
                         </div>
                     </div>

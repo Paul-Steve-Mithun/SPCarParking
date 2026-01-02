@@ -228,20 +228,28 @@ export function VehicleInfo() {
             const totalAmount = vehicle.rentalType === 'daily' ? 
                 vehicle.rentPrice * vehicle.numberOfDays : 
                 vehicle.rentPrice;
-
+    
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const columnWidth = 85;
-            const startX1 = 15;
-            const startX2 = 110;
+            const margin = 12;
+            const leftColWidth = 85;
+            const rightColWidth = 85;
+            const colGap = 8;
             
-            // Modern Header with Gradient - Reduced height
-            doc.setFillColor(21, 101, 192); // RGB for #1565C0
-            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
-            
-            // Add Logo (placeholder - replace with your logo later)
-            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            let currentY = margin;
+            const lineHeight = 6;
+            const sectionSpacing = 8;
+    
+            // ========== PROFESSIONAL HEADER ==========
+            // Top border line
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 3;
+    
+            // Logo and Company Info on Left
+            const logoUrl = 'SP_Car_Parking_bg.png';
             try {
                 const logoResponse = await fetch(logoUrl);
                 const logoBlob = await logoResponse.blob();
@@ -250,102 +258,67 @@ export function VehicleInfo() {
                     reader.onloadend = () => resolve(reader.result);
                     reader.readAsDataURL(logoBlob);
                 });
-
-                // Add logo to the left with increased top padding
-                doc.addImage(logoBase64, 'PNG', 15, 5, 30, 30);  // Increased from 25,25 to 30,30
+                doc.addImage(logoBase64, 'PNG', margin, currentY, 22, 22);
             } catch (logoError) {
                 console.error('Error loading logo:', logoError);
             }
-
-            // Title and Text with adjusted positions
-            doc.setTextColor(255, 255, 255);
+    
+            // Company details - Left side
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(24);
-            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
+            doc.setFontSize(15);
+            doc.setTextColor(30, 58, 138);
+            doc.text('SP Car Parking', margin + 26, currentY + 7);
             
-            // Add motto under the title with increased font size and reduced gap
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "italic");
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
-            
-            // Welcome text with increased font size
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text('Welcomes You', pageWidth/2 + 10, 28, { align: 'center' });
-            
-            // Subtitle inside the header
-            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 36, { align: 'center' });
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 13);
+            doc.text('Madurai (Opposite to Our Lady School)', margin + 26, currentY + 19);
+    
+            // Check if vehicle image exists
+            const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
+    
+            // Invoice title and date - Right side
+            const now = new Date();
+            const invoiceDate = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+            const invoiceTime = now.toLocaleTimeString('en-GB', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+    
+            const rightTextX = vehicleImgLoaded ? (pageWidth - margin - 40) : (pageWidth - margin);
             
-            // Reset color and set modern font
-            doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.setTextColor(30, 58, 138);
+            doc.text('RENTAL INVOICE', rightTextX, currentY + 7, { align: 'right' });
             
-            // Left Column - Vehicle Details
-            createSection(doc, 'Vehicle Details', startX1, 50, columnWidth);
-
-            const vehicleDetails = [
-                ['Vehicle No:', vehicle.vehicleNumber],
-                ['Description:', vehicle.vehicleDescription],
-                ['Lot Number:', vehicle.lotNumber || 'Open'],
-                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
-                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
-                ['Start Date:', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
-                ['Advance:', `INR ${vehicle.advanceAmount}`],
-                ['Rent:', `INR ${vehicle.rentPrice}`],
-                ['Duration:', vehicle.rentalType === 'daily' ? 
-                    `${vehicle.numberOfDays} days` : 'Every Month']  ];
-
-            doc.autoTable({
-                startY: 58,
-                margin: { left: startX1, right: startX1 },
-                head: [],
-                body: vehicleDetails,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 55 }
-                }
-            });
-
-            // Owner Details with reduced spacing
-            const ownerY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection(doc, 'Owner Details', startX1, ownerY, columnWidth);
-
-            const ownerDetails = [
-                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
-                ['Contact:', vehicle.contactNumber || 'N/A'],
-                ['Address:', vehicle.ownerAddress || 'N/A']
-            ];
-
-            doc.autoTable({
-                startY: ownerY + 8,
-                margin: { left: startX1 },
-                head: [],
-                body: ownerDetails,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 55 }
-                }
-            });
-
-            // Add Vehicle Image Section
-            let afterImageY = doc.autoTable.previous.finalY;
-            if (vehicle.vehicleImage?.url) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text(`Generated: ${invoiceDate} ${invoiceTime}`, rightTextX, currentY + 13, { align: 'right' });
+            doc.text(`Invoice #: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, { align: 'right' });
+    
+            // Calculate header bottom position
+            const headerBottomY = currentY + 28;
+            
+            // Draw divider line
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            
+            if (vehicleImgLoaded) {
+                const imgSize = 35;
+                const imgX = pageWidth - margin - imgSize;
+                doc.line(margin, headerBottomY, imgX - 2, headerBottomY);
+                doc.line(imgX + imgSize + 2, headerBottomY, pageWidth - margin, headerBottomY);
+            } else {
+                doc.line(margin, headerBottomY, pageWidth - margin, headerBottomY);
+            }
+    
+            // Add vehicle image if available
+            if (vehicleImgLoaded && vehicle.vehicleImage?.url) {
                 try {
                     const imgResponse = await fetch(vehicle.vehicleImage.url);
                     const imgBlob = await imgResponse.blob();
@@ -354,205 +327,382 @@ export function VehicleInfo() {
                         reader.onloadend = () => resolve(reader.result);
                         reader.readAsDataURL(imgBlob);
                     });
-
-                    const imageWidth = 70;
-                    const imageX = startX1 + ((columnWidth - imageWidth) / 2);
-
-                    doc.addImage(
-                        imgBase64, 
-                        'JPEG', 
-                        imageX,
-                        doc.autoTable.previous.finalY + 5,
-                        imageWidth,
-                        50
-                    );
-                    afterImageY = doc.autoTable.previous.finalY + 5 + 50;
+                    
+                    const imgSize = 35;
+                    const imgX = pageWidth - margin - imgSize;
+                    const imgY = currentY;
+                    
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.3);
+                    doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
+                    doc.addImage(imgBase64, 'JPEG', imgX, imgY, imgSize, imgSize);
                 } catch (imgError) {
                     console.error('Error loading vehicle image:', imgError);
                 }
             }
+    
+            currentY = headerBottomY + sectionSpacing;
+    
+            // Store the starting Y position for both columns
+            const contentStartY = currentY;
+    
+            // ========== VEHICLE DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('VEHICLE INFORMATION', margin, currentY);
+            currentY += lineHeight;
+    
+            const vehicleDetails = [
+                ['Vehicle Number', vehicle.vehicleNumber],
+                ['Description', vehicle.vehicleDescription || 'N/A'],
+                ['Lot Number', vehicle.lotNumber || 'Open'],
+                ['Rental Type', capitalizeFirst(vehicle.rentalType || 'N/A')],
+                ['Status', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+            ];
+    
+            doc.autoTable({
+                startY: currentY,
+                head: [],
+                body: vehicleDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
+                }
+            });
+    
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== OWNER DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('OWNER INFORMATION', margin, currentY);
+            currentY += lineHeight;
+    
+            const ownerDetails = [
+                ['Owner Name', 'MR. ' + (vehicle.ownerName || 'N/A')],
+                ['Contact', vehicle.contactNumber || 'N/A'],
+                ['Address', (vehicle.ownerAddress || 'N/A').substring(0, 50) + ((vehicle.ownerAddress && vehicle.ownerAddress.length > 50) ? '...' : '')],
+            ];
+    
+            doc.autoTable({
+                startY: currentY,
+                head: [],
+                body: ownerDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
+                }
+            });
+    
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== RENTAL DETAILS - Right Column ==========
+            let rightColY = contentStartY;
+    
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('RENTAL DETAILS', margin + leftColWidth + colGap, rightColY);
+            rightColY += lineHeight;
+    
+            // Get last payment date from transactions
+            const lastPayment = transactions
+            .filter(t => t.revenueAmount > 0)
+            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
 
-            // Add invoice generation date and time in IST below the image
-            const nowInvoiceImg = new Date();
-            const istDateInvoiceImg = nowInvoiceImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-            const istTimeInvoiceImg = nowInvoiceImg.toLocaleTimeString('en-GB', { 
+            const lastPaymentFormatted = lastPayment 
+            ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
+            new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', { 
                 timeZone: 'Asia/Kolkata',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
-            });
-            doc.setFontSize(8);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(44, 62, 80);
-            doc.text(`Generated on: ${istDateInvoiceImg} at ${istTimeInvoiceImg} IST`, startX1, afterImageY + 8);
+            })
+            : 'No payment yet';
 
-            // Right Column - Our Facilities with proper spacing
-            createSection(doc, 'Our Facilities', startX2, 50, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
+            const lastPaymentAmount = lastPayment ? `Rs. ${lastPayment.revenueAmount.toLocaleString('en-IN')}` : 'No payment yet';
 
-            const facilities = [
-                ['1.', '24/7 Security Surveillance'],
-                ['2.', '24/7 Watchman Securtiy'],
-                ['3.', 'Private Parking Lot'],
-                ['4.', 'Water and Washroom Facility'],
-
+            const rentalDetails = [
+            ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
+            ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
+            ['Advance Amount', `Rs. ${vehicle.advanceAmount.toLocaleString('en-IN')}`],
+            ['Last Payment', lastPaymentAmount],
+            ['Last Payment Date', lastPaymentFormatted]
             ];
-
+    
             doc.autoTable({
-                startY: 58,  // Reduced from 10
-                margin: { left: startX2 },
+                startY: rightColY,
                 head: [],
-                body: facilities,
+                body: rentalDetails,
+                margin: { left: margin + leftColWidth + colGap, right: margin },
                 theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Reduced from 3
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
                     font: 'helvetica',
-                    textColor: [44, 62, 80]
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 12 },
-                    1: { cellWidth: 80 }
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 42
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto',
+                        fontStyle: 'normal'
+                    }
                 }
             });
-
-            // Terms and Conditions with reduced spacing
-            const termsY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
-            createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-
+    
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== FACILITIES - Right Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('OUR FACILITIES', margin + leftColWidth + colGap, rightColY);
+            rightColY += lineHeight;
+    
+            const facilities = [
+                ['•', '24/7 CCTV Surveillance And Watchman Security'],
+                ['•', 'Private Parking Lot'],
+                ['•', 'Water and Washroom Facility'],
+            ];
+    
+            doc.autoTable({
+                startY: rightColY,
+                head: [],
+                body: facilities,
+                margin: { left: margin + leftColWidth + colGap, right: margin },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: { 
+                        fontStyle: 'bold',
+                        cellWidth: 8
+                    },
+                    1: { 
+                        cellWidth: 'auto'
+                    }
+                }
+            });
+    
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== TERMS & CONDITIONS - Full Width ==========
+            const startTermsY = Math.max(currentY, rightColY) + sectionSpacing;
+    
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, startTermsY - 4, pageWidth - margin, startTermsY - 4);
+            
+            let termsY = startTermsY;
+    
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('TERMS & CONDITIONS', margin, termsY);
+            termsY += lineHeight;
+    
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
                 ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
                 ['3.', 'Parking spot must be kept clean.'],
                 ['4.', 'No unauthorized vehicle transfers.'],
             ];
-
+    
             doc.autoTable({
-                startY: termsY + 8,  // Reduced from 10
-                margin: { left: startX2 },
+                startY: termsY,
                 head: [],
                 body: terms,
+                margin: { left: margin, right: margin },
                 theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Reduced from 3
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
                     font: 'helvetica',
-                    textColor: [44, 62, 80]
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 12 },
-                    1: { cellWidth: 80 }
+                    0: { 
+                        fontStyle: 'bold',
+                        cellWidth: 12
+                    },
+                    1: { 
+                        cellWidth: 'auto'
+                    }
                 }
             });
-
-            // Contact Details with reduced spacing
-            const contactY = doc.autoTable.previous.finalY + 8;  // Reduced from 15
-            createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-
+    
+            termsY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== CONTACT & QR CODE - Side by Side ==========
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, termsY - 4, pageWidth - margin, termsY - 4);
+    
+            // Contact Details - Left Side
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('CONTACT DETAILS', margin, termsY);
+            
             const contacts = [
                 ['Watchman:', '9842850753'],
                 ['Rental:', '9842190000 / 9843050753']
             ];
-
+    
             doc.autoTable({
-                startY: contactY + 8,
-                margin: { left: startX2 },
+                startY: termsY + lineHeight,
                 head: [],
                 body: contacts,
+                margin: { left: margin, right: margin + 100 },
                 theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
                     font: 'helvetica',
-                    textColor: [44, 62, 80]
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 30 },
-                    1: { cellWidth: 65 }
+                    0: { 
+                        fontStyle: 'bold',
+                        textColor: [75, 85, 99],
+                        cellWidth: 30
+                    },
+                    1: { 
+                        textColor: [30, 41, 59],
+                        cellWidth: 'auto'
+                    }
                 }
             });
-
-            // QR Code Section with reduced size and spacing
-            const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
-            doc.setFontSize(16);
-            doc.setTextColor(21, 101, 192);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-            doc.text('Scan QR to Pay', startX2, qrY);
+    
+            // QR Code - Right Side
+            doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.setTextColor(21, 101, 192);
-            doc.text('(Ignore if already paid)', startX2, qrY + 6);  // Reduced from 8
-            doc.setDrawColor(21, 101, 192);
-            doc.setLineWidth(0.5);
-            doc.line(startX2, qrY + 2, startX2 + columnWidth, qrY + 2);
-            doc.setTextColor(44, 62, 80);
-
-            // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            doc.setTextColor(30, 58, 138);
+            doc.text('SCAN TO PAY', pageWidth - margin - 50, termsY, { align: 'center' });
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.text('(Ignore if already paid)', pageWidth - margin - 50, termsY + 5, { align: 'center' });
+    
+            // Generate QR Code
+            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 25,
+                width: 200,
                 margin: 1,
                 color: {
                     dark: '#000000',
                     light: '#ffffff'
                 }
             });
-
-            // Center QR code with reduced size
-            const qrWidth = 45;  // Reduced from 50
-            const qrX = startX2 + ((columnWidth - qrWidth) / 2);
-
-            doc.addImage(
-                qrDataUrl, 
-                'PNG', 
-                qrX,
-                qrY + 10,  // Moved up for more top padding
-                qrWidth,
-                45  // Changed from 50 to 45
-            );
-
-            // Modern Footer - Moved closer to bottom
-            doc.setDrawColor(21, 101, 192);
-            doc.setLineWidth(0.5);
-            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+    
+            const qrSize = 45;
+            const qrX = pageWidth - margin - 50 - (qrSize / 2);
+            doc.addImage(qrDataUrl, 'PNG', qrX, termsY + 8, qrSize, qrSize);
+    
+            // ========== PROFESSIONAL FOOTER ==========
+            const footerY = pageHeight - 12;
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
             
-            doc.setFontSize(9);
-            doc.setTextColor(44, 62, 80);
-            const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
-
-            doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
-            toast.success('Receipt generated successfully');
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.setFont("helvetica", "normal");
+            doc.text('SP Car Parking - Monthly Rental Invoice', pageWidth/2, footerY, { align: 'center' });
+            
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 138);
+            doc.setFontSize(7);
+            doc.text('JESUS LEADS YOU', margin, footerY);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(107, 114, 128);
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth - margin, footerY, { align: 'right' });
+    
+            doc.save(`SP_Parking_Invoice_${vehicle.vehicleNumber}_${invoiceDate.replace(/\//g, '-')}.pdf`);
+            toast.success('Invoice generated successfully! 🎉');
         } catch (error) {
-            console.error('Error generating receipt:', error);
-            toast.error('Failed to generate receipt');
+            console.error('Error generating invoice:', error);
+            toast.error('Failed to generate invoice');
         }
     };
 
     const handlePrintDailyInvoice = async (vehicle) => {
         try {
-            const startDate = new Date(vehicle.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            
-            const endDate = new Date(vehicle.endDate);
-            endDate.setHours(0, 0, 0, 0);
-
             const totalAmount = vehicle.rentPrice * vehicle.numberOfDays;
-
+    
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const columnWidth = 85;
-            const startX1 = 15;
-            const startX2 = 110;
-            
-            // Modern Header with Gradient - Reduced height
-            doc.setFillColor(21, 101, 192); // RGB for #1565C0
-            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
-            
-            // Add Logo (placeholder - replace with your logo later)
-            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
+            const margin = 12;
+            const leftColWidth = 85;
+            const rightColWidth = 85;
+            const colGap = 8;
+    
+            let currentY = margin;
+            const lineHeight = 6;
+            const sectionSpacing = 8;
+    
+            // ========== PROFESSIONAL HEADER ==========
+            // Top border line
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 3;
+    
+            // Logo and Company Info on Left
+            const logoUrl = "SP_Car_Parking_bg.png";
             try {
                 const logoResponse = await fetch(logoUrl);
                 const logoBlob = await logoResponse.blob();
@@ -561,106 +711,93 @@ export function VehicleInfo() {
                     reader.onloadend = () => resolve(reader.result);
                     reader.readAsDataURL(logoBlob);
                 });
-
-                // Add logo to the left with increased top padding
-                doc.addImage(logoBase64, 'PNG', 15, 5, 30, 30);  // Increased from 25,25 to 30,30
+                doc.addImage(logoBase64, "PNG", margin, currentY, 22, 22);
             } catch (logoError) {
-                console.error('Error loading logo:', logoError);
+                console.error("Error loading logo:", logoError);
             }
-
-            // Title and Text with adjusted positions
-            doc.setTextColor(255, 255, 255);
+    
+            // Company details - Left side
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(24);
-            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
-            
-            // Add motto under the title with increased font size and reduced gap
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "italic");
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
-            
-            // Welcome text with increased font size
-            doc.setFontSize(16);
-            doc.setFont("helvetica", "bold");
-            doc.text('Welcomes You', pageWidth/2 + 10, 28, { align: 'center' });
-            
-            // Subtitle inside the header
-            doc.setFontSize(9);
+            doc.setFontSize(15);
+            doc.setTextColor(30, 58, 138);
+            doc.text("SP Car Parking", margin + 26, currentY + 7);
+    
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 36, { align: 'center' });
-            
-            // Reset color and set modern font
-            doc.setTextColor(44, 62, 80);
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text(
+                "SP Nagar, Ponmeni - Madakkulam Main Road",
+                margin + 26,
+                currentY + 13
+            );
+            doc.text(
+                "Madurai (Opposite to Our Lady School)",
+                margin + 26,
+                currentY + 19
+            );
+    
+            // Check if vehicle image exists
+            const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
+    
+            // Invoice title and date - Right side
+            const now = new Date();
+            const invoiceDate = now.toLocaleDateString("en-GB", {
+                timeZone: "Asia/Kolkata",
+            });
+            const invoiceTime = now.toLocaleTimeString("en-GB", {
+                timeZone: "Asia/Kolkata",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            });
+    
+            const rightTextX = vehicleImgLoaded
+                ? pageWidth - margin - 40
+                : pageWidth - margin;
+    
             doc.setFont("helvetica", "bold");
-
-            // Start content higher on the page
-            const startY = 50;  // Reduced from 60
-
-            // Left Column - Vehicle Details
-            createSection(doc, 'Vehicle Details', startX1, startY, columnWidth);
-
-            const vehicleDetails = [
-                ['Vehicle No:', vehicle.vehicleNumber],
-                ['Description:', vehicle.vehicleDescription],
-                ['Lot Number:', vehicle.lotNumber || 'Open'],
-                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
-                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
-                ['Rent/Day:', `INR ${vehicle.rentPrice}`],
-                ['Duration:', `${vehicle.numberOfDays} days`],
-                ['Total:', `INR ${totalAmount}`],
-                ['Start Date:', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
-                ['End Date:', new Date(vehicle.endDate).toLocaleDateString('en-GB')]
-            ];
-
-            doc.autoTable({
-                startY: startY + 8,  // Changed from 5 to 8
-                margin: { left: startX1, right: startX1 },
-                head: [],
-                body: vehicleDetails,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Changed from 2 to 3
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },  // Changed from 40 to 35
-                    1: { cellWidth: 55 }
-                }
+            doc.setFontSize(11);
+            doc.setTextColor(30, 58, 138);
+            doc.text("RENTAL INVOICE", rightTextX, currentY + 7, {
+                align: "right",
             });
-
-            // Owner Details with reduced spacing
-            const ownerY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection(doc, 'Owner Details', startX1, ownerY, columnWidth);
-
-            const ownerDetails = [
-                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
-                ['Contact:', vehicle.contactNumber || 'N/A'],
-                ['Address:', vehicle.ownerAddress || 'N/A']
-            ];
-
-            doc.autoTable({
-                startY: ownerY + 8,  // Changed from 5 to 8
-                margin: { left: startX1 },
-                head: [],
-                body: ownerDetails,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Changed from 2 to 3
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
-                },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },  // Changed from 40 to 35
-                    1: { cellWidth: 55 }
-                }
+    
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text(
+                `Generated: ${invoiceDate} ${invoiceTime}`,
+                rightTextX,
+                currentY + 13,
+                { align: "right" }
+            );
+            doc.text(`Invoice #: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, {
+                align: "right",
             });
-
-            // Add Vehicle Image Section
-            let afterImageY = doc.autoTable.previous.finalY;
-            if (vehicle.vehicleImage?.url) {
+    
+            // Calculate header bottom position
+            const headerBottomY = currentY + 28;
+    
+            // Draw divider line
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+    
+            if (vehicleImgLoaded) {
+                const imgSize = 35;
+                const imgX = pageWidth - margin - imgSize;
+                doc.line(margin, headerBottomY, imgX - 2, headerBottomY);
+                doc.line(
+                    imgX + imgSize + 2,
+                    headerBottomY,
+                    pageWidth - margin,
+                    headerBottomY
+                );
+            } else {
+                doc.line(margin, headerBottomY, pageWidth - margin, headerBottomY);
+            }
+    
+            // Add vehicle image if available
+            if (vehicleImgLoaded && vehicle.vehicleImage?.url) {
                 try {
                     const imgResponse = await fetch(vehicle.vehicleImage.url);
                     const imgBlob = await imgResponse.blob();
@@ -669,180 +806,369 @@ export function VehicleInfo() {
                         reader.onloadend = () => resolve(reader.result);
                         reader.readAsDataURL(imgBlob);
                     });
-
-                    const imageWidth = 70;
-                    const imageX = startX1 + ((columnWidth - imageWidth) / 2);
-
-                    doc.addImage(
-                        imgBase64, 
-                        'JPEG', 
-                        imageX,
-                        doc.autoTable.previous.finalY + 5,
-                        imageWidth,
-                        50
-                    );
-                    afterImageY = doc.autoTable.previous.finalY + 5 + 50;
+    
+                    const imgSize = 35;
+                    const imgX = pageWidth - margin - imgSize;
+                    const imgY = currentY;
+    
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.3);
+                    doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
+                    doc.addImage(imgBase64, "JPEG", imgX, imgY, imgSize, imgSize);
                 } catch (imgError) {
-                    console.error('Error loading vehicle image:', imgError);
+                    console.error("Error loading vehicle image:", imgError);
                 }
             }
-
-            // Add invoice generation date and time in IST below the image
-            const nowDailyImg = new Date();
-            const istDateDailyImg = nowDailyImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-            const istTimeDailyImg = nowDailyImg.toLocaleTimeString('en-GB', { 
-                timeZone: 'Asia/Kolkata',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-            doc.setFontSize(8);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(44, 62, 80);
-            doc.text(`Generated on: ${istDateDailyImg} at ${istTimeDailyImg} IST`, startX1, afterImageY + 8);
-
-            // Right Column - Our Facilities with proper spacing
-            createSection(doc, 'Our Facilities', startX2, startY, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-
-            const facilities = [
-                ['1.', '24/7 Security Surveillance'],
-                ['2.', '24/7 Watchman Securtiy'],
-                ['3.', 'Private Parking Lot'],
-                ['4.', 'Water and Washroom Facility']
+    
+            currentY = headerBottomY + sectionSpacing;
+    
+            // Store the starting Y position for both columns
+            const contentStartY = currentY;
+    
+            // ========== VEHICLE DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("VEHICLE INFORMATION", margin, currentY);
+            currentY += lineHeight;
+    
+            const vehicleDetails = [
+                ["Vehicle Number", vehicle.vehicleNumber],
+                ["Description", vehicle.vehicleDescription || "N/A"],
+                ["Lot Number", vehicle.lotNumber || "Open"],
+                ["Rental Type", capitalizeFirst(vehicle.rentalType || "N/A")],
+                ["Status", vehicle.status === "active" ? "Paid" : "Not Paid"],
             ];
-
+    
             doc.autoTable({
-                startY: startY + 8,  // Changed from 5 to 8
-                margin: { left: startX2 },
+                startY: currentY,
+                head: [],
+                body: vehicleDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: {
+                        fontStyle: "bold",
+                        textColor: [75, 85, 99],
+                        cellWidth: 42,
+                    },
+                    1: {
+                        textColor: [30, 41, 59],
+                        cellWidth: "auto",
+                        fontStyle: "normal",
+                    },
+                },
+            });
+    
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== OWNER DETAILS - Left Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("OWNER INFORMATION", margin, currentY);
+            currentY += lineHeight;
+    
+            const ownerDetails = [
+                ["Owner Name", "MR. " + (vehicle.ownerName || "N/A")],
+                ["Contact", vehicle.contactNumber || "N/A"],
+                [
+                    "Address",
+                    (vehicle.ownerAddress || "N/A").substring(0, 50) +
+                        (vehicle.ownerAddress &&
+                        vehicle.ownerAddress.length > 50
+                            ? "..."
+                            : ""),
+                ],
+            ];
+    
+            doc.autoTable({
+                startY: currentY,
+                head: [],
+                body: ownerDetails,
+                margin: { left: margin, right: margin + leftColWidth + colGap },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: {
+                        fontStyle: "bold",
+                        textColor: [75, 85, 99],
+                        cellWidth: 42,
+                    },
+                    1: {
+                        textColor: [30, 41, 59],
+                        cellWidth: "auto",
+                        fontStyle: "normal",
+                    },
+                },
+            });
+    
+            currentY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== RENTAL DETAILS - Right Column ==========
+            let rightColY = contentStartY;
+    
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("RENTAL DETAILS", margin + leftColWidth + colGap, rightColY);
+            rightColY += lineHeight;
+    
+            const rentalDetails = [
+                ["Start Date", new Date(vehicle.startDate).toLocaleDateString("en-GB")],
+                ["End Date", new Date(vehicle.endDate).toLocaleDateString("en-GB")],
+                ["Rent per Day", `Rs. ${vehicle.rentPrice.toLocaleString("en-IN")}`],
+                ["Number of Days", `${vehicle.numberOfDays} days`],
+                ["Total Amount", `Rs. ${totalAmount.toLocaleString("en-IN")}`],
+            ];
+    
+            doc.autoTable({
+                startY: rightColY,
+                head: [],
+                body: rentalDetails,
+                margin: { left: margin + leftColWidth + colGap, right: margin },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: {
+                        fontStyle: "bold",
+                        textColor: [75, 85, 99],
+                        cellWidth: 42,
+                    },
+                    1: {
+                        textColor: [30, 41, 59],
+                        cellWidth: "auto",
+                        fontStyle: "normal",
+                    },
+                },
+            });
+    
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== FACILITIES - Right Column ==========
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("OUR FACILITIES", margin + leftColWidth + colGap, rightColY);
+            rightColY += lineHeight;
+    
+            const facilities = [
+                ["•", "24/7 CCTV Surveillance And Watchman Security"],
+                ["•", "Private Parking Lot"],
+                ["•", "Water and Washroom Facility"],
+            ];
+    
+            doc.autoTable({
+                startY: rightColY,
                 head: [],
                 body: facilities,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Changed from 2 to 3
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
+                margin: { left: margin + leftColWidth + colGap, right: margin },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 12 },
-                    1: { cellWidth: 80 }
-                }
+                    0: {
+                        fontStyle: "bold",
+                        cellWidth: 8,
+                    },
+                    1: {
+                        cellWidth: "auto",
+                    },
+                },
             });
-
-            // Terms and Conditions with reduced spacing
-            const termsY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection(doc, 'Terms & Conditions', startX2, termsY, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-
+    
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== TERMS & CONDITIONS - Full Width ==========
+            const startTermsY = Math.max(currentY, rightColY) + sectionSpacing;
+    
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, startTermsY - 4, pageWidth - margin, startTermsY - 4);
+    
+            let termsY = startTermsY;
+    
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("TERMS & CONDITIONS", margin, termsY);
+            termsY += lineHeight;
+    
             const terms = [
-                ['1.', 'Rent must be paid before 5th of each month.'],
-                ['2.', 'Parking spot must be kept clean.'],
-                ['3.', 'No unauthorized vehicle transfers.'],
-                ['4.', 'Save Water and Electricity.']
+                ["1.", "Rent must be paid promptly for the number of days parked."],
+                ["2.", "Parking spot must be kept clean."],
+                ["3.", "No unauthorized vehicle transfers."],
+                ["4.", "Save Water and Electricity."],
             ];
-
+    
             doc.autoTable({
-                startY: termsY + 8,  // Changed from 5 to 8
-                margin: { left: startX2 },
+                startY: termsY,
                 head: [],
                 body: terms,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Changed from 2 to 3
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
+                margin: { left: margin, right: margin },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 12 },
-                    1: { cellWidth: 80 }
-                }
+                    0: {
+                        fontStyle: "bold",
+                        cellWidth: 12,
+                    },
+                    1: {
+                        cellWidth: "auto",
+                    },
+                },
             });
-
-            // Contact Details with reduced spacing
-            const contactY = doc.autoTable.previous.finalY + 10;  // Reduced from 15
-            createSection(doc, 'Contact Details', startX2, contactY, columnWidth);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-
+    
+            termsY = doc.autoTable.previous.finalY + sectionSpacing;
+    
+            // ========== CONTACT & QR CODE - Side by Side ==========
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, termsY - 4, pageWidth - margin, termsY - 4);
+    
+            // Contact Details - Left Side
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("CONTACT DETAILS", margin, termsY);
+    
             const contacts = [
-                ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000 / 9843050753']
+                ["Watchman:", "9842850753"],
+                ["Rental:", "9842190000 / 9843050753"],
             ];
-
+    
             doc.autoTable({
-                startY: contactY + 8,  // Changed from 5 to 8
-                margin: { left: startX2 },
+                startY: termsY + lineHeight,
                 head: [],
                 body: contacts,
-                theme: 'plain',
-                styles: { 
-                    fontSize: 12,
-                    cellPadding: 3,  // Changed from 2 to 3
-                    font: 'helvetica',
-                    textColor: [44, 62, 80]
+                margin: { left: margin, right: margin + 100 },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 30 },  // Changed from 40 to 35
-                    1: { cellWidth: 65 }
-                }
+                    0: {
+                        fontStyle: "bold",
+                        textColor: [75, 85, 99],
+                        cellWidth: 30,
+                    },
+                    1: {
+                        textColor: [30, 41, 59],
+                        cellWidth: "auto",
+                    },
+                },
             });
-
-            // QR Code Section with reduced size and spacing
-            const qrY = doc.autoTable.previous.finalY + 8;  // Reduced from 10
-            doc.setFontSize(16);
-            doc.setTextColor(21, 101, 192);
-            doc.setFont("helvetica", "bold");  // Added bold font for section title
-            doc.text('Scan QR to Pay', startX2, qrY);
+    
+            // QR Code - Right Side
+            doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
-            doc.setTextColor(21, 101, 192);
-            doc.text('(Ignore if already paid)', startX2, qrY + 6);  // Reduced from 8
-            doc.setDrawColor(21, 101, 192);
-            doc.setLineWidth(0.5);
-            doc.line(startX2, qrY + 2, startX2 + columnWidth, qrY + 2);
-            doc.setTextColor(44, 62, 80);
-
-            // Generate QR Code with smaller size
-            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            doc.setTextColor(30, 58, 138);
+            doc.text("SCAN TO PAY", pageWidth - margin - 50, termsY, {
+                align: "center",
+            });
+    
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.text(
+                "(Ignore if already paid)",
+                pageWidth - margin - 50,
+                termsY + 5,
+                { align: "center" }
+            );
+    
+            // Generate QR Code
+            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 25,
+                width: 200,
                 margin: 1,
                 color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
+                    dark: "#000000",
+                    light: "#ffffff",
+                },
             });
-
-            // Center QR code with reduced size
-            const qrWidth = 45;  // Reduced from 50
-            const qrX = startX2 + ((columnWidth - qrWidth) / 2);
-
-            doc.addImage(
-                qrDataUrl, 
-                'PNG', 
-                qrX,
-                qrY + 10,  // Changed from 20 to 15
-                qrWidth,
-                45  // Changed from 50 to 45
+    
+            const qrSize = 45;
+            const qrX = pageWidth - margin - 50 - qrSize / 2;
+            doc.addImage(qrDataUrl, "PNG", qrX, termsY + 8, qrSize, qrSize);
+    
+            // ========== PROFESSIONAL FOOTER ==========
+            const footerY = pageHeight - 12;
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
+    
+            doc.setFontSize(7);
+            doc.setTextColor(107, 114, 128);
+            doc.setFont("helvetica", "normal");
+            doc.text(
+                "SP Car Parking - Daily Rental Invoice",
+                pageWidth / 2,
+                footerY,
+                { align: "center" }
             );
-
-            // Modern Footer - Moved closer to bottom
-            doc.setDrawColor(21, 101, 192);
-            doc.setLineWidth(0.5);
-            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
-            
-            doc.setFontSize(9);
-            doc.setTextColor(44, 62, 80);
-            const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
-
-            doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`);
-            toast.success('Receipt generated successfully');
+    
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 58, 138);
+            doc.setFontSize(7);
+            doc.text("JESUS LEADS YOU", margin, footerY);
+    
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(107, 114, 128);
+            doc.text(
+                '"Your Car Is Under Safe Hands"',
+                pageWidth - margin,
+                footerY,
+                { align: "right" }
+            );
+    
+            doc.save(
+                `SP_Parking_Invoice_${vehicle.vehicleNumber}_Daily_${invoiceDate.replace(
+                    /\//g,
+                    "-"
+                )}.pdf`
+            );
+            toast.success("Invoice generated successfully! 🎉");
         } catch (error) {
-            console.error('Error generating receipt:', error);
-            toast.error('Failed to generate receipt');
+            console.error("Error generating invoice:", error);
+            toast.error("Failed to generate invoice");
         }
     };
+    
 
     const handleDownloadFullReport = async (vehicle) => {
         try {
@@ -911,13 +1237,13 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(30, 58, 138);
-            doc.text('Vehicle Report', rightTextX, currentY + 7, { align: 'right' });
+            doc.text('VEHICLE HISTORY', rightTextX, currentY + 7, { align: 'right' });
             
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
             doc.text(`Generated: ${reportDate} ${reportTime}`, rightTextX, currentY + 13, { align: 'right' });
-            doc.text(`Vehicle: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, { align: 'right' });
+            doc.text(`History #: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, { align: 'right' });
 
             // Calculate where to draw the divider line (below the header content)
             const headerBottomY = currentY + 28;
@@ -1023,10 +1349,9 @@ export function VehicleInfo() {
             currentY += lineHeight;
 
             const ownerDetails = [
-                ['Owner Name', vehicle.ownerName || 'N/A'],
+                ['Owner Name', 'MR. ' + vehicle.ownerName || 'N/A'],
                 ['Contact', vehicle.contactNumber || 'N/A'],
                 ['Address', (vehicle.ownerAddress || 'N/A').substring(0, 50) + ((vehicle.ownerAddress && vehicle.ownerAddress.length > 50) ? '...' : '')],
-                ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
             ];
 
             doc.autoTable({
@@ -1065,11 +1390,27 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('RENTAL INFORMATION', margin + leftColWidth + colGap, rightColY);
+            doc.text('RENTAL DETAILS', margin + leftColWidth + colGap, rightColY);
             rightColY += lineHeight;
 
+            // Get last payment date from transactions
+            const lastPayment = transactions
+            .filter(t => t.revenueAmount > 0)
+            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+
+            const lastPaymentFormatted = lastPayment 
+            ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
+            new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', { 
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            })
+            : 'No payment yet';
+
+
             const rentalDetails = [
-                ['Rental Type', capitalizeFirst(vehicle.rentalType || 'N/A')],
+                ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
                 ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
             ];
 
@@ -1135,10 +1476,8 @@ export function VehicleInfo() {
 
             if (filteredTransactions.length > 0) {
                 const totalPaid = filteredTransactions.reduce((sum, t) => sum + t.revenueAmount, 0);
-                const totalPayments = filteredTransactions.length;
                 const lastPayment = filteredTransactions[0];
-                const upiCount = filteredTransactions.filter(t => t.transactionMode === 'UPI').length;
-                const cashCount = filteredTransactions.filter(t => t.transactionMode === 'Cash').length;
+
 
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(10);
@@ -1148,11 +1487,8 @@ export function VehicleInfo() {
 
                 const summaryDetails = [
                     ['Total Paid', `Rs. ${totalPaid.toLocaleString('en-IN')}`],
-                    ['Total Payments', totalPayments.toString()],
                     ['Last Payment', `Rs. ${lastPayment.revenueAmount.toLocaleString('en-IN')}`],
-                    ['Last Payment Date', new Date(lastPayment.transactionDate).toLocaleDateString('en-GB')],
-                    ['UPI', upiCount.toString()],
-                    ['Cash', cashCount.toString()],
+                    ['Last Payment Date', lastPaymentFormatted],
                 ];
 
                 doc.autoTable({
@@ -1295,7 +1631,7 @@ export function VehicleInfo() {
             doc.setFontSize(7);
             doc.setTextColor(107, 114, 128);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Car Parking - Comprehensive Vehicle Report', pageWidth/2, footerY, { align: 'center' });
+            doc.text('SP Car Parking - Vehicle History', pageWidth/2, footerY, { align: 'center' });
             
             doc.setFont("helvetica", "bold");
             doc.setTextColor(30, 58, 138);
@@ -1913,7 +2249,7 @@ export function VehicleInfo() {
                                 <div className="p-4">
                                     {/* Cards instead of table for better mobile */}
                                     <div className="hidden md:block">
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                                             <table className={`min-w-full divide-y rounded-lg overflow-hidden transition-colors duration-300 ${
                                                 isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
                                             }`}>
@@ -2042,7 +2378,7 @@ export function VehicleInfo() {
                                     </div>
 
                                     {/* Mobile-friendly cards view */}
-                                    <div className="md:hidden">
+                                    <div className="md:hidden max-h-[500px] overflow-y-auto">
                                         {filteredTxns.length > 0 && (
                                             <div>
                                                 <div
