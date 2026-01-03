@@ -135,10 +135,10 @@ export function VehicleInfo() {
             if (Array.isArray(advances) && latest.rentalType === 'monthly') {
                 // Get the original advance record (has advanceAmount and no refundDate)
                 advanceInfo = advances
-                    .filter(a => a.vehicleNumber === latest.vehicleNumber && 
-                                a.advanceAmount !== undefined && 
-                                a.advanceAmount >= 0 &&
-                                !a.refundDate)
+                    .filter(a => a.vehicleNumber === latest.vehicleNumber &&
+                        a.advanceAmount !== undefined &&
+                        a.advanceAmount >= 0 &&
+                        !a.refundDate)
                     .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
                 // Get the refund record (has refundDate, regardless of refund amount)
                 refundInfo = advances
@@ -186,7 +186,7 @@ export function VehicleInfo() {
             (vehicle.vehicleDescription || '').toUpperCase().includes(searchTermUpper) ||
             (vehicle.ownerName || '').toUpperCase().includes(searchTermUpper) ||
             (vehicle.contactNumber || '').toUpperCase().includes(searchTermUpper) ||
-            (vehicle.lotNumber 
+            (vehicle.lotNumber
                 ? vehicle.lotNumber.toUpperCase().includes(searchTermUpper)
                 : searchTermUpper === 'OPEN')
         );
@@ -194,8 +194,8 @@ export function VehicleInfo() {
 
     // Function to handle image click
     const handleImageClick = (imageUrl, title, vehicle) => {
-        setSelectedImage({ 
-            url: imageUrl, 
+        setSelectedImage({
+            url: imageUrl,
             title,
             vehicleNumber: vehicle.vehicleNumber,
             vehicleDescription: vehicle.vehicleDescription
@@ -225,10 +225,10 @@ export function VehicleInfo() {
 
     const handlePrintInvoice = async (vehicle) => {
         try {
-            const totalAmount = vehicle.rentalType === 'daily' ? 
-                vehicle.rentPrice * vehicle.numberOfDays : 
+            const totalAmount = vehicle.rentalType === 'daily' ?
+                vehicle.rentPrice * vehicle.numberOfDays :
                 vehicle.rentPrice;
-    
+
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
@@ -236,18 +236,18 @@ export function VehicleInfo() {
             const leftColWidth = 85;
             const rightColWidth = 85;
             const colGap = 8;
-            
+
             let currentY = margin;
             const lineHeight = 6;
             const sectionSpacing = 8;
-    
+
             // ========== PROFESSIONAL HEADER ==========
             // Top border line
             doc.setDrawColor(30, 58, 138);
             doc.setLineWidth(0.5);
             doc.line(margin, currentY, pageWidth - margin, currentY);
             currentY += 3;
-    
+
             // Logo and Company Info on Left
             const logoUrl = 'SP_Car_Parking_bg.png';
             try {
@@ -262,52 +262,52 @@ export function VehicleInfo() {
             } catch (logoError) {
                 console.error('Error loading logo:', logoError);
             }
-    
+
             // Company details - Left side
             doc.setFont("helvetica", "bold");
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
             doc.text('SP Car Parking', margin + 26, currentY + 7);
-            
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
             doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 13);
             doc.text('Madurai (Opposite to Our Lady School)', margin + 26, currentY + 19);
-    
+
             // Check if vehicle image exists
             const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
-    
+
             // Invoice title and date - Right side
             const now = new Date();
             const invoiceDate = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-            const invoiceTime = now.toLocaleTimeString('en-GB', { 
+            const invoiceTime = now.toLocaleTimeString('en-GB', {
                 timeZone: 'Asia/Kolkata',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true
             });
-    
+
             const rightTextX = vehicleImgLoaded ? (pageWidth - margin - 40) : (pageWidth - margin);
-            
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(30, 58, 138);
             doc.text('RENTAL INVOICE', rightTextX, currentY + 7, { align: 'right' });
-            
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
             doc.text(`Generated: ${invoiceDate} ${invoiceTime}`, rightTextX, currentY + 13, { align: 'right' });
             doc.text(`Invoice #: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, { align: 'right' });
-    
+
             // Calculate header bottom position
             const headerBottomY = currentY + 28;
-            
+
             // Draw divider line
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            
+
             if (vehicleImgLoaded) {
                 const imgSize = 35;
                 const imgX = pageWidth - margin - imgSize;
@@ -316,7 +316,7 @@ export function VehicleInfo() {
             } else {
                 doc.line(margin, headerBottomY, pageWidth - margin, headerBottomY);
             }
-    
+
             // Add vehicle image if available
             if (vehicleImgLoaded && vehicle.vehicleImage?.url) {
                 try {
@@ -327,11 +327,11 @@ export function VehicleInfo() {
                         reader.onloadend = () => resolve(reader.result);
                         reader.readAsDataURL(imgBlob);
                     });
-                    
+
                     const imgSize = 35;
                     const imgX = pageWidth - margin - imgSize;
                     const imgY = currentY;
-                    
+
                     doc.setDrawColor(226, 232, 240);
                     doc.setLineWidth(0.3);
                     doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
@@ -340,19 +340,19 @@ export function VehicleInfo() {
                     console.error('Error loading vehicle image:', imgError);
                 }
             }
-    
+
             currentY = headerBottomY + sectionSpacing;
-    
+
             // Store the starting Y position for both columns
             const contentStartY = currentY;
-    
+
             // ========== VEHICLE DETAILS - Left Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('VEHICLE INFORMATION', margin, currentY);
+            doc.text('VEHICLE DETAILS', margin, currentY);
             currentY += lineHeight;
-    
+
             const vehicleDetails = [
                 ['Vehicle Number', vehicle.vehicleNumber],
                 ['Description', vehicle.vehicleDescription || 'N/A'],
@@ -360,7 +360,7 @@ export function VehicleInfo() {
                 ['Rental Type', capitalizeFirst(vehicle.rentalType || 'N/A')],
                 ['Status', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
             ];
-    
+
             doc.autoTable({
                 startY: currentY,
                 head: [],
@@ -375,34 +375,40 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
                     }
+                },
+                didParseCell: function (data) {
+                    // Make vehicle number value bold
+                    if (data.row.index === 0 && data.column.index === 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                    }
                 }
             });
-    
+
             currentY = doc.autoTable.previous.finalY + sectionSpacing;
-    
+
             // ========== OWNER DETAILS - Left Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('OWNER INFORMATION', margin, currentY);
+            doc.text('OWNER DETAILS', margin, currentY);
             currentY += lineHeight;
-    
+
             const ownerDetails = [
                 ['Owner Name', 'MR. ' + (vehicle.ownerName || 'N/A')],
                 ['Contact', vehicle.contactNumber || 'N/A'],
                 ['Address', (vehicle.ownerAddress || 'N/A').substring(0, 50) + ((vehicle.ownerAddress && vehicle.ownerAddress.length > 50) ? '...' : '')],
             ];
-    
+
             doc.autoTable({
                 startY: currentY,
                 head: [],
@@ -417,55 +423,55 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
                     }
                 }
             });
-    
+
             currentY = doc.autoTable.previous.finalY + sectionSpacing;
-    
+
             // ========== RENTAL DETAILS - Right Column ==========
             let rightColY = contentStartY;
-    
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
             doc.text('RENTAL DETAILS', margin + leftColWidth + colGap, rightColY);
             rightColY += lineHeight;
-    
+
             // Get last payment date from transactions
             const lastPayment = transactions
-            .filter(t => t.revenueAmount > 0)
-            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+                .filter(t => t.revenueAmount > 0)
+                .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
 
-            const lastPaymentFormatted = lastPayment 
-            ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
-            new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', { 
-                timeZone: 'Asia/Kolkata',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            })
-            : 'No payment yet';
+            const lastPaymentFormatted = lastPayment
+                ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
+                new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', {
+                    timeZone: 'Asia/Kolkata',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })
+                : 'No payment yet';
 
             const lastPaymentAmount = lastPayment ? `Rs. ${lastPayment.revenueAmount.toLocaleString('en-IN')}` : 'No payment yet';
 
             const rentalDetails = [
-            ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
-            ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
-            ['Advance Amount', `Rs. ${vehicle.advanceAmount.toLocaleString('en-IN')}`],
-            ['Last Payment', lastPaymentAmount],
-            ['Last Payment Date', lastPaymentFormatted]
+                ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
+                ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
+                ['Advance Amount', `Rs. ${vehicle.advanceAmount.toLocaleString('en-IN')}`],
+                ['Last Payment', lastPaymentAmount],
+                ['Last Payment Date', lastPaymentFormatted]
             ];
-    
+
             doc.autoTable({
                 startY: rightColY,
                 head: [],
@@ -480,38 +486,37 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
                     }
                 }
             });
-    
+
             rightColY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== FACILITIES - Right Column ==========
+
+            // ========== CONTACT DETAILS - Right Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('OUR FACILITIES', margin + leftColWidth + colGap, rightColY);
+            doc.text('CONTACT DETAILS', margin + leftColWidth + colGap, rightColY);
             rightColY += lineHeight;
-    
-            const facilities = [
-                ['•', '24/7 CCTV Surveillance And Watchman Security'],
-                ['•', 'Private Parking Lot'],
-                ['•', 'Water and Washroom Facility'],
+
+            const contacts = [
+                ['Watchman:', '9842850753'],
+                ['Rental:', '9842190000 / 9843050753']
             ];
-    
+
             doc.autoTable({
                 startY: rightColY,
                 head: [],
-                body: facilities,
+                body: contacts,
                 margin: { left: margin + leftColWidth + colGap, right: margin },
                 theme: 'plain',
                 styles: {
@@ -522,40 +527,88 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
-                        cellWidth: 8
+                        textColor: [75, 85, 99],
+                        cellWidth: 30
                     },
-                    1: { 
+                    1: {
+                        textColor: [30, 41, 59],
                         cellWidth: 'auto'
                     }
                 }
             });
-    
+
             rightColY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== TERMS & CONDITIONS - Full Width ==========
-            const startTermsY = Math.max(currentY, rightColY) + sectionSpacing;
-    
+
+            // ========== FACILITIES - Full Width ==========
+            const startFacilitiesY = Math.max(currentY, rightColY) + sectionSpacing;
+
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            doc.line(margin, startTermsY - 4, pageWidth - margin, startTermsY - 4);
-            
-            let termsY = startTermsY;
-    
+            doc.line(margin, startFacilitiesY - 4, pageWidth - margin, startFacilitiesY - 4);
+
+            let facilitiesY = startFacilitiesY;
+
+            // Our Facilities - Full Width
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text('OUR FACILITIES', margin, facilitiesY);
+
+            const facilities = [
+                ['1.', '24/7 CCTV Surveillance And Watchman Security'],
+                ['2.', 'Private Parking Lot'],
+                ['3.', 'Water and Washroom Facility'],
+            ];
+
+            doc.autoTable({
+                startY: facilitiesY + lineHeight,
+                head: [],
+                body: facilities,
+                margin: { left: margin, right: margin },
+                theme: 'plain',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: 'helvetica',
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: {
+                        fontStyle: 'bold',
+                        cellWidth: 8
+                    },
+                    1: {
+                        cellWidth: 'auto'
+                    }
+                }
+            });
+
+            facilitiesY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== TERMS & CONDITIONS with QR CODE ==========
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, facilitiesY - 4, pageWidth - margin, facilitiesY - 4);
+
+            let termsY = facilitiesY;
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
             doc.text('TERMS & CONDITIONS', margin, termsY);
             termsY += lineHeight;
-    
+
             const terms = [
                 ['1.', 'Rent must be paid before 5th of each month.'],
                 ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
                 ['3.', 'Parking spot must be kept clean.'],
                 ['4.', 'No unauthorized vehicle transfers.'],
             ];
-    
+
+            // Terms table with full width
             doc.autoTable({
                 startY: termsY,
                 head: [],
@@ -570,71 +623,57 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         cellWidth: 12
                     },
-                    1: { 
+                    1: {
                         cellWidth: 'auto'
                     }
                 }
             });
-    
+
             termsY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== CONTACT & QR CODE - Side by Side ==========
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.3);
-            doc.line(margin, termsY - 4, pageWidth - margin, termsY - 4);
-    
-            // Contact Details - Left Side
+
+            // ========== PROFESSIONAL FOOTER ==========
+            const footerY = pageHeight - 12;
+
+            // Add signature image on the left (ABOVE the line)
+            const signatureUrl = 'signature.png';
+            try {
+                const signatureResponse = await fetch(signatureUrl);
+                const signatureBlob = await signatureResponse.blob();
+                const signatureBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(signatureBlob);
+                });
+                const signatureWidth = 30;
+                const signatureHeight = 15;
+                doc.addImage(signatureBase64, 'PNG', margin, footerY - 22, signatureWidth, signatureHeight);
+
+                doc.setFontSize(6);
+                doc.setTextColor(75, 85, 99);
+                doc.setFont("helvetica", "normal");
+                doc.text('Authorized Signature', margin, footerY - 6);
+                doc.text('SP Car Parking', margin, footerY - 3);
+            } catch (signatureError) {
+                console.error('Error loading signature:', signatureError);
+            }
+
+            // QR Code - Right Side Bottom (ABOVE the line)
+            const qrXPos = pageWidth - margin - 20;
+
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
+            doc.setFontSize(8);
             doc.setTextColor(30, 58, 138);
-            doc.text('CONTACT DETAILS', margin, termsY);
-            
-            const contacts = [
-                ['Watchman:', '9842850753'],
-                ['Rental:', '9842190000 / 9843050753']
-            ];
-    
-            doc.autoTable({
-                startY: termsY + lineHeight,
-                head: [],
-                body: contacts,
-                margin: { left: margin, right: margin + 100 },
-                theme: 'plain',
-                styles: {
-                    fontSize: 8,
-                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
-                    font: 'helvetica',
-                    lineWidth: 0,
-                    textColor: [55, 65, 81],
-                },
-                columnStyles: {
-                    0: { 
-                        fontStyle: 'bold',
-                        textColor: [75, 85, 99],
-                        cellWidth: 30
-                    },
-                    1: { 
-                        textColor: [30, 41, 59],
-                        cellWidth: 'auto'
-                    }
-                }
-            });
-    
-            // QR Code - Right Side
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.setTextColor(30, 58, 138);
-            doc.text('SCAN TO PAY', pageWidth - margin - 50, termsY, { align: 'center' });
-            
+            doc.text('SCAN TO PAY', qrXPos, footerY - 51, { align: 'center' });
+
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setTextColor(107, 114, 128);
-            doc.text('(Ignore if already paid)', pageWidth - margin - 50, termsY + 5, { align: 'center' });
-    
+            doc.text('(Ignore if paid)', qrXPos, footerY - 47, { align: 'center' });
+
             // Generate QR Code
             const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
@@ -645,31 +684,28 @@ export function VehicleInfo() {
                     light: '#ffffff'
                 }
             });
-    
-            const qrSize = 45;
-            const qrX = pageWidth - margin - 50 - (qrSize / 2);
-            doc.addImage(qrDataUrl, 'PNG', qrX, termsY + 8, qrSize, qrSize);
-    
-            // ========== PROFESSIONAL FOOTER ==========
-            const footerY = pageHeight - 12;
+
+            const qrSize = 30;
+            const qrX = qrXPos - (qrSize / 2);
+            doc.addImage(qrDataUrl, 'PNG', qrX, footerY - 43, qrSize, qrSize);
+
+            // Draw the bottom line
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-            
-            doc.setFontSize(7);
-            doc.setTextColor(107, 114, 128);
-            doc.setFont("helvetica", "normal");
-            doc.text('SP Car Parking - Monthly Rental Invoice', pageWidth/2, footerY, { align: 'center' });
-            
-            doc.setFont("helvetica", "bold");
+            doc.line(margin, footerY - 1, pageWidth - margin, footerY - 1);
+
+            // Center text - JESUS LEADS YOU
+            doc.setFontSize(8);
             doc.setTextColor(30, 58, 138);
-            doc.setFontSize(7);
-            doc.text('JESUS LEADS YOU', margin, footerY);
-            
+            doc.setFont("helvetica", "bold");
+            doc.text('JESUS LEADS YOU', pageWidth / 2, footerY + 2, { align: 'center' });
+
+            // Right side text
             doc.setFont("helvetica", "normal");
             doc.setTextColor(107, 114, 128);
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth - margin, footerY, { align: 'right' });
-    
+            doc.setFontSize(7);
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth - margin, footerY + 2, { align: 'right' });
+
             doc.save(`SP_Parking_Invoice_${vehicle.vehicleNumber}_${invoiceDate.replace(/\//g, '-')}.pdf`);
             toast.success('Invoice generated successfully! 🎉');
         } catch (error) {
@@ -681,7 +717,7 @@ export function VehicleInfo() {
     const handlePrintDailyInvoice = async (vehicle) => {
         try {
             const totalAmount = vehicle.rentPrice * vehicle.numberOfDays;
-    
+
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
@@ -689,18 +725,18 @@ export function VehicleInfo() {
             const leftColWidth = 85;
             const rightColWidth = 85;
             const colGap = 8;
-    
+
             let currentY = margin;
             const lineHeight = 6;
             const sectionSpacing = 8;
-    
+
             // ========== PROFESSIONAL HEADER ==========
             // Top border line
             doc.setDrawColor(30, 58, 138);
             doc.setLineWidth(0.5);
             doc.line(margin, currentY, pageWidth - margin, currentY);
             currentY += 3;
-    
+
             // Logo and Company Info on Left
             const logoUrl = "SP_Car_Parking_bg.png";
             try {
@@ -715,13 +751,13 @@ export function VehicleInfo() {
             } catch (logoError) {
                 console.error("Error loading logo:", logoError);
             }
-    
+
             // Company details - Left side
             doc.setFont("helvetica", "bold");
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
             doc.text("SP Car Parking", margin + 26, currentY + 7);
-    
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
@@ -735,10 +771,10 @@ export function VehicleInfo() {
                 margin + 26,
                 currentY + 19
             );
-    
+
             // Check if vehicle image exists
             const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
-    
+
             // Invoice title and date - Right side
             const now = new Date();
             const invoiceDate = now.toLocaleDateString("en-GB", {
@@ -750,18 +786,18 @@ export function VehicleInfo() {
                 minute: "2-digit",
                 hour12: true,
             });
-    
+
             const rightTextX = vehicleImgLoaded
                 ? pageWidth - margin - 40
                 : pageWidth - margin;
-    
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(30, 58, 138);
             doc.text("RENTAL INVOICE", rightTextX, currentY + 7, {
                 align: "right",
             });
-    
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
@@ -774,14 +810,14 @@ export function VehicleInfo() {
             doc.text(`Invoice #: ${vehicle.vehicleNumber}`, rightTextX, currentY + 19, {
                 align: "right",
             });
-    
+
             // Calculate header bottom position
             const headerBottomY = currentY + 28;
-    
+
             // Draw divider line
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-    
+
             if (vehicleImgLoaded) {
                 const imgSize = 35;
                 const imgX = pageWidth - margin - imgSize;
@@ -795,7 +831,7 @@ export function VehicleInfo() {
             } else {
                 doc.line(margin, headerBottomY, pageWidth - margin, headerBottomY);
             }
-    
+
             // Add vehicle image if available
             if (vehicleImgLoaded && vehicle.vehicleImage?.url) {
                 try {
@@ -806,11 +842,11 @@ export function VehicleInfo() {
                         reader.onloadend = () => resolve(reader.result);
                         reader.readAsDataURL(imgBlob);
                     });
-    
+
                     const imgSize = 35;
                     const imgX = pageWidth - margin - imgSize;
                     const imgY = currentY;
-    
+
                     doc.setDrawColor(226, 232, 240);
                     doc.setLineWidth(0.3);
                     doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
@@ -819,19 +855,19 @@ export function VehicleInfo() {
                     console.error("Error loading vehicle image:", imgError);
                 }
             }
-    
+
             currentY = headerBottomY + sectionSpacing;
-    
+
             // Store the starting Y position for both columns
             const contentStartY = currentY;
-    
+
             // ========== VEHICLE DETAILS - Left Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text("VEHICLE INFORMATION", margin, currentY);
+            doc.text("VEHICLE DETAILS", margin, currentY);
             currentY += lineHeight;
-    
+
             const vehicleDetails = [
                 ["Vehicle Number", vehicle.vehicleNumber],
                 ["Description", vehicle.vehicleDescription || "N/A"],
@@ -839,7 +875,7 @@ export function VehicleInfo() {
                 ["Rental Type", capitalizeFirst(vehicle.rentalType || "N/A")],
                 ["Status", vehicle.status === "active" ? "Paid" : "Not Paid"],
             ];
-    
+
             doc.autoTable({
                 startY: currentY,
                 head: [],
@@ -865,30 +901,36 @@ export function VehicleInfo() {
                         fontStyle: "normal",
                     },
                 },
+                didParseCell: function (data) {
+                    // Make vehicle number value bold
+                    if (data.row.index === 0 && data.column.index === 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
             });
-    
+
             currentY = doc.autoTable.previous.finalY + sectionSpacing;
-    
+
             // ========== OWNER DETAILS - Left Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text("OWNER INFORMATION", margin, currentY);
+            doc.text("OWNER DETAILS", margin, currentY);
             currentY += lineHeight;
-    
+
             const ownerDetails = [
                 ["Owner Name", "MR. " + (vehicle.ownerName || "N/A")],
                 ["Contact", vehicle.contactNumber || "N/A"],
                 [
                     "Address",
                     (vehicle.ownerAddress || "N/A").substring(0, 50) +
-                        (vehicle.ownerAddress &&
+                    (vehicle.ownerAddress &&
                         vehicle.ownerAddress.length > 50
-                            ? "..."
-                            : ""),
+                        ? "..."
+                        : ""),
                 ],
             ];
-    
+
             doc.autoTable({
                 startY: currentY,
                 head: [],
@@ -915,18 +957,18 @@ export function VehicleInfo() {
                     },
                 },
             });
-    
+
             currentY = doc.autoTable.previous.finalY + sectionSpacing;
-    
+
             // ========== RENTAL DETAILS - Right Column ==========
             let rightColY = contentStartY;
-    
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
             doc.text("RENTAL DETAILS", margin + leftColWidth + colGap, rightColY);
             rightColY += lineHeight;
-    
+
             const rentalDetails = [
                 ["Start Date", new Date(vehicle.startDate).toLocaleDateString("en-GB")],
                 ["End Date", new Date(vehicle.endDate).toLocaleDateString("en-GB")],
@@ -934,7 +976,7 @@ export function VehicleInfo() {
                 ["Number of Days", `${vehicle.numberOfDays} days`],
                 ["Total Amount", `Rs. ${totalAmount.toLocaleString("en-IN")}`],
             ];
-    
+
             doc.autoTable({
                 startY: rightColY,
                 head: [],
@@ -961,27 +1003,75 @@ export function VehicleInfo() {
                     },
                 },
             });
-    
+
             rightColY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== FACILITIES - Right Column ==========
+
+            // ========== CONTACT DETAILS - Right Column ==========
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text("OUR FACILITIES", margin + leftColWidth + colGap, rightColY);
+            doc.text("CONTACT DETAILS", margin + leftColWidth + colGap, rightColY);
             rightColY += lineHeight;
-    
-            const facilities = [
-                ["•", "24/7 CCTV Surveillance And Watchman Security"],
-                ["•", "Private Parking Lot"],
-                ["•", "Water and Washroom Facility"],
+
+            const contacts = [
+                ["Watchman:", "9842850753"],
+                ["Rental:", "9842190000 / 9843050753"],
             ];
-    
+
             doc.autoTable({
                 startY: rightColY,
                 head: [],
-                body: facilities,
+                body: contacts,
                 margin: { left: margin + leftColWidth + colGap, right: margin },
+                theme: "plain",
+                styles: {
+                    fontSize: 8,
+                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
+                    font: "helvetica",
+                    lineWidth: 0,
+                    textColor: [55, 65, 81],
+                },
+                columnStyles: {
+                    0: {
+                        fontStyle: "bold",
+                        textColor: [75, 85, 99],
+                        cellWidth: 30,
+                    },
+                    1: {
+                        textColor: [30, 41, 59],
+                        cellWidth: "auto",
+                    },
+                },
+            });
+
+            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== FACILITIES - Full Width ==========
+            const startFacilitiesY = Math.max(currentY, rightColY) + sectionSpacing;
+
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, startFacilitiesY - 4, pageWidth - margin, startFacilitiesY - 4);
+
+            let facilitiesY = startFacilitiesY;
+
+            // Our Facilities - Full Width
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(30, 58, 138);
+            doc.text("OUR FACILITIES", margin, facilitiesY);
+
+            const facilities = [
+                ["1.", "24/7 CCTV Surveillance And Watchman Security"],
+                ["2.", "Private Parking Lot"],
+                ["3.", "Water and Washroom Facility"],
+            ];
+
+            doc.autoTable({
+                startY: facilitiesY + lineHeight,
+                head: [],
+                body: facilities,
+                margin: { left: margin, right: margin },
                 theme: "plain",
                 styles: {
                     fontSize: 8,
@@ -1000,31 +1090,30 @@ export function VehicleInfo() {
                     },
                 },
             });
-    
-            rightColY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== TERMS & CONDITIONS - Full Width ==========
-            const startTermsY = Math.max(currentY, rightColY) + sectionSpacing;
-    
+
+            facilitiesY = doc.autoTable.previous.finalY + sectionSpacing;
+
+            // ========== TERMS & CONDITIONS with QR CODE ==========
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            doc.line(margin, startTermsY - 4, pageWidth - margin, startTermsY - 4);
-    
-            let termsY = startTermsY;
-    
+            doc.line(margin, facilitiesY - 4, pageWidth - margin, facilitiesY - 4);
+
+            let termsY = facilitiesY;
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
             doc.text("TERMS & CONDITIONS", margin, termsY);
             termsY += lineHeight;
-    
+
             const terms = [
                 ["1.", "Rent must be paid promptly for the number of days parked."],
                 ["2.", "Parking spot must be kept clean."],
                 ["3.", "No unauthorized vehicle transfers."],
                 ["4.", "Save Water and Electricity."],
             ];
-    
+
+            // Terms table with full width
             doc.autoTable({
                 startY: termsY,
                 head: [],
@@ -1048,69 +1137,48 @@ export function VehicleInfo() {
                     },
                 },
             });
-    
+
             termsY = doc.autoTable.previous.finalY + sectionSpacing;
-    
-            // ========== CONTACT & QR CODE - Side by Side ==========
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.3);
-            doc.line(margin, termsY - 4, pageWidth - margin, termsY - 4);
-    
-            // Contact Details - Left Side
+
+            // ========== PROFESSIONAL FOOTER ==========
+            const footerY = pageHeight - 12;
+
+            // Add signature image on the left (ABOVE the line)
+            const signatureUrl = 'signature.png';
+            try {
+                const signatureResponse = await fetch(signatureUrl);
+                const signatureBlob = await signatureResponse.blob();
+                const signatureBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(signatureBlob);
+                });
+                const signatureWidth = 30;
+                const signatureHeight = 15;
+                doc.addImage(signatureBase64, 'PNG', margin, footerY - 22, signatureWidth, signatureHeight);
+
+                doc.setFontSize(6);
+                doc.setTextColor(75, 85, 99);
+                doc.setFont("helvetica", "normal");
+                doc.text('Authorized Signature', margin, footerY - 6);
+                doc.text('SP Car Parking', margin, footerY - 3);
+            } catch (signatureError) {
+                console.error('Error loading signature:', signatureError);
+            }
+
+            // QR Code - Right Side Bottom (ABOVE the line)
+            const qrXPos = pageWidth - margin - 20;
+
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
+            doc.setFontSize(8);
             doc.setTextColor(30, 58, 138);
-            doc.text("CONTACT DETAILS", margin, termsY);
-    
-            const contacts = [
-                ["Watchman:", "9842850753"],
-                ["Rental:", "9842190000 / 9843050753"],
-            ];
-    
-            doc.autoTable({
-                startY: termsY + lineHeight,
-                head: [],
-                body: contacts,
-                margin: { left: margin, right: margin + 100 },
-                theme: "plain",
-                styles: {
-                    fontSize: 8,
-                    cellPadding: { top: 2, bottom: 2, left: 0, right: 4 },
-                    font: "helvetica",
-                    lineWidth: 0,
-                    textColor: [55, 65, 81],
-                },
-                columnStyles: {
-                    0: {
-                        fontStyle: "bold",
-                        textColor: [75, 85, 99],
-                        cellWidth: 30,
-                    },
-                    1: {
-                        textColor: [30, 41, 59],
-                        cellWidth: "auto",
-                    },
-                },
-            });
-    
-            // QR Code - Right Side
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
-            doc.setTextColor(30, 58, 138);
-            doc.text("SCAN TO PAY", pageWidth - margin - 50, termsY, {
-                align: "center",
-            });
-    
+            doc.text("SCAN TO PAY", qrXPos, footerY - 51, { align: "center" });
+
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(7);
+            doc.setFontSize(6);
             doc.setTextColor(107, 114, 128);
-            doc.text(
-                "(Ignore if already paid)",
-                pageWidth - margin - 50,
-                termsY + 5,
-                { align: "center" }
-            );
-    
+            doc.text("(Ignore if paid)", qrXPos, footerY - 47, { align: "center" });
+
             // Generate QR Code
             const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
             const qrDataUrl = await QRCode.toDataURL(qrData, {
@@ -1121,41 +1189,33 @@ export function VehicleInfo() {
                     light: "#ffffff",
                 },
             });
-    
-            const qrSize = 45;
-            const qrX = pageWidth - margin - 50 - qrSize / 2;
-            doc.addImage(qrDataUrl, "PNG", qrX, termsY + 8, qrSize, qrSize);
-    
-            // ========== PROFESSIONAL FOOTER ==========
-            const footerY = pageHeight - 12;
+
+            const qrSize = 30;
+            const qrX = qrXPos - (qrSize / 2);
+            doc.addImage(qrDataUrl, "PNG", qrX, footerY - 43, qrSize, qrSize);
+
+            // Draw the bottom line
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-    
-            doc.setFontSize(7);
-            doc.setTextColor(107, 114, 128);
-            doc.setFont("helvetica", "normal");
-            doc.text(
-                "SP Car Parking - Daily Rental Invoice",
-                pageWidth / 2,
-                footerY,
-                { align: "center" }
-            );
-    
-            doc.setFont("helvetica", "bold");
+            doc.line(margin, footerY - 1, pageWidth - margin, footerY - 1);
+
+            // Center text - JESUS LEADS YOU
+            doc.setFontSize(8);
             doc.setTextColor(30, 58, 138);
-            doc.setFontSize(7);
-            doc.text("JESUS LEADS YOU", margin, footerY);
-    
+            doc.setFont("helvetica", "bold");
+            doc.text("JESUS LEADS YOU", pageWidth / 2, footerY + 2, { align: "center" });
+
+            // Right side text
             doc.setFont("helvetica", "normal");
             doc.setTextColor(107, 114, 128);
+            doc.setFontSize(7);
             doc.text(
                 '"Your Car Is Under Safe Hands"',
                 pageWidth - margin,
-                footerY,
+                footerY + 2,
                 { align: "right" }
             );
-    
+
             doc.save(
                 `SP_Parking_Invoice_${vehicle.vehicleNumber}_Daily_${invoiceDate.replace(
                     /\//g,
@@ -1168,7 +1228,7 @@ export function VehicleInfo() {
             toast.error("Failed to generate invoice");
         }
     };
-    
+
 
     const handleDownloadFullReport = async (vehicle) => {
         try {
@@ -1179,7 +1239,7 @@ export function VehicleInfo() {
             const leftColWidth = 85;
             const rightColWidth = 85;
             const colGap = 8;
-            
+
             let currentY = margin;
             const lineHeight = 6;
             const sectionSpacing = 8;
@@ -1211,7 +1271,7 @@ export function VehicleInfo() {
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
             doc.text('SP Car Parking', margin + 26, currentY + 7);
-            
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
@@ -1224,7 +1284,7 @@ export function VehicleInfo() {
             // Report title and date - Right side (with proper spacing from vehicle image)
             const now = new Date();
             const reportDate = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-            const reportTime = now.toLocaleTimeString('en-GB', { 
+            const reportTime = now.toLocaleTimeString('en-GB', {
                 timeZone: 'Asia/Kolkata',
                 hour: '2-digit',
                 minute: '2-digit',
@@ -1233,12 +1293,12 @@ export function VehicleInfo() {
 
             // Position text to the left of vehicle image with proper spacing
             const rightTextX = vehicleImgLoaded ? (pageWidth - margin - 40) : (pageWidth - margin);
-            
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(30, 58, 138);
             doc.text('VEHICLE HISTORY', rightTextX, currentY + 7, { align: 'right' });
-            
+
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
@@ -1247,11 +1307,11 @@ export function VehicleInfo() {
 
             // Calculate where to draw the divider line (below the header content)
             const headerBottomY = currentY + 28;
-            
+
             // Draw divider line before adding image so image appears on top
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            
+
             // If vehicle image exists, draw line up to where image starts, then continue after image
             if (vehicleImgLoaded) {
                 const imgSize = 35;
@@ -1275,16 +1335,16 @@ export function VehicleInfo() {
                         reader.onloadend = () => resolve(reader.result);
                         reader.readAsDataURL(imgBlob);
                     });
-                    
+
                     const imgSize = 35;
                     const imgX = pageWidth - margin - imgSize;
                     const imgY = currentY;
-                    
+
                     // Add subtle border around image
                     doc.setDrawColor(226, 232, 240);
                     doc.setLineWidth(0.3);
                     doc.rect(imgX - 1, imgY - 1, imgSize + 2, imgSize + 2);
-                    
+
                     // Draw image on top
                     doc.addImage(imgBase64, 'JPEG', imgX, imgY, imgSize, imgSize);
                 } catch (imgError) {
@@ -1301,7 +1361,7 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('VEHICLE INFORMATION', margin, currentY);
+            doc.text('VEHICLE DETAILS', margin, currentY);
             currentY += lineHeight;
 
             const vehicleDetails = [
@@ -1326,12 +1386,12 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
@@ -1345,7 +1405,7 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             doc.setTextColor(30, 58, 138);
-            doc.text('OWNER INFORMATION', margin, currentY);
+            doc.text('OWNER DETAILS', margin, currentY);
             currentY += lineHeight;
 
             const ownerDetails = [
@@ -1368,12 +1428,12 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
@@ -1395,18 +1455,18 @@ export function VehicleInfo() {
 
             // Get last payment date from transactions
             const lastPayment = transactions
-            .filter(t => t.revenueAmount > 0)
-            .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+                .filter(t => t.revenueAmount > 0)
+                .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
 
-            const lastPaymentFormatted = lastPayment 
-            ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
-            new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', { 
-                timeZone: 'Asia/Kolkata',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            })
-            : 'No payment yet';
+            const lastPaymentFormatted = lastPayment
+                ? new Date(lastPayment.transactionDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
+                new Date(lastPayment.transactionDate).toLocaleTimeString('en-GB', {
+                    timeZone: 'Asia/Kolkata',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                })
+                : 'No payment yet';
 
 
             const rentalDetails = [
@@ -1416,7 +1476,7 @@ export function VehicleInfo() {
 
             if (vehicle.rentalType === 'monthly') {
                 rentalDetails.push(['Advance Amount', `Rs. ${(vehicle.advanceAmount || 0).toLocaleString('en-IN')}`]);
-                
+
                 if (vehicle.isArchived && vehicle.advanceAmount > 0) {
                     const latestRevenue = allRevenue
                         .filter(r => r.vehicleNumber === vehicle.vehicleNumber && r.revenueAmount > 0)
@@ -1428,7 +1488,7 @@ export function VehicleInfo() {
                         rentalDetails.push(['Refund Amount', `Rs. ${refundAmt.toLocaleString('en-IN')}`]);
                     }
                 }
-                
+
                 if (vehicle.refundDate) {
                     rentalDetails.push(['Refund Date', new Date(vehicle.refundDate).toLocaleDateString('en-GB')]);
                 }
@@ -1454,12 +1514,12 @@ export function VehicleInfo() {
                     textColor: [55, 65, 81],
                 },
                 columnStyles: {
-                    0: { 
+                    0: {
                         fontStyle: 'bold',
                         textColor: [75, 85, 99],
                         cellWidth: 42
                     },
-                    1: { 
+                    1: {
                         textColor: [30, 41, 59],
                         cellWidth: 'auto',
                         fontStyle: 'normal'
@@ -1505,12 +1565,12 @@ export function VehicleInfo() {
                         textColor: [55, 65, 81],
                     },
                     columnStyles: {
-                        0: { 
+                        0: {
                             fontStyle: 'bold',
                             textColor: [75, 85, 99],
                             cellWidth: 45
                         },
-                        1: { 
+                        1: {
                             textColor: [22, 163, 74],
                             fontStyle: 'bold',
                             cellWidth: 'auto'
@@ -1529,7 +1589,7 @@ export function VehicleInfo() {
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
             doc.line(margin, startTxnY - 4, pageWidth - margin, startTxnY - 4);
-            
+
             let txnY = startTxnY;
 
             if (filteredTransactions.length > 0) {
@@ -1551,7 +1611,7 @@ export function VehicleInfo() {
                 // Calculate full width for transaction table
                 const tableMargin = margin;
                 const availableWidth = pageWidth - (tableMargin * 2);
-                
+
                 doc.autoTable({
                     startY: txnY,
                     head: [['#', 'Date', 'Mode', 'Amount']],
@@ -1576,24 +1636,24 @@ export function VehicleInfo() {
                         cellPadding: 4,
                     },
                     columnStyles: {
-                        0: { 
-                            cellWidth: availableWidth * 0.08, 
-                            halign: 'center', 
-                            fontStyle: 'bold' 
+                        0: {
+                            cellWidth: availableWidth * 0.08,
+                            halign: 'center',
+                            fontStyle: 'bold'
                         },
-                        1: { 
-                            cellWidth: availableWidth * 0.35, 
-                            halign: 'center' 
+                        1: {
+                            cellWidth: availableWidth * 0.35,
+                            halign: 'center'
                         },
-                        2: { 
-                            cellWidth: availableWidth * 0.27, 
-                            halign: 'center' 
+                        2: {
+                            cellWidth: availableWidth * 0.27,
+                            halign: 'center'
                         },
-                        3: { 
-                            cellWidth: availableWidth * 0.30, 
-                            halign: 'right', 
-                            fontStyle: 'bold', 
-                            textColor: [22, 163, 74] 
+                        3: {
+                            cellWidth: availableWidth * 0.30,
+                            halign: 'right',
+                            fontStyle: 'bold',
+                            textColor: [22, 163, 74]
                         }
                     },
                     alternateRowStyles: {
@@ -1615,7 +1675,7 @@ export function VehicleInfo() {
                 doc.setTextColor(30, 58, 138);
                 doc.text('TRANSACTION HISTORY', margin, txnY);
                 txnY += lineHeight + 3;
-                
+
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(8);
                 doc.setTextColor(107, 114, 128);
@@ -1627,17 +1687,17 @@ export function VehicleInfo() {
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
             doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-            
+
             doc.setFontSize(7);
             doc.setTextColor(107, 114, 128);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Car Parking - Vehicle History', pageWidth/2, footerY, { align: 'center' });
-            
+            doc.text('SP Car Parking - Vehicle History', pageWidth / 2, footerY, { align: 'center' });
+
             doc.setFont("helvetica", "bold");
             doc.setTextColor(30, 58, 138);
             doc.setFontSize(7);
             doc.text('JESUS LEADS YOU', margin, footerY);
-            
+
             doc.setFont("helvetica", "normal");
             doc.setTextColor(107, 114, 128);
             doc.text(`"Your Car Is Under Safe Hands"`, pageWidth - margin, footerY, { align: 'right' });
@@ -1690,40 +1750,35 @@ export function VehicleInfo() {
     };
 
     return (
-        <div className={`min-h-screen p-2 sm:p-6 transition-colors duration-300 ${
-            isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
-        }`}>
+        <div className={`min-h-screen p-2 sm:p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+            }`}>
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
                 {/* Back Button */}
-                <button 
+                <button
                     onClick={() => navigate('/')}
-                    className={`flex items-center gap-2 transition-colors font-medium py-2 ${
-                        isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
-                    }`}
+                    className={`flex items-center gap-2 transition-colors font-medium py-2 ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                        }`}
                 >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back to Dashboard</span>
                 </button>
-                
+
                 {/* Search Section - Improved mobile padding */}
-                <div className={`rounded-2xl shadow-lg p-4 sm:p-6 transition-colors duration-300 ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                }`}>
+                <div className={`rounded-2xl shadow-lg p-4 sm:p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+                    }`}>
                     <div className="relative">
                         <input
                             type="text"
                             placeholder="Search vehicles..."
                             value={searchQuery}
                             onChange={handleSearch}
-                            className={`w-full px-4 py-2.5 pl-10 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm sm:text-base transition-colors duration-300 ${
-                                isDarkMode 
-                                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
-                                    : 'border-gray-200 text-gray-900 placeholder-gray-500'
-                            }`}
+                            className={`w-full px-4 py-2.5 pl-10 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm sm:text-base transition-colors duration-300 ${isDarkMode
+                                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+                                : 'border-gray-200 text-gray-900 placeholder-gray-500'
+                                }`}
                         />
-                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-400'
-                        }`} />
+                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                            }`} />
                     </div>
 
                     {/* Search Results - Improved mobile view */}
@@ -1733,19 +1788,16 @@ export function VehicleInfo() {
                                 <button
                                     key={vehicle._id || vehicle.vehicleNumber + '_archived'}
                                     onClick={() => setSelectedVehicle(vehicle)}
-                                    className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors flex items-center space-x-3 ${
-                                        isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                                    }`}
+                                    className={`w-full text-left p-3 sm:p-4 rounded-lg transition-colors flex items-center space-x-3 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                                        }`}
                                 >
                                     <Car className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className={`font-medium text-sm sm:text-base transition-colors duration-300 ${
-                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                            }`}>{vehicle.vehicleNumber}</p>
-                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full transition-colors duration-300 ${
-                                                isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-700'
-                                            }`}>
+                                            <p className={`font-medium text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                }`}>{vehicle.vehicleNumber}</p>
+                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-full transition-colors duration-300 ${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-700'
+                                                }`}>
                                                 {vehicle.lotNumber || 'Open'}
                                             </span>
                                             {vehicle.isArchived && (
@@ -1754,9 +1806,8 @@ export function VehicleInfo() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className={`text-xs sm:text-sm truncate transition-colors duration-300 ${
-                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                        }`}>{vehicle.vehicleDescription}</p>
+                                        <p className={`text-xs sm:text-sm truncate transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                            }`}>{vehicle.vehicleDescription}</p>
                                     </div>
                                 </button>
                             ))}
@@ -1768,9 +1819,8 @@ export function VehicleInfo() {
                 {selectedVehicle && (
                     <div className="space-y-4 sm:space-y-6">
                         {/* Basic Info Card - Redesigned with modern UI */}
-                        <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${
-                            isDarkMode ? 'bg-gray-800' : 'bg-white'
-                        }`}>
+                        <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+                            }`}>
                             <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
@@ -1781,13 +1831,12 @@ export function VehicleInfo() {
                                         <span className="px-2.5 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-bold rounded-lg shadow-sm border border-white/20">
                                             {selectedVehicle.lotNumber || 'Open'}
                                         </span>
-                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${
-                                            selectedVehicle.status === 'active' 
-                                                ? 'bg-emerald-500/80 text-white border-emerald-400/50' 
-                                                : selectedVehicle.status === 'archived'
-                                                    ? 'bg-yellow-500/80 text-white border-yellow-400/50'
-                                                    : 'bg-red-500/80 text-white border-red-400/50'
-                                        }`}>
+                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${selectedVehicle.status === 'active'
+                                            ? 'bg-emerald-500/80 text-white border-emerald-400/50'
+                                            : selectedVehicle.status === 'archived'
+                                                ? 'bg-yellow-500/80 text-white border-yellow-400/50'
+                                                : 'bg-red-500/80 text-white border-red-400/50'
+                                            }`}>
                                             {selectedVehicle.status === 'active' ? 'Active' : selectedVehicle.status === 'archived' ? 'Archived' : 'Expired'}
                                         </span>
                                         {/* Premium Badge for Monthly Rental Vehicles (not archived) */}
@@ -1820,62 +1869,52 @@ export function VehicleInfo() {
                             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                                 {/* Vehicle Details Section */}
                                 <div>
-                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                                    }`}>
+                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                        }`}>
                                         <Car className="w-4 h-4 text-blue-600" />
                                         <span>Vehicle Information</span>
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
+                                            }`}>
                                             <div className="bg-blue-100 p-2 rounded-full">
                                                 <Car className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Vehicle Number</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>{selectedVehicle.vehicleNumber}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Vehicle Number</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>{selectedVehicle.vehicleNumber}</p>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
+                                            }`}>
                                             <div className="bg-blue-100 p-2 rounded-full">
                                                 <Car className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Description</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>{selectedVehicle.vehicleDescription}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Description</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>{selectedVehicle.vehicleDescription}</p>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-blue-900/20 border-blue-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-blue-50 border-blue-100'
+                                            }`}>
                                             <div className="bg-blue-100 p-2 rounded-full">
                                                 <MapPin className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Lot Number</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>{selectedVehicle.lotNumber || 'Open'}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Lot Number</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>{selectedVehicle.lotNumber || 'Open'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1883,67 +1922,57 @@ export function VehicleInfo() {
 
                                 {/* Owner Details Section */}
                                 <div>
-                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                                    }`}>
+                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                        }`}>
                                         <User className="w-4 h-4 text-indigo-600" />
                                         <span>Owner Information</span>
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
+                                            }`}>
                                             <div className="bg-indigo-100 p-2 rounded-full">
                                                 <User className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Owner Name</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>{selectedVehicle.ownerName || '-'}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Owner Name</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>{selectedVehicle.ownerName || '-'}</p>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
+                                            }`}>
                                             <div className="bg-indigo-100 p-2 rounded-full">
                                                 <Phone className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Contact</p>
-                                                <a 
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Contact</p>
+                                                <a
                                                     href={`tel:${selectedVehicle.contactNumber}`}
-                                                    className={`font-semibold text-sm sm:text-base hover:underline transition-colors duration-300 ${
-                                                        isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'
-                                                    }`}
+                                                    className={`font-semibold text-sm sm:text-base hover:underline transition-colors duration-300 ${isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'
+                                                        }`}
                                                 >
                                                     {selectedVehicle.contactNumber || '-'}
                                                 </a>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-indigo-900/20 border-indigo-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-indigo-50 border-indigo-100'
+                                            }`}>
                                             <div className="bg-indigo-100 p-2 rounded-full">
                                                 <Calendar className="text-indigo-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Start Date</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Start Date</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>
                                                     {new Date(selectedVehicle.startDate).toLocaleDateString('en-GB')}
                                                 </p>
                                             </div>
@@ -1953,71 +1982,60 @@ export function VehicleInfo() {
 
                                 {/* Rental Details Section */}
                                 <div>
-                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-200' : 'text-gray-700'
-                                    }`}>
+                                    <h3 className={`font-semibold mb-3 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                        }`}>
                                         <IndianRupee className="w-4 h-4 text-emerald-600" />
                                         <span>Rental Information</span>
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                            }`}>
                                             <div className="bg-emerald-100 p-2 rounded-full">
                                                 <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Rental Type</p>
-                                                <p className={`font-semibold text-sm sm:text-base capitalize transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>{selectedVehicle.rentalType || '-'}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Rental Type</p>
+                                                <p className={`font-semibold text-sm sm:text-base capitalize transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>{selectedVehicle.rentalType || '-'}</p>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                            }`}>
                                             <div className="bg-emerald-100 p-2 rounded-full">
                                                 <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>Rent Price</p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>₹{selectedVehicle.rentPrice.toLocaleString('en-IN')}</p>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>Rent Price</p>
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>₹{selectedVehicle.rentPrice.toLocaleString('en-IN')}</p>
                                             </div>
                                         </div>
-                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                        }`}>
+                                        <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800'
+                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                            }`}>
                                             <div className="bg-emerald-100 p-2 rounded-full">
                                                 <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className={`text-xs transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>
+                                                <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>
                                                     {selectedVehicle.rentalType === 'monthly' ? 'Advance Amount' : 'Total Rental Price'}
                                                 </p>
-                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                }`}>
-                                                    ₹{selectedVehicle.rentalType === 'monthly' 
+                                                <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                    }`}>
+                                                    ₹{selectedVehicle.rentalType === 'monthly'
                                                         ? (selectedVehicle.advanceAmount || 0).toLocaleString('en-IN')
                                                         : (selectedVehicle.rentPrice * selectedVehicle.numberOfDays).toLocaleString('en-IN')}
                                                     {selectedVehicle.rentalType === 'daily' && (
-                                                        <span className={`text-xs ml-1 transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <span className={`text-xs ml-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             ({selectedVehicle.numberOfDays} days)
                                                         </span>
                                                     )}
@@ -2028,21 +2046,18 @@ export function VehicleInfo() {
                                             <>
                                                 {/* Only show Refund Amount card when advance > 0 */}
                                                 {selectedVehicle.advanceAmount > 0 && (
-                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                                        isDarkMode 
-                                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                                    }`}>
+                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                                        ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800'
+                                                        : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                                        }`}>
                                                         <div className="bg-emerald-100 p-2 rounded-full">
                                                             <IndianRupee className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className={`text-xs transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                            }`}>Refund Amount</p>
-                                                            <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
+                                                            <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                }`}>Refund Amount</p>
+                                                            <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                 {(() => {
                                                                     // Find latest revenue transaction for this vehicle
                                                                     const latestRevenue = allRevenue
@@ -2059,21 +2074,18 @@ export function VehicleInfo() {
                                                 )}
                                                 {/* Always show Refund Date if it exists */}
                                                 {selectedVehicle.refundDate && (
-                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${
-                                                        isDarkMode 
-                                                            ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800' 
-                                                            : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
-                                                    }`}>
+                                                    <div className={`flex items-center space-x-3 p-4 rounded-xl border shadow-sm transition-colors duration-300 ${isDarkMode
+                                                        ? 'bg-gradient-to-br from-gray-700 to-emerald-900/20 border-emerald-800'
+                                                        : 'bg-gradient-to-br from-gray-50 to-emerald-50 border-emerald-100'
+                                                        }`}>
                                                         <div className="bg-emerald-100 p-2 rounded-full">
                                                             <Calendar className="text-emerald-600 w-4 h-4 sm:w-5 sm:h-5" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className={`text-xs transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                            }`}>Refund Date</p>
-                                                            <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
+                                                            <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                }`}>Refund Date</p>
+                                                            <p className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                }`}>
                                                                 {new Date(selectedVehicle.refundDate).toLocaleDateString('en-GB')}
                                                             </p>
                                                         </div>
@@ -2087,56 +2099,47 @@ export function VehicleInfo() {
                         </div>
 
                         {/* Images Section - Modern gallery style */}
-                        <div className={`rounded-2xl shadow-lg p-4 sm:p-6 transition-colors duration-300 ${
-                            isDarkMode ? 'bg-gray-800' : 'bg-white'
-                        }`}>
-                            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 transition-colors duration-300 ${
-                                isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                        <div className={`rounded-2xl shadow-lg p-4 sm:p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'
                             }`}>
+                            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                }`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 Documents & Images
                             </h3>
-                            
+
                             {(!selectedVehicle.vehicleImage?.url && !selectedVehicle.document1Image?.url && !selectedVehicle.document2Image?.url) ? (
-                                <div className={`text-center py-8 transition-colors duration-300 ${
-                                    isDarkMode ? 'text-gray-400' : 'text-gray-400'
-                                }`}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 mx-auto mb-4 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-600' : 'text-gray-300'
-                                    }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className={`text-center py-8 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                    }`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-16 w-16 mx-auto mb-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'
+                                        }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    <p className={`text-lg font-medium transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                    }`}>No images available</p>
-                                    <p className={`text-sm mt-1 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>No vehicle images or documents have been uploaded.</p>
+                                    <p className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                        }`}>No images available</p>
+                                    <p className={`text-sm mt-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                        }`}>No vehicle images or documents have been uploaded.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {selectedVehicle.vehicleImage?.url && (
-                                        <div 
+                                        <div
                                             onClick={() => handleImageClick(selectedVehicle.vehicleImage.url, 'Vehicle Image', selectedVehicle)}
                                             className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                                         >
-                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${
-                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                            }`}>
+                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
                                                 <Car className="w-3.5 h-3.5 text-blue-500" />
                                                 Vehicle Image
                                             </p>
-                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${
-                                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                                            }`}>
-                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${
-                                                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'
                                                 }`}>
-                                                    <img 
-                                                        src={selectedVehicle.vehicleImage.url} 
-                                                        alt="Vehicle" 
+                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                                    }`}>
+                                                    <img
+                                                        src={selectedVehicle.vehicleImage.url}
+                                                        alt="Vehicle"
                                                         className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
                                                     />
                                                 </div>
@@ -2149,27 +2152,24 @@ export function VehicleInfo() {
                                         </div>
                                     )}
                                     {selectedVehicle.document1Image?.url && (
-                                        <div 
+                                        <div
                                             onClick={() => handleImageClick(selectedVehicle.document1Image.url, 'Aadhaar Card', selectedVehicle)}
                                             className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                                         >
-                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${
-                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                            }`}>
+                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                                                 </svg>
                                                 Aadhaar Card
                                             </p>
-                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${
-                                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                                            }`}>
-                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${
-                                                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'
                                                 }`}>
-                                                    <img 
-                                                        src={selectedVehicle.document1Image.url} 
-                                                        alt="Document 1" 
+                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                                    }`}>
+                                                    <img
+                                                        src={selectedVehicle.document1Image.url}
+                                                        alt="Document 1"
                                                         className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
                                                     />
                                                 </div>
@@ -2182,27 +2182,24 @@ export function VehicleInfo() {
                                         </div>
                                     )}
                                     {selectedVehicle.document2Image?.url && (
-                                        <div 
+                                        <div
                                             onClick={() => handleImageClick(selectedVehicle.document2Image.url, 'RC/License', selectedVehicle)}
                                             className="cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                                         >
-                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${
-                                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                            }`}>
+                                            <p className={`text-sm mb-2 flex items-center gap-1.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                                 RC/License
                                             </p>
-                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${
-                                                isDarkMode ? 'border-gray-600' : 'border-gray-200'
-                                            }`}>
-                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${
-                                                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                            <div className={`relative overflow-hidden rounded-lg border shadow-sm transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'
                                                 }`}>
-                                                    <img 
-                                                        src={selectedVehicle.document2Image.url} 
-                                                        alt="Document 2" 
+                                                <div className={`aspect-w-16 aspect-h-10 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                                    }`}>
+                                                    <img
+                                                        src={selectedVehicle.document2Image.url}
+                                                        alt="Document 2"
                                                         className="w-full h-48 object-cover rounded-lg transition-transform duration-500 group-hover:scale-105"
                                                     />
                                                 </div>
@@ -2219,159 +2216,136 @@ export function VehicleInfo() {
                         </div>
 
                         {/* Transaction History - Modern redesign */}
-                        <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${
-                            isDarkMode ? 'bg-gray-800' : 'bg-white'
-                        }`}>
+                        <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+                            }`}>
                             <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                                 <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                                     <Receipt className="w-5 h-5" />
                                     Transaction History
                                 </h3>
                             </div>
-                            
+
                             {transactions.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${
-                                        isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                                    }`}>
-                                        <Receipt className={`w-8 h-8 transition-colors duration-300 ${
-                                            isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                                        }`} />
+                                    <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                        }`}>
+                                        <Receipt className={`w-8 h-8 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                                            }`} />
                                     </div>
-                                    <h3 className={`text-lg font-medium transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                                    }`}>No transactions found</h3>
-                                    <p className={`text-sm mt-2 transition-colors duration-300 ${
-                                        isDarkMode ? 'text-gray-400' : 'text-gray-400'
-                                    }`}>This vehicle doesn't have any recorded transactions.</p>
+                                    <h3 className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                                        }`}>No transactions found</h3>
+                                    <p className={`text-sm mt-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                                        }`}>This vehicle doesn't have any recorded transactions.</p>
                                 </div>
                             ) : (
                                 <div className="p-4">
                                     {/* Cards instead of table for better mobile */}
                                     <div className="hidden md:block">
                                         <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-                                            <table className={`min-w-full divide-y rounded-lg overflow-hidden transition-colors duration-300 ${
-                                                isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
-                                            }`}>
+                                            <table className={`min-w-full divide-y rounded-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
+                                                }`}>
                                                 <thead>
-                                                    <tr className={`transition-colors duration-300 ${
-                                                        isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                                                    }`}>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider rounded-tl-lg transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    <tr className={`transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
                                                         }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider rounded-tl-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             S.No
                                                         </th>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             Date
                                                         </th>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             Type
                                                         </th>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             Mode
                                                         </th>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             Received By
                                                         </th>
-                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider rounded-tr-lg transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                        }`}>
+                                                        <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider rounded-tr-lg transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            }`}>
                                                             Amount
                                                         </th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className={`divide-y transition-colors duration-300 ${
-                                                    isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'
-                                                }`}>
+                                                <tbody className={`divide-y transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'
+                                                    }`}>
                                                     {transactions
                                                         .filter(transaction => transaction.revenueAmount > 0)
                                                         .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))
                                                         .map((transaction, index) => (
-                                                        <tr 
-                                                            key={transaction._id} 
-                                                            className={`transition-colors duration-150 ${
-                                                                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
-                                                            }`}
-                                                        >
-                                                            <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
-                                                                <span className="bg-blue-100 text-blue-800 font-medium px-2.5 py-1 rounded-full text-xs">
-                                                                    {index + 1}
-                                                                </span>
-                                                            </td>
-                                                            <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-medium">
-                                                                        {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
-                                                                    </span>
-                                                                    <span className={`text-xs transition-colors duration-300 ${
-                                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                            <tr
+                                                                key={transaction._id}
+                                                                className={`transition-colors duration-150 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
+                                                                    }`}
+                                                            >
+                                                                <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
                                                                     }`}>
-                                                                        {new Date(transaction.transactionDate).toLocaleTimeString('en-GB', {
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })}
+                                                                    <span className="bg-blue-100 text-blue-800 font-medium px-2.5 py-1 rounded-full text-xs">
+                                                                        {index + 1}
                                                                     </span>
-                                                                </div>
-                                                            </td>
-                                                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
-                                                                {transaction.transactionType}
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                                    transaction.transactionMode === 'UPI' 
-                                                                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
-                                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                                }`}>
-                                                                    {transaction.transactionMode === 'UPI' ? (
-                                                                        <>
-                                                                            <CreditCard className="w-3 h-3 mr-1" />
-                                                                            <span>UPI</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <DollarSign className="w-3 h-3 mr-1" />
-                                                                            <span>Cash</span>
-                                                                        </>
-                                                                    )}
-                                                                </span>
-                                                            </td>
-                                                            <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${
-                                                                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                            }`}>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <div className={`p-1 rounded-full transition-colors duration-300 ${
-                                                                        isDarkMode ? 'bg-gray-600' : 'bg-gray-100'
+                                                                </td>
+                                                                <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
                                                                     }`}>
-                                                                        <User className={`w-3 h-3 transition-colors duration-300 ${
-                                                                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                                                        }`} />
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-medium">
+                                                                            {new Date(transaction.transactionDate).toLocaleDateString('en-GB')}
+                                                                        </span>
+                                                                        <span className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                            }`}>
+                                                                            {new Date(transaction.transactionDate).toLocaleTimeString('en-GB', {
+                                                                                hour: '2-digit',
+                                                                                minute: '2-digit'
+                                                                            })}
+                                                                        </span>
                                                                     </div>
-                                                                    <span>{transaction.receivedBy || 'Admin'}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                                                <div className="flex items-center gap-1">
-                                                                    <IndianRupee className="w-3.5 h-3.5" />
-                                                                    {transaction.revenueAmount.toLocaleString('en-IN')}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                                </td>
+                                                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                    }`}>
+                                                                    {transaction.transactionType}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${transaction.transactionMode === 'UPI'
+                                                                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                                        }`}>
+                                                                        {transaction.transactionMode === 'UPI' ? (
+                                                                            <>
+                                                                                <CreditCard className="w-3 h-3 mr-1" />
+                                                                                <span>UPI</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <DollarSign className="w-3 h-3 mr-1" />
+                                                                                <span>Cash</span>
+                                                                            </>
+                                                                        )}
+                                                                    </span>
+                                                                </td>
+                                                                <td className={`px-6 py-4 whitespace-nowrap text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                    }`}>
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <div className={`p-1 rounded-full transition-colors duration-300 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-100'
+                                                                            }`}>
+                                                                            <User className={`w-3 h-3 transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                                                                }`} />
+                                                                        </div>
+                                                                        <span>{transaction.receivedBy || 'Admin'}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <IndianRupee className="w-3.5 h-3.5" />
+                                                                        {transaction.revenueAmount.toLocaleString('en-IN')}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -2410,25 +2384,21 @@ export function VehicleInfo() {
                                                     </div>
 
                                                     {/* Transaction Card with enhanced effects */}
-                                                    <div className={`w-full border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${
-                                                        isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'
-                                                    }`}>
-                                                        <div className={`p-4 border-b transition-colors duration-300 ${
-                                                            isDarkMode 
-                                                                ? 'border-gray-700 bg-gradient-to-r from-gray-700 to-gray-800' 
-                                                                : 'border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50'
+                                                    <div className={`w-full border rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'
                                                         }`}>
+                                                        <div className={`p-4 border-b transition-colors duration-300 ${isDarkMode
+                                                            ? 'border-gray-700 bg-gradient-to-r from-gray-700 to-gray-800'
+                                                            : 'border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50'
+                                                            }`}>
                                                             <div className="flex justify-between items-start">
                                                                 <div>
-                                                                    <div className={`font-semibold transition-colors duration-300 ${
-                                                                        isDarkMode ? 'text-blue-300' : 'text-blue-900'
-                                                                    }`}>{filteredTxns[currentTxnIndex].transactionType}</div>
+                                                                    <div className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-blue-300' : 'text-blue-900'
+                                                                        }`}>{filteredTxns[currentTxnIndex].transactionType}</div>
                                                                 </div>
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
-                                                                    filteredTxns[currentTxnIndex].transactionMode === 'UPI' 
-                                                                        ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
-                                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                                }`}>
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${filteredTxns[currentTxnIndex].transactionMode === 'UPI'
+                                                                    ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                                                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                                    }`}>
                                                                     {filteredTxns[currentTxnIndex].transactionMode === 'UPI' ? (
                                                                         <>
                                                                             <CreditCard className="w-3 h-3 mr-1" />
@@ -2443,24 +2413,20 @@ export function VehicleInfo() {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className={`p-4 space-y-3 transition-colors duration-300 ${
-                                                            isDarkMode 
-                                                                ? 'bg-gradient-to-br from-gray-800 to-gray-900' 
-                                                                : 'bg-gradient-to-br from-white to-gray-50'
-                                                        }`}>
+                                                        <div className={`p-4 space-y-3 transition-colors duration-300 ${isDarkMode
+                                                            ? 'bg-gradient-to-br from-gray-800 to-gray-900'
+                                                            : 'bg-gradient-to-br from-white to-gray-50'
+                                                            }`}>
                                                             <div className="flex justify-between">
-                                                                <span className={`text-sm transition-colors duration-300 ${
-                                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                                }`}>Date</span>
+                                                                <span className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>Date</span>
                                                                 <div className="flex flex-col items-end">
-                                                                    <span className={`text-sm font-medium transition-colors duration-300 ${
-                                                                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                                    }`}>
+                                                                    <span className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                        }`}>
                                                                         {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleDateString('en-GB')}
                                                                     </span>
-                                                                    <span className={`text-xs mt-0.5 transition-colors duration-300 ${
-                                                                        isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                                                                    }`}>
+                                                                    <span className={`text-xs mt-0.5 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                                                                        }`}>
                                                                         {new Date(filteredTxns[currentTxnIndex].transactionDate).toLocaleTimeString('en-GB', {
                                                                             hour: '2-digit',
                                                                             minute: '2-digit',
@@ -2470,24 +2436,19 @@ export function VehicleInfo() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex justify-between">
-                                                                <span className={`text-sm transition-colors duration-300 ${
-                                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                                }`}>Received By</span>
-                                                                <span className={`text-sm font-medium flex items-center transition-colors duration-300 ${
-                                                                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                                }`}>
-                                                                    <User className={`w-3 h-3 mr-1 transition-colors duration-300 ${
-                                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                                    }`} />
+                                                                <span className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>Received By</span>
+                                                                <span className={`text-sm font-medium flex items-center transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                                                                    }`}>
+                                                                    <User className={`w-3 h-3 mr-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                        }`} />
                                                                     {filteredTxns[currentTxnIndex].receivedBy || 'Admin'}
                                                                 </span>
                                                             </div>
-                                                            <div className={`flex justify-between pt-2 border-t transition-colors duration-300 ${
-                                                                isDarkMode ? 'border-gray-700' : 'border-gray-100'
-                                                            }`}>
-                                                                <span className={`text-sm transition-colors duration-300 ${
-                                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                                }`}>Amount</span>
+                                                            <div className={`flex justify-between pt-2 border-t transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'
+                                                                }`}>
+                                                                <span className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                                    }`}>Amount</span>
                                                                 <span className="text-green-600 font-semibold flex items-center">
                                                                     <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
                                                                     {filteredTxns[currentTxnIndex].revenueAmount.toLocaleString('en-IN')}
@@ -2501,20 +2462,18 @@ export function VehicleInfo() {
                                                     {filteredTxns.map((_, idx) => (
                                                         <span
                                                             key={idx}
-                                                            className={`inline-block w-2 h-2 rounded-full transition-all duration-300 ${
-                                                                idx === currentTxnIndex 
-                                                                    ? 'bg-blue-500 w-4' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 hover:bg-gray-500' 
-                                                                        : 'bg-gray-300 hover:bg-gray-400'
-                                                            }`}
+                                                            className={`inline-block w-2 h-2 rounded-full transition-all duration-300 ${idx === currentTxnIndex
+                                                                ? 'bg-blue-500 w-4'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 hover:bg-gray-500'
+                                                                    : 'bg-gray-300 hover:bg-gray-400'
+                                                                }`}
                                                         />
                                                     ))}
                                                 </div>
                                                 {/* Transaction counter */}
-                                                <div className={`text-center mt-2 text-sm transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>
+                                                <div className={`text-center mt-2 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>
                                                     Transaction {currentTxnIndex + 1} of {filteredTxns.length}
                                                 </div>
                                             </div>
@@ -2526,9 +2485,8 @@ export function VehicleInfo() {
 
                         {/* Transaction Summary - NEW */}
                         {transactions.length > 0 && (
-                            <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${
-                                isDarkMode ? 'bg-gray-800' : 'bg-white'
-                            }`}>
+                            <div className={`rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+                                }`}>
                                 <div className="bg-gradient-to-r from-green-600 to-green-600 p-4 sm:p-6">
                                     <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                                         <IndianRupee className="w-5 h-5" />
@@ -2538,64 +2496,56 @@ export function VehicleInfo() {
                                 <div className="p-6">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         {/* Total Paid */}
-                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'from-emerald-900/20 to-teal-900/20 border-emerald-800' 
-                                                : 'from-emerald-50 to-teal-50 border-emerald-100'
-                                        }`}>
+                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${isDarkMode
+                                            ? 'from-emerald-900/20 to-teal-900/20 border-emerald-800'
+                                            : 'from-emerald-50 to-teal-50 border-emerald-100'
+                                            }`}>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className={`font-medium text-sm transition-colors duration-300 ${
-                                                        isDarkMode ? 'text-emerald-300' : 'text-emerald-800'
-                                                    }`}>Total Paid</span>
+                                                    <span className={`font-medium text-sm transition-colors duration-300 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-800'
+                                                        }`}>Total Paid</span>
                                                     <div className="bg-emerald-100 p-2 rounded-full">
                                                         <IndianRupee className="w-4 h-4 text-emerald-700" />
                                                     </div>
                                                 </div>
-                                                <div className={`text-2xl font-bold transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-emerald-300' : 'text-emerald-800'
-                                                }`}>
+                                                <div className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-800'
+                                                    }`}>
                                                     ₹{transactions
                                                         .filter(t => t.revenueAmount > 0)
                                                         .reduce((total, t) => total + t.revenueAmount, 0)
                                                         .toLocaleString('en-IN')}
                                                 </div>
-                                                <div className={`text-xs mt-1 transition-colors duration-300 ${
-                                                    isDarkMode ? 'text-emerald-400' : 'text-emerald-700'
-                                                }`}>
+                                                <div className={`text-xs mt-1 transition-colors duration-300 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'
+                                                    }`}>
                                                     {transactions.filter(t => t.revenueAmount > 0).length} payment(s)
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         {/* Last Payment */}
-                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'from-blue-900/20 to-indigo-900/20 border-blue-800' 
-                                                : 'from-blue-50 to-indigo-50 border-blue-100'
-                                        }`}>
+                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${isDarkMode
+                                            ? 'from-blue-900/20 to-indigo-900/20 border-blue-800'
+                                            : 'from-blue-50 to-indigo-50 border-blue-100'
+                                            }`}>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className={`font-medium text-sm transition-colors duration-300 ${
-                                                        isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                                                    }`}>Last Payment</span>
+                                                    <span className={`font-medium text-sm transition-colors duration-300 ${isDarkMode ? 'text-blue-300' : 'text-blue-800'
+                                                        }`}>Last Payment</span>
                                                     <div className="bg-blue-100 p-2 rounded-full">
                                                         <Calendar className="w-4 h-4 text-blue-700" />
                                                     </div>
                                                 </div>
                                                 {transactions.filter(t => t.revenueAmount > 0).length > 0 ? (
                                                     <>
-                                                        <div className={`text-2xl font-bold transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                                                        }`}>
+                                                        <div className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-blue-300' : 'text-blue-800'
+                                                            }`}>
                                                             ₹{transactions
                                                                 .filter(t => t.revenueAmount > 0)
                                                                 .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0]
                                                                 .revenueAmount.toLocaleString('en-IN')}
                                                         </div>
-                                                        <div className={`text-xs mt-1 transition-colors duration-300 ${
-                                                            isDarkMode ? 'text-blue-400' : 'text-blue-700'
-                                                        }`}>
+                                                        <div className={`text-xs mt-1 transition-colors duration-300 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'
+                                                            }`}>
                                                             {new Date(transactions
                                                                 .filter(t => t.revenueAmount > 0)
                                                                 .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0]
@@ -2603,24 +2553,21 @@ export function VehicleInfo() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className={`transition-colors duration-300 ${
-                                                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                    }`}>No payments</div>
+                                                    <div className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                                        }`}>No payments</div>
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         {/* Payment Mode */}
-                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${
-                                            isDarkMode 
-                                                ? 'from-purple-900/20 to-pink-900/20 border-purple-800' 
-                                                : 'from-purple-50 to-pink-50 border-purple-100'
-                                        }`}>
+                                        <div className={`bg-gradient-to-br rounded-2xl p-5 border transition-colors duration-300 ${isDarkMode
+                                            ? 'from-purple-900/20 to-pink-900/20 border-purple-800'
+                                            : 'from-purple-50 to-pink-50 border-purple-100'
+                                            }`}>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className={`font-medium text-sm transition-colors duration-300 ${
-                                                        isDarkMode ? 'text-purple-300' : 'text-purple-800'
-                                                    }`}>Payment Methods</span>
+                                                    <span className={`font-medium text-sm transition-colors duration-300 ${isDarkMode ? 'text-purple-300' : 'text-purple-800'
+                                                        }`}>Payment Methods</span>
                                                     <div className="bg-purple-100 p-2 rounded-full">
                                                         <CreditCard className="w-4 h-4 text-purple-700" />
                                                     </div>
@@ -2653,35 +2600,35 @@ export function VehicleInfo() {
 
             {/* Add enhanced Image Viewer Modal with zoom and better controls */}
             {selectedImage && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 transition-all duration-300 ease-in-out"
                     onClick={handleCloseViewer}
                 >
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-lg"></div>
-                    
+
                     {/* Content */}
                     <div className="relative h-full w-full flex items-center justify-center p-4">
                         {/* Close button */}
-                        <button 
+                        <button
                             onClick={handleCloseViewer}
                             className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 bg-black/30 hover:bg-black/50 transition-colors p-2 rounded-full backdrop-blur-sm"
                             aria-label="Close viewer"
                         >
                             <X className="w-6 h-6" />
                         </button>
-                        
+
                         {/* Image info */}
                         <div className="absolute top-4 left-4 bg-black/30 backdrop-blur-sm text-white p-3 rounded-xl max-w-[80%] md:max-w-sm">
                             <h3 className="text-xl font-semibold">{selectedImage.title}</h3>
                             <p className="text-sm mt-1 text-white/80">{selectedImage.vehicleNumber}</p>
                             <p className="text-sm mt-0.5 text-white/80 truncate">{selectedImage.vehicleDescription}</p>
                         </div>
-                        
+
                         {/* Image container */}
                         <div className="bg-white/5 backdrop-blur-sm p-1 rounded-2xl shadow-2xl border border-white/10 max-h-[90vh] max-w-5xl overflow-hidden">
-                            <img 
-                                src={selectedImage.url} 
+                            <img
+                                src={selectedImage.url}
                                 alt={selectedImage.title}
                                 className="max-h-[85vh] max-w-full object-contain rounded-xl"
                                 onClick={(e) => e.stopPropagation()}
