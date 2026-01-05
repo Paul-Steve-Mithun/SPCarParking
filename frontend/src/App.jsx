@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink, Navigate, useNavigate } from 'react-router-dom';
-import { 
-    Menu, 
-    X, 
+import {
+    Menu,
+    X,
     Home,
     PlusCircle,
     Car,
@@ -32,7 +32,7 @@ import BalanceSheet from './BalanceSheet';
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
-    
+
     if (!auth.isAuthenticated) {
         return <Navigate to="/" replace />;
     }
@@ -50,7 +50,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
     const navigate = useNavigate();
     const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
     const { isDarkMode, toggleTheme } = useTheme();
-    
+
     // Get user name based on role/username
     const getUserName = () => {
         if (!auth.isAuthenticated) return '';
@@ -65,11 +65,11 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
 
     const scrollToLogin = () => {
         navigate('/');
-        
+
         setTimeout(() => {
             const loginSection = document.querySelector('#loginSection');
             if (loginSection) {
-                loginSection.scrollIntoView({ 
+                loginSection.scrollIntoView({
                     behavior: 'smooth',
                     block: 'center'
                 });
@@ -80,20 +80,20 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
 
     const NavItem = ({ to, children, requiredRoles }) => {
         const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
-        
+
         // If route requires specific roles and user doesn't have them, don't show the link
         if (requiredRoles && (!auth.isAuthenticated || !requiredRoles.includes(auth.role))) {
             return null;
         }
 
         return (
-            <NavLink 
-                to={to} 
+            <NavLink
+                to={to}
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) => `
                     block w-full px-4 py-2 text-sm font-medium transition-all duration-200
-                    ${isActive 
-                        ? 'bg-white/20 text-white' 
+                    ${isActive
+                        ? 'bg-white/20 text-white'
                         : 'text-white hover:bg-white/10'
                     }
                     md:inline-block md:w-auto md:rounded-lg
@@ -179,7 +179,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                     </div>
                                 </NavItem>
                             </div>
-                            
+
                             {/* Dark Mode Toggle */}
                             <button
                                 onClick={toggleTheme}
@@ -192,7 +192,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                     <Moon className="w-4 h-4" />
                                 )}
                             </button>
-                            
+
                             {isAuthenticated && (
                                 <button
                                     onClick={handleLogout}
@@ -220,11 +220,10 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                         <div className="md:hidden fixed inset-0 z-50">
                             {/* Backdrop */}
                             <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
-                            
+
                             {/* Menu Panel - Sliding from left */}
-                            <div className={`fixed inset-y-0 left-0 w-[280px] shadow-xl transform transition-all duration-300 ${
-                                isDarkMode ? 'bg-gray-900' : 'bg-white'
-                            }`}>
+                            <div className={`fixed inset-y-0 left-0 w-[280px] shadow-xl transform transition-all duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'
+                                }`}>
                                 {/* Header */}
                                 <div className="flex flex-col px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-600">
                                     <div className="flex justify-between items-start">
@@ -238,7 +237,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                             <X className="h-5 w-5" />
                                         </button>
                                     </div>
-                                    
+
                                     {/* Enhanced Welcome message for mobile */}
                                     <div className="mt-3 flex items-center space-x-2">
                                         <div className="bg-white/20 p-1.5 rounded-full">
@@ -247,10 +246,10 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                         <div className="flex flex-col">
                                             <span className="text-white font-medium text-base">Welcome {getUserName()}</span>
                                             <span className="text-white/80 text-xs">
-                                                {new Date().toLocaleDateString('en-US', { 
-                                                    weekday: 'short', 
-                                                    month: 'short', 
-                                                    day: 'numeric' 
+                                                {new Date().toLocaleDateString('en-US', {
+                                                    weekday: 'short',
+                                                    month: 'short',
+                                                    day: 'numeric'
                                                 })}
                                             </span>
                                         </div>
@@ -284,13 +283,13 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                                     onClick={() => setIsMenuOpen(false)}
                                                     className={({ isActive }) => `
                                                         flex items-center px-3 py-2 mb-0.5 rounded-lg transition-all duration-200
-                                                        ${isActive 
-                                                            ? isDarkMode 
-                                                                ? 'bg-blue-900/20 text-blue-400' 
+                                                        ${isActive
+                                                            ? isDarkMode
+                                                                ? 'bg-blue-900/20 text-blue-400'
                                                                 : 'bg-blue-50 text-blue-600'
                                                             : isDarkMode
                                                                 ? 'text-gray-300 hover:bg-gray-800'
-                                                            : 'text-gray-600 hover:bg-gray-50'
+                                                                : 'text-gray-600 hover:bg-gray-50'
                                                         }
                                                     `}
                                                 >
@@ -305,18 +304,16 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                 </div>
 
                                 {/* Footer with Login/Logout and Dark Mode Toggle */}
-                                <div className={`p-3 border-t transition-colors duration-300 ${
-                                    isDarkMode ? 'border-gray-700' : 'border-gray-100'
-                                }`}>
+                                <div className={`p-3 border-t transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'
+                                    }`}>
                                     {/* Dark Mode Toggle for Mobile */}
                                     <button
                                         onClick={toggleTheme}
                                         className={`w-full py-2.5 px-3 rounded-lg font-medium text-sm
-                                        active:scale-[0.98] transition-all duration-200 flex items-center justify-center mb-3 ${
-                                            isDarkMode 
-                                                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                                        active:scale-[0.98] transition-all duration-200 flex items-center justify-center mb-3 ${isDarkMode
+                                                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
+                                            }`}
                                     >
                                         {isDarkMode ? (
                                             <>
@@ -330,7 +327,7 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                             </>
                                         )}
                                     </button>
-                                    
+
                                     {isAuthenticated ? (
                                         <button
                                             onClick={() => {
@@ -338,17 +335,16 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                                 setIsMenuOpen(false);
                                             }}
                                             className={`w-full py-2.5 px-3 rounded-lg font-medium text-sm
-                                            active:scale-[0.98] transition-all duration-200 flex items-center justify-center ${
-                                                isDarkMode 
-                                                    ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30' 
+                                            active:scale-[0.98] transition-all duration-200 flex items-center justify-center ${isDarkMode
+                                                    ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
                                                     : 'bg-red-50 text-red-600 hover:bg-red-100'
-                                            }`}
+                                                }`}
                                         >
                                             <LogOut className="w-[18px] h-[18px] mr-2" />
                                             Logout
                                         </button>
                                     ) : (
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 scrollToLogin();
                                                 setIsMenuOpen(false);
@@ -360,24 +356,20 @@ const Navigation = ({ isAuthenticated, setIsAuthenticated }) => {
                                             Login
                                         </button>
                                     )}
-                                    
+
                                     {/* Copyright and Company Name */}
-                                    <div className={`mt-4 pt-4 border-t flex flex-col items-center space-y-2 transition-colors duration-300 ${
-                                        isDarkMode ? 'border-gray-700' : 'border-gray-100'
-                                    }`}>
-                                        <p className={`text-xl font-black tracking-wide hover:scale-105 transition-transform duration-300 ${
-                                            isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                    <div className={`mt-4 pt-4 border-t flex flex-col items-center space-y-2 transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'
                                         }`}>
-                                            STERIX ENTERPRISES
+                                        <p className={`text-xl font-black tracking-wide hover:scale-105 transition-transform duration-300 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                            }`}>
+                                            STEVE ENTERPRISES
                                         </p>
-                                        <p className={`text-xs transition-colors duration-300 ${
-                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                        }`}>
+                                        <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                            }`}>
                                             © {new Date().getFullYear()} SP Car Parking. All rights reserved.
                                         </p>
-                                        <p className={`text-xs transition-colors duration-300 ${
-                                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                        }`}>JESUS LEADS YOU</p>
+                                        <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                            }`}>JESUS LEADS YOU</p>
                                     </div>
                                 </div>
                             </div>
@@ -431,35 +423,31 @@ function App() {
     return (
         <Router>
             <div className={`w-full mx-auto min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-                <Navigation 
-                    isAuthenticated={isAuthenticated} 
+                <Navigation
+                    isAuthenticated={isAuthenticated}
                     setIsAuthenticated={setIsAuthenticated}
                 />
 
                 {/* Welcome Banner - Only visible on desktop */}
                 {isAuthenticated && (
-                    <div className={`hidden md:block border-b transition-colors duration-300 ${
-                        isDarkMode 
-                            ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-gray-700' 
+                    <div className={`hidden md:block border-b transition-colors duration-300 ${isDarkMode
+                            ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-gray-700'
                             : 'bg-gradient-to-r from-blue-100 to-blue-50 border-blue-200'
-                    }`}>
+                        }`}>
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                             <div className="flex items-center space-x-3">
                                 <div className="bg-blue-600 text-white p-2 rounded-full">
                                     <User className="h-5 w-5" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className={`font-bold text-lg transition-colors duration-300 ${
-                                        isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                                    }`}>Welcome {getUserName()}</span>
-                                    <span className={`text-sm transition-colors duration-300 ${
-                                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                                    }`}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    <span className={`font-bold text-lg transition-colors duration-300 ${isDarkMode ? 'text-blue-300' : 'text-blue-800'
+                                        }`}>Welcome {getUserName()}</span>
+                                    <span className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                        }`}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
                             </div>
-                            <div className={`font-medium text-base transition-colors duration-300 ${
-                                isDarkMode ? 'text-blue-300' : 'text-blue-700'
-                            }`}>
+                            <div className={`font-medium text-base transition-colors duration-300 ${isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                                }`}>
                                 SP Car Parking Management System
                             </div>
                         </div>
@@ -469,7 +457,7 @@ function App() {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-4rem-3.5rem)]">
                     <Routes>
                         <Route path="/" element={
-                            <HomePage 
+                            <HomePage
                                 isAuthenticated={isAuthenticated}
                                 onAuthentication={setIsAuthenticated}
                             />
@@ -519,20 +507,17 @@ function App() {
 
                 {/* Footer - Now outside of Routes */}
                 {isAuthenticated && (
-                    <footer className={`border-t transition-colors duration-300 ${
-                        isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                    }`}>
+                    <footer className={`border-t transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                        }`}>
                         <div className="text-center py-8 relative">
                             <div className="flex flex-col-reverse md:flex-row justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 space-y-reverse md:space-y-0">
-                                <p className={`text-sm transition-colors duration-300 ${
-                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                }`}>
+                                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                    }`}>
                                     © {new Date().getFullYear()} SP Car Parking. All rights reserved.
                                 </p>
-                                <p className={`text-xl md:text-lg font-black tracking-wide hover:scale-105 transition-transform duration-300 ${
-                                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                                }`}>
-                                    STERIX ENTERPRISES
+                                <p className={`text-xl md:text-lg font-black tracking-wide hover:scale-105 transition-transform duration-300 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                    }`}>
+                                    STEVE ENTERPRISES
                                 </p>
                             </div>
                         </div>
