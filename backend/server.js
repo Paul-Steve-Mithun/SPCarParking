@@ -809,20 +809,6 @@ app.get('/advances/allUpToDate', async (req, res) => {
 app.get('/advances', async (req, res) => {
     try {
         const { month, year } = req.query;
-        // If no month/year provided, return all (fallback or original behavior?)
-        // The original code used req.query without check, implying it expected them or failed?
-        // Let's check the orphan code... it uses month/year directly.
-        // But the previous implementation (before my meddling) might have had a check?
-        // Looking at Step 7, line 799-ish of original file... we don't see the body in Step 7.
-        // But the orphan code in Step 27 line 852 takes month, year.
-        // It creates Date objects. If month is undefined, `new Date(undefined, undefined, 1)` -> Invalid Date.
-        // So it likely expects them.
-
-        if (!month || !year) {
-            const advances = await Advance.find();
-            return res.json(advances);
-        }
-
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
 
