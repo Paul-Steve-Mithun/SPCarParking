@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from './contexts/ThemeContext';
-import { 
-    DollarSign, 
+import {
+    DollarSign,
     Calendar,
     ChevronDown,
     ArrowUp,
@@ -18,6 +18,7 @@ import {
 import toast, { Toaster } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { AdvanceExpensesModal } from './AdvanceExpensesModal';
 
 export function BalanceSheet() {
     const { isDarkMode } = useTheme();
@@ -52,11 +53,14 @@ export function BalanceSheet() {
         totalRevenue: 0,
         totalExpense: 0,
         netIncome: 0,
-        totalAdvance: 0
+        totalAdvance: 0,
+        advanceInHand: 0
     });
+    const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
+    const [advanceExpensesTotal, setAdvanceExpensesTotal] = useState(0);
 
     const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June', 
+        'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
@@ -69,18 +73,24 @@ export function BalanceSheet() {
         try {
             // Get end date for advance calculation (last day of selected month)
             const endDate = new Date(selectedYear, selectedMonth + 1, 0);
-            
-            const [revenueRes, expensesRes, balanceSheetRes, advanceRes] = await Promise.all([
+
+            const [revenueRes, expensesRes, balanceSheetRes, advanceRes, advanceExpensesRes] = await Promise.all([
                 fetch(`https://spcarparkingbknd.onrender.com/revenue?month=${selectedMonth}&year=${selectedYear}`),
                 fetch(`https://spcarparkingbknd.onrender.com/expenses?month=${selectedMonth}&year=${selectedYear}`),
                 fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${selectedMonth}&year=${selectedYear}`),
-                fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${endDate.toISOString()}`)
+                fetch(`https://spcarparkingbknd.onrender.com/advances/allUpToDate?date=${endDate.toISOString()}`),
+                fetch('https://spcarparkingbknd.onrender.com/advance-expenses')
             ]);
 
             const revenueData = await revenueRes.json();
             const expensesData = await expensesRes.json();
             const balanceSheetData = await balanceSheetRes.json();
             const advanceData = await advanceRes.json();
+            const advanceExpensesData = await advanceExpensesRes.json();
+
+            // Calculate advance expenses total
+            const totalAdvanceExpenses = advanceExpensesData.reduce((sum, item) => sum + (item.amount || 0), 0);
+            setAdvanceExpensesTotal(totalAdvanceExpenses);
 
             // Calculate totals for Balu
             const baluRevenue = revenueData
@@ -141,6 +151,8 @@ export function BalanceSheet() {
                 return total + (vehicle.advanceAmount || 0);
             }, 0);
 
+            const advanceInHand = totalAdvance - totalAdvanceExpenses;
+
             setBalanceData({
                 balu: {
                     revenue: baluRevenue,
@@ -164,7 +176,8 @@ export function BalanceSheet() {
                 totalRevenue: totalRevenue || 0,
                 totalExpense: totalExpense || 0,
                 netIncome: netIncome || 0,
-                totalAdvance: totalAdvance || 0
+                totalAdvance: totalAdvance || 0,
+                advanceInHand: advanceInHand || 0
             });
         } catch (error) {
             toast.error('Failed to fetch balance data');
@@ -182,21 +195,21 @@ export function BalanceSheet() {
 
     const handleSubmitTakeHome = async () => {
         if (!takeHomeAmount) return;
-        
+
         setIsLoading(true);
         try {
             // Check if a record exists for this month and user
             const checkResponse = await fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${selectedMonth}&year=${selectedYear}`);
             const existingRecords = await checkResponse.json();
-            
+
             const existingRecord = existingRecords.find(
-                record => record.userName === selectedUser && 
-                record.month === selectedMonth && 
-                record.year === selectedYear &&
-                (record.type === undefined || record.type === 'normal')
+                record => record.userName === selectedUser &&
+                    record.month === selectedMonth &&
+                    record.year === selectedYear &&
+                    (record.type === undefined || record.type === 'normal')
             );
 
-            const endpoint = existingRecord 
+            const endpoint = existingRecord
                 ? `https://spcarparkingbknd.onrender.com/balancesheet/${existingRecord._id}`
                 : 'https://spcarparkingbknd.onrender.com/balancesheet';
 
@@ -281,12 +294,12 @@ export function BalanceSheet() {
             // Header styling
             doc.setFillColor(79, 70, 229);
             doc.rect(0, 0, pageWidth, 35, 'F');
-            
+
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
             doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
-            
+
             doc.setFontSize(14);
             const today = new Date();
             const formattedDate = today.toLocaleDateString('en-gb', {
@@ -323,14 +336,14 @@ export function BalanceSheet() {
             // Update the formatAmount function - remove the font setting
             const formatAmount = (amount) => {
                 if (amount === '-') return '-';
-                
+
                 // Convert amount to string with 2 decimal places
                 const amountStr = amount.toFixed(2);
-                
+
                 // Calculate spaces needed (for maximum 100000.00)
                 const spaceNeeded = 10 - amountStr.length;
                 const spaces = ' '.repeat(spaceNeeded);
-                
+
                 // Return formatted string with consistent spacing
                 return `INR${spaces}${amountStr}`;
             };
@@ -344,7 +357,7 @@ export function BalanceSheet() {
                     description: `${monthNames[(selectedMonth - 1 + 12) % 12].toUpperCase()} BROUGHT FORWARD`,
                     mode: "-",
                     expense: "-",
-                    revenue: { 
+                    revenue: {
                         content: formatAmount(balanceData[user.toLowerCase()].previousMonthTakeHome),
                         styles: { fontStyle: 'bold' }
                     }
@@ -353,10 +366,10 @@ export function BalanceSheet() {
                     sno: (index + 2).toString(),
                     date: formatDateForPDF(record.date),
                     type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : (record.type === 'expense' ? record.expenseType : 'Transfer'),
-                    description: record.type === 'revenue' 
-                        ? (record.vehicleDescription || '-').toUpperCase() 
-                        : (record.type === 'expense' 
-                            ? (record.description || '-').toUpperCase() 
+                    description: record.type === 'revenue'
+                        ? (record.vehicleDescription || '-').toUpperCase()
+                        : (record.type === 'expense'
+                            ? (record.description || '-').toUpperCase()
                             : (record.description || '-').toUpperCase()),
                     mode: record.transactionMode || '-',
                     expense: record.type === 'expense' ? formatAmount(record.amount) : (record.type === 'transfer' && record.amount < 0 ? formatAmount(Math.abs(record.amount)) : '-'),
@@ -373,8 +386,8 @@ export function BalanceSheet() {
                 .reduce((sum, tr) => sum + Math.abs(tr.amount), 0);
 
             const totalExpense = userExpenses.reduce((sum, exp) => sum + exp.amount, 0) + transferOut;
-            const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0) + 
-                               balanceData[user.toLowerCase()].previousMonthTakeHome + transferIn;
+            const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0) +
+                balanceData[user.toLowerCase()].previousMonthTakeHome + transferIn;
             const cashInHand = totalRevenue - totalExpense;
 
             let isLastCellProcessed = false;
@@ -425,19 +438,19 @@ export function BalanceSheet() {
                     revenue: { cellWidth: columnWidths.revenue, halign: 'right' }
                 },
                 margin: { left: leftMargin },
-                didDrawPage: function(data) {
+                didDrawPage: function (data) {
                     // Store current page info for later
                     pageNumbers.push({
                         pageNumber: doc.internal.getCurrentPageInfo().pageNumber,
                         y: pageHeight - 10
                     });
                 },
-                didParseCell: function(data) {
+                didParseCell: function (data) {
                     // For amount columns, use monospace font and bold style
                     if (data.column.dataKey === 'expense' || data.column.dataKey === 'revenue') {
                         data.cell.styles.font = 'courier';
                         data.cell.styles.fontStyle = 'bold';  // Make all amounts bold
-                        
+
                         // Handle different data types
                         if (data.cell.raw !== '-') {
                             let amount;
@@ -463,11 +476,11 @@ export function BalanceSheet() {
                         isLastCellProcessed = true;
                     }
                 },
-                didDrawCell: function(data) {
+                didDrawCell: function (data) {
                     if (data.row.index === tableRows.length - 1 && data.column.index === 6) {
                         let finalY = data.cell.y + data.cell.height + 10;
                         const requiredHeight = 50;
-                        
+
                         if (pageHeight - finalY < requiredHeight) {
                             hasStatsOverflow = true;
                             lastTablePage = doc.internal.getCurrentPageInfo().pageNumber;
@@ -490,9 +503,9 @@ export function BalanceSheet() {
                         // Calculate column positions with right alignment
                         const totalWidth = columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
                         const descriptionWidth = totalWidth * 0.4;
-                        const rightMargin = leftMargin + columnWidths.sno + columnWidths.date + columnWidths.type + 
-                                          columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
-                        
+                        const rightMargin = leftMargin + columnWidths.sno + columnWidths.date + columnWidths.type +
+                            columnWidths.description + columnWidths.mode + columnWidths.expense + columnWidths.revenue;
+
                         const revenueX = rightMargin - columnWidths.revenue;
                         const expenseX = revenueX - columnWidths.expense;
                         const startX = expenseX - descriptionWidth;
@@ -511,24 +524,24 @@ export function BalanceSheet() {
                             // Set bold font for description
                             doc.setFont('helvetica', 'bold');
                             doc.text(description, startX + 2, y);
-                            
+
                             // Set monospace bold font for amounts
                             doc.setFont('courier', 'bold');
-                            
+
                             if (expense !== null) {
                                 doc.text(
                                     formatAmount(expense),
                                     expenseX + columnWidths.expense - 2,
-                                    y, 
+                                    y,
                                     { align: 'right' }
                                 );
                             }
-                            
+
                             if (revenue !== null) {
                                 doc.text(
                                     formatAmount(revenue),
                                     revenueX + columnWidths.revenue - 2,
-                                    y, 
+                                    y,
                                     { align: 'right' }
                                 );
                             }
@@ -612,8 +625,8 @@ export function BalanceSheet() {
 
         return (
             <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200 
-                ${isDarkMode 
-                    ? 'border-gray-700 bg-gray-800/90' 
+                ${isDarkMode
+                    ? 'border-gray-700 bg-gray-800/90'
                     : `bg-gradient-to-br ${bgGradient} border-white/50`
                 }`
             }>
@@ -746,7 +759,7 @@ export function BalanceSheet() {
     return (
         <div className={`max-w-[1920px] mx-auto px-2 py-2 sm:px-4 ${isDarkMode ? 'bg-gray-900 min-h-screen' : ''}`}>
             <Toaster position="top-right" />
-            
+
             {/* Header Section */}
             <div className={`rounded-2xl shadow-lg overflow-hidden mb-4 sm:mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className={`bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6`}>
@@ -756,7 +769,7 @@ export function BalanceSheet() {
                         </h1>
                         <div className="flex flex-col gap-3 w-full sm:flex-row sm:gap-4 sm:w-auto items-center">
                             <div className="relative w-full sm:w-48">
-                                <select 
+                                <select
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                                     className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 ${isDarkMode ? 'bg-gray-800 text-blue-300 border border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 hover:bg-gray-50'}`}
@@ -768,7 +781,7 @@ export function BalanceSheet() {
                                 <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
                             </div>
                             <div className="relative w-full sm:w-32">
-                                <select 
+                                <select
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                                     className={`w-full appearance-none px-4 py-3 pr-10 rounded-xl font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 ${isDarkMode ? 'bg-gray-800 text-blue-300 border border-gray-700 hover:bg-gray-700' : 'bg-white text-blue-600 hover:bg-gray-50'}`}
@@ -900,19 +913,47 @@ export function BalanceSheet() {
                                 </p>
                             </div>
                         )}
+
+                        {/* Advance in Hand */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 border-cyan-700/30' : 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border-cyan-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-cyan-700/50' : 'bg-cyan-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-cyan-700/30' : 'bg-cyan-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-cyan-700/40' : 'bg-cyan-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={() => setIsAdvanceModalOpen(true)}
+                                className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg cursor-pointer transform hover:scale-[1.02] ${isDarkMode ? 'bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 border-cyan-700/30' : 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border-cyan-200'}`}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100'}`}>
+                                        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-cyan-600" />
+                                    </div>
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Advance in Hand</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                                    ₹{totalSummary.advanceInHand.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Balance Sheets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <UserSection 
+                <UserSection
                     user="Balu"
                     data={balanceData.balu}
                     onTakeHome={handleTakeHome}
                     isLoading={isLoading}
                 />
-                <UserSection 
+                <UserSection
                     user="Mani"
                     data={balanceData.mani}
                     onTakeHome={handleTakeHome}
@@ -922,12 +963,12 @@ export function BalanceSheet() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 z-50">
-                    <div 
+                    <div
                         className={`fixed inset-0 backdrop-blur-sm ${isDarkMode ? 'bg-black/70' : 'bg-black/30'}`}
                         onClick={() => setIsModalOpen(false)}
                     />
                     <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <div 
+                        <div
                             className={`rounded-2xl p-6 w-full max-w-xs sm:max-w-md shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                             onClick={e => e.stopPropagation()}
                         >
@@ -942,14 +983,14 @@ export function BalanceSheet() {
                                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}</p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setIsModalOpen(false)}
                                     className={`p-3 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                                 >
                                     <X className={`w-6 h-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                                 </button>
                             </div>
-                            
+
                             {/* Amount Input */}
                             <div className="mb-8">
                                 <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enter Amount</label>
@@ -973,7 +1014,7 @@ export function BalanceSheet() {
                                     />
                                 </div>
                             </div>
-                            
+
                             {/* Action Buttons */}
                             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
                                 <button
@@ -1143,8 +1184,15 @@ export function BalanceSheet() {
                     </div>
                 </div>
             )}
+            <AdvanceExpensesModal
+                isOpen={isAdvanceModalOpen}
+                onClose={() => setIsAdvanceModalOpen(false)}
+                onUpdate={fetchBalanceData}
+                totalAdvance={totalSummary.totalAdvance}
+                isDarkMode={isDarkMode}
+            />
         </div>
     );
 }
 
-export default BalanceSheet; 
+export default BalanceSheet;
