@@ -267,12 +267,18 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
-            doc.text('SP Car Parking', margin + 26, currentY + 7);
+            doc.text('SP Car Parking', margin + 26, currentY + 6);
+
+            // Tagline
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            doc.setTextColor(30, 58, 138);
+            doc.text('"Your Car Is Under Safe Hands"', margin + 26, currentY + 10.5);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 13);
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 15);
             doc.text('Madurai (Opposite to Our Lady School)', margin + 26, currentY + 19);
 
             // Check if vehicle image exists
@@ -288,12 +294,17 @@ export function VehicleInfo() {
                 hour12: true
             });
 
+            // Check if vehicle has any transaction history
+            const vehicleTransactions = transactions.filter(t => t.vehicleNumber === vehicle.vehicleNumber && t.revenueAmount > 0);
+            const hasTransactions = vehicleTransactions.length > 0;
+            const invoiceTitle = hasTransactions ? 'RENTAL INVOICE' : 'ADVANCE RECEIPT';
+
             const rightTextX = vehicleImgLoaded ? (pageWidth - margin - 40) : (pageWidth - margin);
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.setTextColor(30, 58, 138);
-            doc.text('RENTAL INVOICE', rightTextX, currentY + 7, { align: 'right' });
+            doc.text(invoiceTitle, rightTextX, currentY + 7, { align: 'right' });
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
@@ -391,6 +402,17 @@ export function VehicleInfo() {
                     if (data.row.index === 0 && data.column.index === 1) {
                         data.cell.styles.fontStyle = 'bold';
                     }
+                    // Status Color Logic
+                    if (data.row.index === 4 && data.column.index === 1) {
+                        const statusText = data.cell.raw;
+                        if (statusText === 'Paid') {
+                            data.cell.styles.textColor = [22, 163, 74]; // Green
+                            data.cell.styles.fontStyle = 'bold';
+                        } else {
+                            data.cell.styles.textColor = [220, 38, 38]; // Red
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
                 }
             });
 
@@ -448,8 +470,7 @@ export function VehicleInfo() {
             rightColY += lineHeight;
 
             // Get last payment date from transactions
-            const lastPayment = transactions
-                .filter(t => t.revenueAmount > 0)
+            const lastPayment = vehicleTransactions
                 .sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
 
             const lastPaymentFormatted = lastPayment
@@ -464,13 +485,49 @@ export function VehicleInfo() {
 
             const lastPaymentAmount = lastPayment ? `Rs. ${lastPayment.revenueAmount.toLocaleString('en-IN')}` : 'No payment yet';
 
+            // Get advance payment details if no transactions
+            let advancePaymentDate = 'N/A';
+            if (!hasTransactions) {
+                const advanceRecord = advances.find(a => a.vehicleNumber === vehicle.vehicleNumber);
+                if (advanceRecord && advanceRecord.startDate) {
+                    advancePaymentDate = new Date(advanceRecord.startDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' ' +
+                        new Date(advanceRecord.startDate).toLocaleTimeString('en-GB', {
+                            timeZone: 'Asia/Kolkata',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                } else {
+                    // Fallback to vehicle start date if no specific advance record found (though unlikely for valid vehicle)
+                    advancePaymentDate = new Date(vehicle.startDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' }) + ' 12:00 PM';
+                }
+            }
+
+            // Calculate Duration for Rental Invoice (Previous Month)
+            let durationString = 'N/A';
+            if (hasTransactions) {
+                // Strictly previous month from Current Date
+                const now = new Date();
+                // First day of previous month
+                const startPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                // Last day of previous month
+                const endPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+                durationString = `${startPrevMonth.toLocaleDateString('en-GB')} - ${endPrevMonth.toLocaleDateString('en-GB')}`;
+            }
+
             const rentalDetails = [
                 ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
-                ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
                 ['Advance Amount', `Rs. ${vehicle.advanceAmount.toLocaleString('en-IN')}`],
-                ['Last Payment', lastPaymentAmount],
-                ['Last Payment Date', lastPaymentFormatted]
+                ['Rent Amount', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
             ];
+
+            if (hasTransactions) {
+                rentalDetails.push(['Duration', durationString]);
+                rentalDetails.push(['Last Payment Date', lastPaymentFormatted]);
+            } else {
+                rentalDetails.push(['Advance Payment Date', advancePaymentDate]);
+            }
 
             doc.autoTable({
                 startY: rightColY,
@@ -625,7 +682,7 @@ export function VehicleInfo() {
                 columnStyles: {
                     0: {
                         fontStyle: 'bold',
-                        cellWidth: 12
+                        cellWidth: 8
                     },
                     1: {
                         cellWidth: 'auto'
@@ -638,31 +695,20 @@ export function VehicleInfo() {
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
 
-            // Add signature image on the left (ABOVE the line)
-            const signatureUrl = 'signature.png';
-            try {
-                const signatureResponse = await fetch(signatureUrl);
-                const signatureBlob = await signatureResponse.blob();
-                const signatureBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(signatureBlob);
-                });
-                const signatureWidth = 30;
-                const signatureHeight = 15;
-                doc.addImage(signatureBase64, 'PNG', margin, footerY - 22, signatureWidth, signatureHeight);
+            // QR Code - Left Side Bottom (ABOVE the line)
+            // QR is 30px wide. Position at margin. Center text at margin + 15
+            const qrXPos = margin + 15;
 
-                doc.setFontSize(6);
-                doc.setTextColor(75, 85, 99);
-                doc.setFont("helvetica", "normal");
-                doc.text('Authorized Signature', margin, footerY - 6);
-                doc.text('SP Car Parking', margin, footerY - 3);
-            } catch (signatureError) {
-                console.error('Error loading signature:', signatureError);
-            }
-
-            // QR Code - Right Side Bottom (ABOVE the line)
-            const qrXPos = pageWidth - margin - 20;
+            // Generate QR Code first to use in layout
+            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
+            const qrDataUrl = await QRCode.toDataURL(qrData, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(8);
@@ -674,20 +720,57 @@ export function VehicleInfo() {
             doc.setTextColor(107, 114, 128);
             doc.text('(Ignore if paid)', qrXPos, footerY - 47, { align: 'center' });
 
-            // Generate QR Code
-            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
-            const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 200,
-                margin: 1,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
-            });
-
             const qrSize = 30;
-            const qrX = qrXPos - (qrSize / 2);
+            const qrX = margin;
             doc.addImage(qrDataUrl, 'PNG', qrX, footerY - 43, qrSize, qrSize);
+
+            // Add Signature & Stamp (Only if Paid/Active)
+            if (vehicle.status === 'active') {
+                try {
+                    // 1. Stamp
+                    const stampUrl = 'stamp.png';
+                    const stampResponse = await fetch(stampUrl);
+                    const stampBlob = await stampResponse.blob();
+                    const stampBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(stampBlob);
+                    });
+
+                    // Draw Stamp above signature
+                    // Signature is at Y-22, Height 15. Top is Y-37? No, Y increases downwards.
+                    // FooterY is bottom line. Signature is at footerY - 22 (top edge).
+                    // So Stamp should be above footerY - 22. Say footerY - 45.
+                    const stampSize = 25;
+                    // Align roughly with signature (Right aligned)
+                    const stampX = pageWidth - margin - 35;
+                    doc.addImage(stampBase64, 'PNG', stampX, footerY - 50, stampSize, stampSize);
+
+                    // 2. Signature
+                    const signatureUrl = 'signature.png';
+                    const signatureResponse = await fetch(signatureUrl);
+                    const signatureBlob = await signatureResponse.blob();
+                    const signatureBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(signatureBlob);
+                    });
+                    const signatureWidth = 30;
+                    const signatureHeight = 15;
+                    // Position signature on right align
+                    const signatureX = pageWidth - margin - signatureWidth;
+                    doc.addImage(signatureBase64, 'PNG', signatureX, footerY - 22, signatureWidth, signatureHeight);
+
+                    doc.setFontSize(6);
+                    doc.setTextColor(75, 85, 99);
+                    doc.setFont("helvetica", "normal");
+                    // Text aligned to right margin
+                    doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
+                    doc.text('SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                } catch (error) {
+                    console.error('Error loading signature/stamp:', error);
+                }
+            }
 
             // Draw the bottom line
             doc.setDrawColor(226, 232, 240);
@@ -699,12 +782,6 @@ export function VehicleInfo() {
             doc.setTextColor(30, 58, 138);
             doc.setFont("helvetica", "bold");
             doc.text('JESUS LEADS YOU', pageWidth / 2, footerY + 2, { align: 'center' });
-
-            // Right side text
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(107, 114, 128);
-            doc.setFontSize(7);
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth - margin, footerY + 2, { align: 'right' });
 
             doc.save(`SP_Parking_Invoice_${vehicle.vehicleNumber}_${invoiceDate.replace(/\//g, '-')}.pdf`);
             toast.success('Invoice generated successfully! 🎉');
@@ -756,7 +833,13 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
-            doc.text("SP Car Parking", margin + 26, currentY + 7);
+            doc.text("SP Car Parking", margin + 26, currentY + 6);
+
+            // Tagline
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            doc.setTextColor(30, 58, 138);
+            doc.text('"Your Car Is Under Safe Hands"', margin + 26, currentY + 10.5);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
@@ -764,7 +847,7 @@ export function VehicleInfo() {
             doc.text(
                 "SP Nagar, Ponmeni - Madakkulam Main Road",
                 margin + 26,
-                currentY + 13
+                currentY + 15
             );
             doc.text(
                 "Madurai (Opposite to Our Lady School)",
@@ -905,6 +988,17 @@ export function VehicleInfo() {
                     // Make vehicle number value bold
                     if (data.row.index === 0 && data.column.index === 1) {
                         data.cell.styles.fontStyle = 'bold';
+                    }
+                    // Status Color Logic
+                    if (data.row.index === 4 && data.column.index === 1) {
+                        const statusText = data.cell.raw;
+                        if (statusText === 'Paid') {
+                            data.cell.styles.textColor = [22, 163, 74]; // Green
+                            data.cell.styles.fontStyle = 'bold';
+                        } else {
+                            data.cell.styles.textColor = [220, 38, 38]; // Red
+                            data.cell.styles.fontStyle = 'bold';
+                        }
                     }
                 }
             });
@@ -1130,7 +1224,7 @@ export function VehicleInfo() {
                 columnStyles: {
                     0: {
                         fontStyle: "bold",
-                        cellWidth: 12,
+                        cellWidth: 8,
                     },
                     1: {
                         cellWidth: "auto",
@@ -1143,41 +1237,8 @@ export function VehicleInfo() {
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
 
-            // Add signature image on the left (ABOVE the line)
-            const signatureUrl = 'signature.png';
-            try {
-                const signatureResponse = await fetch(signatureUrl);
-                const signatureBlob = await signatureResponse.blob();
-                const signatureBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(signatureBlob);
-                });
-                const signatureWidth = 30;
-                const signatureHeight = 15;
-                doc.addImage(signatureBase64, 'PNG', margin, footerY - 22, signatureWidth, signatureHeight);
-
-                doc.setFontSize(6);
-                doc.setTextColor(75, 85, 99);
-                doc.setFont("helvetica", "normal");
-                doc.text('Authorized Signature', margin, footerY - 6);
-                doc.text('SP Car Parking', margin, footerY - 3);
-            } catch (signatureError) {
-                console.error('Error loading signature:', signatureError);
-            }
-
-            // QR Code - Right Side Bottom (ABOVE the line)
-            const qrXPos = pageWidth - margin - 20;
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8);
-            doc.setTextColor(30, 58, 138);
-            doc.text("SCAN TO PAY", qrXPos, footerY - 51, { align: "center" });
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(6);
-            doc.setTextColor(107, 114, 128);
-            doc.text("(Ignore if paid)", qrXPos, footerY - 47, { align: "center" });
+            // QR Code - Left Side Bottom (ABOVE the line)
+            const qrXPos = margin + 15;
 
             // Generate QR Code
             const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
@@ -1190,9 +1251,61 @@ export function VehicleInfo() {
                 },
             });
 
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.setTextColor(30, 58, 138);
+            doc.text("SCAN TO PAY", qrXPos, footerY - 51, { align: "center" });
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6);
+            doc.setTextColor(107, 114, 128);
+            doc.text("(Ignore if paid)", qrXPos, footerY - 47, { align: "center" });
+
             const qrSize = 30;
-            const qrX = qrXPos - (qrSize / 2);
+            const qrX = margin;
             doc.addImage(qrDataUrl, "PNG", qrX, footerY - 43, qrSize, qrSize);
+
+            // Add Signature & Stamp (Only if Paid/Active)
+            if (vehicle.status === 'active') {
+                try {
+                    // 1. Stamp
+                    const stampUrl = 'stamp.png';
+                    const stampResponse = await fetch(stampUrl);
+                    const stampBlob = await stampResponse.blob();
+                    const stampBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(stampBlob);
+                    });
+
+                    const stampSize = 25;
+                    const stampX = pageWidth - margin - 35;
+                    doc.addImage(stampBase64, 'PNG', stampX, footerY - 50, stampSize, stampSize);
+
+                    // 2. Signature
+                    const signatureUrl = 'signature.png';
+                    const signatureResponse = await fetch(signatureUrl);
+                    const signatureBlob = await signatureResponse.blob();
+                    const signatureBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(signatureBlob);
+                    });
+                    const signatureWidth = 30;
+                    const signatureHeight = 15;
+
+                    const signatureX = pageWidth - margin - signatureWidth;
+                    doc.addImage(signatureBase64, 'PNG', signatureX, footerY - 22, signatureWidth, signatureHeight);
+
+                    doc.setFontSize(6);
+                    doc.setTextColor(75, 85, 99);
+                    doc.setFont("helvetica", "normal");
+                    doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
+                    doc.text('SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                } catch (error) {
+                    console.error('Error loading signature/stamp:', error);
+                }
+            }
 
             // Draw the bottom line
             doc.setDrawColor(226, 232, 240);
@@ -1204,17 +1317,6 @@ export function VehicleInfo() {
             doc.setTextColor(30, 58, 138);
             doc.setFont("helvetica", "bold");
             doc.text("JESUS LEADS YOU", pageWidth / 2, footerY + 2, { align: "center" });
-
-            // Right side text
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(107, 114, 128);
-            doc.setFontSize(7);
-            doc.text(
-                '"Your Car Is Under Safe Hands"',
-                pageWidth - margin,
-                footerY + 2,
-                { align: "right" }
-            );
 
             doc.save(
                 `SP_Parking_Invoice_${vehicle.vehicleNumber}_Daily_${invoiceDate.replace(
@@ -1270,12 +1372,18 @@ export function VehicleInfo() {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(15);
             doc.setTextColor(30, 58, 138);
-            doc.text('SP Car Parking', margin + 26, currentY + 7);
+            doc.text('SP Car Parking', margin + 26, currentY + 6);
+
+            // Tagline
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            doc.setTextColor(30, 58, 138);
+            doc.text('"Your Car Is Under Safe Hands"', margin + 26, currentY + 10.5);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(75, 85, 99);
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 13);
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, currentY + 15);
             doc.text('Madurai (Opposite to Our Lady School)', margin + 26, currentY + 19);
 
             // Check if vehicle image exists (but load it later, after divider line)
@@ -1396,6 +1504,23 @@ export function VehicleInfo() {
                         cellWidth: 'auto',
                         fontStyle: 'normal'
                     }
+                },
+                didParseCell: function (data) {
+                    // Make vehicle number bold
+                    if (data.row.index === 0 && data.column.index === 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                    // Status Color Logic
+                    if (data.row.index === 4 && data.column.index === 1) {
+                        const statusText = data.cell.raw;
+                        if (statusText === 'Active' || statusText === 'Paid') {
+                            data.cell.styles.textColor = [22, 163, 74]; // Green
+                            data.cell.styles.fontStyle = 'bold';
+                        } else {
+                            data.cell.styles.textColor = [220, 38, 38]; // Red
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
                 }
             });
 
@@ -1471,7 +1596,7 @@ export function VehicleInfo() {
 
             const rentalDetails = [
                 ['Start Date', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
-                ['Rent Price', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
+                ['Rent Amount', `Rs. ${vehicle.rentPrice.toLocaleString('en-IN')}`],
             ];
 
             if (vehicle.rentalType === 'monthly') {
@@ -1697,10 +1822,6 @@ export function VehicleInfo() {
             doc.setTextColor(30, 58, 138);
             doc.setFontSize(7);
             doc.text('JESUS LEADS YOU', margin, footerY);
-
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(107, 114, 128);
-            doc.text(`"Your Car Is Under Safe Hands"`, pageWidth - margin, footerY, { align: 'right' });
 
             doc.save(`SP_Vehicle_Report_${vehicle.vehicleNumber}_${reportDate.replace(/\//g, '-')}.pdf`);
             toast.success('Full report downloaded successfully! 🎉');
