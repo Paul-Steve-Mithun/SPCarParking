@@ -39,7 +39,7 @@ const upload = multer({ storage: storage });
 // Helper function to delete file
 async function deleteFile(filename) {
     if (!filename) return;
-    
+
     try {
         await fs.unlink(path.join(__dirname, 'uploads', filename));
     } catch (error) {
@@ -49,18 +49,18 @@ async function deleteFile(filename) {
 }
 
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    dbName: process.env.Db_name,
-  })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Error connecting to MongoDB:", err));
+    .connect(process.env.MONGODB_URI, {
+        dbName: process.env.Db_name,
+    })
+    .then(() => console.log("Connected to MongoDB"))
+    .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 // Update VehicleSchema to store Cloudinary URLs
 const VehicleSchema = new mongoose.Schema({
     vehicleNumber: { type: String, required: true },
     vehicleDescription: { type: String },
     vehicleType: { type: String, enum: ['own', 'tboard'], required: true },
-    lotNumber: { type: String},
+    lotNumber: { type: String },
     ownerName: { type: String, required: true },
     contactNumber: { type: String, required: true },
     parkingType: { type: String, enum: ['private', 'open'], required: true },
@@ -70,11 +70,11 @@ const VehicleSchema = new mongoose.Schema({
     advanceAmount: { type: Number, default: 5000 },
     startDate: { type: Date, default: Date.now },
     endDate: { type: Date },
-    additionalDays: {type: Number},
+    additionalDays: { type: Number },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     transactionMode: { type: String, enum: ['Cash', 'UPI'], default: 'Cash' },
     receivedBy: { type: String, enum: ['Balu', 'Mani'], required: true },
-    vehicleImage: { 
+    vehicleImage: {
         url: String,
         public_id: String
     },
@@ -120,8 +120,8 @@ const AdvanceSchema = new mongoose.Schema({
 });
 
 const ExpenseSchema = new mongoose.Schema({
-    expenseType: { 
-        type: String, 
+    expenseType: {
+        type: String,
         enum: [
             'Watchman 1',
             'Watchman 2',
@@ -132,31 +132,31 @@ const ExpenseSchema = new mongoose.Schema({
             'Water',
             'Miscellaneous'
         ],
-        required: true 
+        required: true
     },
     spentBy: {
         type: String,
         enum: ['Balu', 'Mani'],
         required: true
     },
-    description: { 
+    description: {
         type: String,
-        required: function() { 
-            return this.expenseType === 'Miscellaneous'; 
+        required: function () {
+            return this.expenseType === 'Miscellaneous';
         }
     },
-    amount: { 
-        type: Number, 
-        required: true 
+    amount: {
+        type: Number,
+        required: true
     },
-    transactionMode: { 
-        type: String, 
-        enum: ['Cash', 'UPI'], 
-        required: true 
+    transactionMode: {
+        type: String,
+        enum: ['Cash', 'UPI'],
+        required: true
     },
-    transactionDate: { 
-        type: Date, 
-        default: Date.now 
+    transactionDate: {
+        type: Date,
+        default: Date.now
     },
     month: { type: Number, required: true },
     year: { type: Number, required: true }
@@ -164,34 +164,34 @@ const ExpenseSchema = new mongoose.Schema({
 
 // Add Balancesheet Schema
 const BalancesheetSchema = new mongoose.Schema({
-    userName: { 
-        type: String, 
-        enum: ['Balu', 'Mani'], 
-        required: true 
+    userName: {
+        type: String,
+        enum: ['Balu', 'Mani'],
+        required: true
     },
-    amount: { 
-        type: Number, 
-        required: true 
+    amount: {
+        type: Number,
+        required: true
     },
-    date: { 
-        type: Date, 
-        default: Date.now 
+    date: {
+        type: Date,
+        default: Date.now
     },
-    month: { 
-        type: Number, 
-        required: true 
+    month: {
+        type: Number,
+        required: true
     },
-    year: { 
-        type: Number, 
-        required: true 
+    year: {
+        type: Number,
+        required: true
     },
-    type: { 
-        type: String, 
-        enum: ['normal', 'transfer'], 
-        default: 'normal' 
+    type: {
+        type: String,
+        enum: ['normal', 'transfer'],
+        default: 'normal'
     },
-    description: { 
-        type: String 
+    description: {
+        type: String
     }
 });
 
@@ -200,18 +200,27 @@ const Advance = mongoose.model('Advance', AdvanceSchema);
 const Expense = mongoose.model('Expense', ExpenseSchema);
 const Balancesheet = mongoose.model('Balancesheet', BalancesheetSchema);
 
+// Add AdvanceExpense Schema
+const AdvanceExpenseSchema = new mongoose.Schema({
+    description: { type: String, required: true },
+    amount: { type: Number, required: true },
+    date: { type: Date, default: Date.now }
+});
+
+const AdvanceExpense = mongoose.model('AdvanceExpense', AdvanceExpenseSchema);
+
 // Update VehicleSchema pre-save middleware
-VehicleSchema.pre('save', function(next) {
+VehicleSchema.pre('save', function (next) {
     if (this.isNew || this.isModified('startDate') || this.isModified('numberOfDays')) {
         const startDate = new Date(this.startDate);
-        
+
         // Helper function to set standard end time (18:29:59.999 UTC = 23:59:59.999 IST)
         const setStandardEndTime = (date) => {
             const d = new Date(date);
             d.setUTCHours(18, 29, 59, 999);
             return d;
         };
-        
+
         if (this.rentalType === 'monthly') {
             // Get the last day of the current month
             const lastDay = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
@@ -233,11 +242,11 @@ const updateVehicleStatus = async () => {
     try {
         const currentDate = new Date();
         const result = await Vehicle.updateMany(
-            { 
+            {
                 endDate: { $lt: currentDate },
                 status: 'active'
             },
-            { 
+            {
                 $set: { status: 'inactive' }
             }
         );
@@ -270,7 +279,7 @@ app.post('/addVehicle', upload.fields([
 ]), async (req, res) => {
     try {
         const vehicleData = JSON.parse(req.body.vehicleData);
-        
+
         // Add image data to vehicle data
         if (req.files) {
             if (req.files.vehicleImage) {
@@ -302,7 +311,7 @@ app.post('/addVehicle', upload.fields([
 
         // Handle special case for daily rental with 0 days
         const isZeroDayDaily = vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) === 0;
-        
+
         // For zero-day daily rentals, set end date to previous day with standard time
         let endDate;
         if (isZeroDayDaily) {
@@ -415,7 +424,7 @@ app.delete('/removeVehicle/:id', async (req, res) => {
 // Updated reactivateVehicle endpoint
 app.put('/reactivateVehicle/:id', async (req, res) => {
     try {
-        const { status, transactionMode, rentPrice, receivedBy } = req.body;        
+        const { status, transactionMode, rentPrice, receivedBy } = req.body;
         const vehicle = await Vehicle.findById(req.params.id);
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
@@ -423,10 +432,10 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
 
         // Get the original end date from the database
         const originalEndDate = new Date(vehicle.endDate);
-        
+
         // Calculate the last day of the next month after the original end date
         const nextMonthEndDate = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 2, 0);
-        
+
         // Set the time to 23:59:59.999 in local timezone
         nextMonthEndDate.setHours(18, 29, 59, 999);
 
@@ -463,7 +472,7 @@ app.put('/reactivateVehicle/:id', async (req, res) => {
 
         await extensionRevenue.save();
 
-        res.json({ 
+        res.json({
             success: true,
             vehicle: updatedVehicle,
             revenue: extensionRevenue
@@ -482,14 +491,14 @@ app.put('/updateVehicle/:id', upload.fields([
     try {
         const vehicleData = JSON.parse(req.body.vehicleData);
         const currentVehicle = await Vehicle.findById(req.params.id);
-        
+
         if (!currentVehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
         }
 
         // Check if vehicle number is being changed
-        const isVehicleNumberChanged = vehicleData.vehicleNumber && 
-                                       vehicleData.vehicleNumber !== currentVehicle.vehicleNumber;
+        const isVehicleNumberChanged = vehicleData.vehicleNumber &&
+            vehicleData.vehicleNumber !== currentVehicle.vehicleNumber;
 
         // Handle image updates
         if (req.files) {
@@ -585,7 +594,7 @@ app.put('/extendRental/:id', async (req, res) => {
     try {
         const { additionalDays, transactionMode, receivedBy } = req.body;
         const vehicle = await Vehicle.findById(req.params.id);
-        
+
         if (!vehicle) {
             return res.status(404).json({ error: 'Vehicle not found' });
         }
@@ -650,7 +659,7 @@ app.get('/revenue', async (req, res) => {
     try {
         const { month, year } = req.query;
         const query = {};
-        
+
         if (month !== undefined) query.month = parseInt(month);
         if (year !== undefined) query.year = parseInt(year);
 
@@ -666,7 +675,7 @@ app.get('/revenueStats', async (req, res) => {
     try {
         const { month, year } = req.query;
         const query = {};
-        
+
         if (month !== undefined) query.month = parseInt(month);
         if (year !== undefined) query.year = parseInt(year);
 
@@ -712,15 +721,15 @@ app.put('/revenue/:id', async (req, res) => {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Transaction updated successfully',
-            transaction: updatedRevenue 
+            transaction: updatedRevenue
         });
     } catch (error) {
-        res.status(500).json({ 
+        res.status(500).json({
             error: error.message,
-            message: 'Failed to update transaction' 
+            message: 'Failed to update transaction'
         });
     }
 });
@@ -729,20 +738,20 @@ app.put('/revenue/:id', async (req, res) => {
 app.delete('/revenue/:id', async (req, res) => {
     try {
         const deletedRevenue = await Revenue.findByIdAndDelete(req.params.id);
-        
+
         if (!deletedRevenue) {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Transaction deleted successfully',
-            deletedTransaction: deletedRevenue 
+            deletedTransaction: deletedRevenue
         });
     } catch (error) {
-        res.status(500).json({ 
+        res.status(500).json({
             error: error.message,
-            message: 'Failed to delete transaction' 
+            message: 'Failed to delete transaction'
         });
     }
 });
@@ -800,6 +809,20 @@ app.get('/advances/allUpToDate', async (req, res) => {
 app.get('/advances', async (req, res) => {
     try {
         const { month, year } = req.query;
+        // If no month/year provided, return all (fallback or original behavior?)
+        // The original code used req.query without check, implying it expected them or failed?
+        // Let's check the orphan code... it uses month/year directly.
+        // But the previous implementation (before my meddling) might have had a check?
+        // Looking at Step 7, line 799-ish of original file... we don't see the body in Step 7.
+        // But the orphan code in Step 27 line 852 takes month, year.
+        // It creates Date objects. If month is undefined, `new Date(undefined, undefined, 1)` -> Invalid Date.
+        // So it likely expects them.
+
+        if (!month || !year) {
+            const advances = await Advance.find();
+            return res.json(advances);
+        }
+
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, parseInt(month) + 1, 0, 23, 59, 59);
 
@@ -834,6 +857,41 @@ app.get('/advances', async (req, res) => {
     }
 });
 
+// Advance Expenses Routes
+app.get('/advance-expenses', async (req, res) => {
+    try {
+        const expenses = await AdvanceExpense.find().sort({ date: -1 });
+        res.json(expenses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/advance-expenses', async (req, res) => {
+    try {
+        const { description, amount, date } = req.body;
+        const newExpense = new AdvanceExpense({
+            description,
+            amount,
+            date: date || new Date()
+        });
+        await newExpense.save();
+        res.json(newExpense);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/advance-expenses/:id', async (req, res) => {
+    try {
+        await AdvanceExpense.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Advance expense deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 // Update the endpoint to create new refund record
 app.put('/advances/refund/:vehicleNumber', async (req, res) => {
     try {
@@ -841,7 +899,7 @@ app.put('/advances/refund/:vehicleNumber', async (req, res) => {
         const { advanceRefund } = req.body;
 
         // First find the original advance record
-        const originalAdvance = await Advance.findOne({ 
+        const originalAdvance = await Advance.findOne({
             vehicleNumber,
             advanceRefund: null // Get the non-refunded record
         });
@@ -877,7 +935,7 @@ app.put('/advances/refund/:vehicleNumber', async (req, res) => {
 // Add this new endpoint to get vehicles with zero advance
 app.get('/vehicles/zero-advance', async (req, res) => {
     try {
-        const vehicles = await Vehicle.find({ 
+        const vehicles = await Vehicle.find({
             advanceAmount: 0,
             status: 'active'
         });
@@ -927,9 +985,9 @@ app.put('/vehicles/update-advance/:id', async (req, res) => {
 
         await newAdvance.save();
 
-        res.json({ 
-            success: true, 
-            vehicle, 
+        res.json({
+            success: true,
+            vehicle,
             advance: newAdvance,
             message: `Added ₹${advanceAmount} to existing advance of ₹${currentVehicle.advanceAmount}`
         });
@@ -943,7 +1001,7 @@ app.get('/vehicles/search', checkVehicleStatus, async (req, res) => {
     try {
         const { query } = req.query;
         if (!query) {
-            const vehicles = await Vehicle.find({ 
+            const vehicles = await Vehicle.find({
                 advanceAmount: 0
             });
             return res.json(vehicles);
@@ -983,7 +1041,7 @@ app.get('/expenses', async (req, res) => {
     try {
         const { month, year } = req.query;
         const query = {};
-        
+
         if (month !== undefined) query.month = parseInt(month);
         if (year !== undefined) query.year = parseInt(year);
 
@@ -999,7 +1057,7 @@ app.get('/expenses/stats', async (req, res) => {
     try {
         const { month, year } = req.query;
         const query = {};
-        
+
         if (month !== undefined) query.month = parseInt(month);
         if (year !== undefined) query.year = parseInt(year);
 
@@ -1027,10 +1085,10 @@ app.delete('/expenses/:id', async (req, res) => {
         if (!deletedExpense) {
             return res.status(404).json({ error: 'Expense not found' });
         }
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Expense deleted successfully',
-            expense: deletedExpense 
+            expense: deletedExpense
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -1054,7 +1112,7 @@ app.put('/balancesheet/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        
+
         const updatedBalance = await Balancesheet.findByIdAndUpdate(
             id,
             updateData,
@@ -1075,7 +1133,7 @@ app.get('/balancesheet', async (req, res) => {
     try {
         const { month, year } = req.query;
         const query = {};
-        
+
         if (month !== undefined) query.month = parseInt(month);
         if (year !== undefined) query.year = parseInt(year);
 
@@ -1092,7 +1150,7 @@ app.post('/notifications/send-payment-reminder', async (req, res) => {
         const { vehicleNumber, ownerName, contactNumber, amount, dueDate } = req.body;
 
         // Format the phone number to include country code if not present
-        const formattedNumber = contactNumber.startsWith('+') 
+        const formattedNumber = contactNumber.startsWith('+')
             ? '9842138883'
             : `+919842138883`; // Adding India's country code
 
@@ -1107,7 +1165,7 @@ app.post('/notifications/send-payment-reminder', async (req, res) => {
         res.json({ success: result });
     } catch (error) {
         console.error('Notification Error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: error.message,
             details: 'Failed to send notification. Please check Twilio credentials and phone number format.'
         });
