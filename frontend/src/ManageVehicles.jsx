@@ -1779,15 +1779,15 @@ export function ManageVehicles() {
                         title="Total Outstanding"
                         amount={stats.total}
                         icon={IndianRupee}
-                        gradient="from-blue-50 to-blue-100"
-                        iconColor="text-blue-600"
+                        gradient="from-red-50 to-red-100"
+                        iconColor="text-red-600"
                     />
                     <StatCard
                         title="Monthly Outstanding"
                         amount={stats.monthly}
                         icon={Calendar}
-                        gradient="from-green-50 to-green-100"
-                        iconColor="text-green-600"
+                        gradient="from-rose-50 to-rose-100"
+                        iconColor="text-rose-600"
                     />
                     <StatCard
                         title="Daily Outstanding"
