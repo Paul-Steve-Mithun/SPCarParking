@@ -26,7 +26,76 @@ export function ManageVehicles() {
     const [showDailyInvoiceModal, setShowDailyInvoiceModal] = useState(false);
     const [selectedDailyVehicle, setSelectedDailyVehicle] = useState(null);
     const [customDays, setCustomDays] = useState('');
+    const [stats, setStats] = useState({
+        total: 0,
+        monthly: 0,
+        daily: 0
+    });
     const navigate = useNavigate();
+
+    // Calculate stats whenever vehicles change
+    useEffect(() => {
+        const calculateStats = () => {
+            let monthlyTotal = 0;
+            let dailyTotal = 0;
+
+            vehicles.forEach(vehicle => {
+                if (vehicle.rentalType === 'monthly') {
+                    monthlyTotal += vehicle.rentPrice;
+                } else if (vehicle.rentalType === 'daily') {
+                    const startDate = new Date(vehicle.endDate);
+                    startDate.setDate(startDate.getDate() + 1);
+                    startDate.setHours(0, 0, 0, 0);
+
+                    const endDate = new Date();
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const diffTime = endDate.getTime() - startDate.getTime();
+                    const dueDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1);
+                    dailyTotal += (vehicle.rentPrice * dueDays);
+                }
+            });
+
+            setStats({
+                total: monthlyTotal + dailyTotal,
+                monthly: monthlyTotal,
+                daily: dailyTotal
+            });
+        };
+
+        if (vehicles.length > 0) {
+            calculateStats();
+        } else {
+            setStats({ total: 0, monthly: 0, daily: 0 });
+        }
+    }, [vehicles]);
+
+    const StatCard = ({ title, amount, icon: Icon, gradient, iconColor }) => {
+        const bgGradient = isDarkMode
+            ? gradient.replace('50', '900/20').replace('100', '800/20')
+            : gradient;
+
+        const borderColor = isDarkMode ? 'border-gray-700' : 'border-white';
+
+        return (
+            <div className={`rounded-2xl p-4 sm:p-6 bg-gradient-to-br border shadow-md hover:shadow-lg transition-all duration-200 ${bgGradient} ${borderColor}`}>
+                <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-white'
+                        }`}>
+                        <Icon className={`w-8 h-8 ${iconColor}`} />
+                    </div>
+                    <div>
+                        <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                            }`}>{title}</p>
+                        <p className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                            }`}>
+                            ₹ {amount.toLocaleString('en-IN')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const fetchExpiredVehicles = async () => {
         setLoading(true);
@@ -94,29 +163,29 @@ export function ManageVehicles() {
     };
 
     const filteredMonthlyVehicles = sortByLotNumber(
-        vehicles.filter(vehicle => 
-            vehicle.rentalType === 'monthly' && 
+        vehicles.filter(vehicle =>
+            vehicle.rentalType === 'monthly' &&
             (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
+                vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
         )
     );
 
     const filteredDailyVehicles = sortByLotNumber(
-        vehicles.filter(vehicle => 
-            vehicle.rentalType === 'daily' && 
+        vehicles.filter(vehicle =>
+            vehicle.rentalType === 'daily' &&
             (vehicle.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
+                vehicle.vehicleDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (vehicle.lotNumber && vehicle.lotNumber.toLowerCase().includes(searchTerm.toLowerCase())))
         )
     );
 
     const handlePrintInvoice = async (vehicle) => {
         try {
-            const totalAmount = vehicle.rentalType === 'daily' ? 
-                vehicle.rentPrice * vehicle.numberOfDays : 
+            const totalAmount = vehicle.rentalType === 'daily' ?
+                vehicle.rentPrice * vehicle.numberOfDays :
                 vehicle.rentPrice;
 
             const doc = new jsPDF();
@@ -125,11 +194,11 @@ export function ManageVehicles() {
             const columnWidth = 85;
             const startX1 = 15;
             const startX2 = 110;
-            
+
             // Modern Header with Gradient - Reduced height
             doc.setFillColor(21, 101, 192); // RGB for #1565C0
             doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced height from 40 to 35
-            
+
             // Add Logo (placeholder - replace with your logo later)
             const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
             try {
@@ -151,22 +220,22 @@ export function ManageVehicles() {
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(24);
-            doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
-            
+            doc.text('SP CAR PARKING', pageWidth / 2 + 10, 15, { align: 'center' });
+
             // Add motto under the title with increased font size and reduced gap
             doc.setFontSize(12);
             doc.setFont("helvetica", "italic");
-            doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
-            
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth / 2 + 10, 22, { align: 'center' });
+
             // Subtitle inside the header
             doc.setFontSize(11); // Increased font size for address
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 30, { align: 'center' });
-            
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth / 2 + 10, 30, { align: 'center' });
+
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
-            
+
             // Section Styling Function
             const createSection = (title, x, y) => {
                 doc.setFontSize(16);
@@ -190,7 +259,7 @@ export function ManageVehicles() {
                 ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
                 ['Advance:', `INR ${vehicle.advanceAmount}`],
                 ['Rent:', `INR ${vehicle.rentPrice}`],
-                ['Duration:', vehicle.rentalType === 'daily' ? 
+                ['Duration:', vehicle.rentalType === 'daily' ?
                     `${vehicle.numberOfDays} days` : 'Every Month'],
             ];
 
@@ -200,7 +269,7 @@ export function ManageVehicles() {
                 head: [],
                 body: vehicleDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,  // Increased from 10
                     cellPadding: 3,
                     font: 'helvetica',
@@ -234,7 +303,7 @@ export function ManageVehicles() {
                 head: [],
                 body: agreementDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
@@ -262,8 +331,8 @@ export function ManageVehicles() {
                     const imageX = startX1 + ((columnWidth - imageWidth) / 2);
 
                     doc.addImage(
-                        imgBase64, 
-                        'JPEG', 
+                        imgBase64,
+                        'JPEG',
                         imageX,
                         doc.autoTable.previous.finalY + 5,
                         imageWidth,
@@ -273,7 +342,7 @@ export function ManageVehicles() {
                     // Add invoice generation date and time in IST below the image
                     const nowInvoiceImg = new Date();
                     const istDateInvoiceImg = nowInvoiceImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-                    const istTimeInvoiceImg = nowInvoiceImg.toLocaleTimeString('en-GB', { 
+                    const istTimeInvoiceImg = nowInvoiceImg.toLocaleTimeString('en-GB', {
                         timeZone: 'Asia/Kolkata',
                         hour: '2-digit',
                         minute: '2-digit',
@@ -288,7 +357,7 @@ export function ManageVehicles() {
                 }
             }
 
-            
+
             // Right Column
             createSection('Owner Details', startX2, 55);
 
@@ -304,7 +373,7 @@ export function ManageVehicles() {
                 head: [],
                 body: ownerDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
@@ -332,7 +401,7 @@ export function ManageVehicles() {
                 head: [],
                 body: terms,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 2,
                     font: 'helvetica',
@@ -373,8 +442,8 @@ export function ManageVehicles() {
             const qrX = startX2 + ((columnWidth - qrWidth) / 2);
 
             doc.addImage(
-                qrDataUrl, 
-                'PNG', 
+                qrDataUrl,
+                'PNG',
                 qrX,
                 doc.autoTable.previous.finalY + 25,  // Reduced spacing
                 qrWidth,
@@ -385,11 +454,11 @@ export function ManageVehicles() {
             doc.setDrawColor(21, 101, 192);
             doc.setLineWidth(0.5);
             doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
-            
+
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
             const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });  // Moved up from -15
+            doc.text(footer, pageWidth / 2, pageHeight - 8, { align: 'center' });  // Moved up from -15
 
             doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
             toast.success('Receipt generated successfully');
@@ -400,305 +469,305 @@ export function ManageVehicles() {
     };
 
     const handlePrintDailyInvoice = async (vehicle, customDaysOverride = null) => {
-    try {
-        // Calculate dates
-        const startDate = new Date(vehicle.endDate);
-        startDate.setDate(startDate.getDate() + 1);
-        startDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
-        
-        let endDate, numberOfDays;
-        
-        if (customDaysOverride !== null) {
-            // Use custom days
-            numberOfDays = customDaysOverride;
-            endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + numberOfDays - 1);
-            endDate.setHours(23, 59, 59, 999); // Set to end of day
-        } else {
-            // Use current date logic
-            endDate = new Date(); // Current date
-            endDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
-            const diffTime = endDate.getTime() - startDate.getTime();
-            numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        }
-        
-        // Calculate total amount
-        const totalAmount = vehicle.rentPrice * numberOfDays;
-
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const columnWidth = 85;
-        const startX1 = 15;
-        const startX2 = 110;
-        
-        // Modern Header with Gradient
-        doc.setFillColor(21, 101, 192); // RGB for #1565C0
-        doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
-        
-        // Add Logo (placeholder - replace with your logo later)
-        const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
         try {
-            const logoResponse = await fetch(logoUrl);
-            const logoBlob = await logoResponse.blob();
-            const logoBase64 = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(logoBlob);
-            });
+            // Calculate dates
+            const startDate = new Date(vehicle.endDate);
+            startDate.setDate(startDate.getDate() + 1);
+            startDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
 
-            // Add logo to the left with increased top padding
-            doc.addImage(logoBase64, 'PNG', 15, 2, 30, 30);
-        } catch (logoError) {
-            console.error('Error loading logo:', logoError);
-        }
+            let endDate, numberOfDays;
 
-        // Title and Text with adjusted positions
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(24);
-        doc.text('SP CAR PARKING', pageWidth/2 + 10, 15, { align: 'center' });
-        
-        // Add motto under the title with increased font size and reduced gap
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "italic");
-        doc.text('"Your Car Is Under Safe Hands"', pageWidth/2 + 10, 22, { align: 'center' });
-        
-        // Subtitle inside the header
-        doc.setFontSize(11); // Increased font size for address
-        doc.setFont("helvetica", "normal");
-        doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2 + 10, 30, { align: 'center' });
-        
-        // Reset color and set modern font
-        doc.setTextColor(44, 62, 80);
-        doc.setFont("helvetica", "bold");
-        
-        // Section Styling Function
-        const createSection = (title, x, y) => {
-            doc.setFontSize(16);
-            doc.setTextColor(21, 101, 192);  // Changed to header blue color
-            doc.setFont("helvetica", "bold");
-            doc.text(title, x, y);
-            doc.setDrawColor(21, 101, 192);  // Changed to header blue color
-            doc.setLineWidth(0.5);
-            doc.line(x, y + 2, x + columnWidth, y + 2);
-            doc.setTextColor(44, 62, 80);
-        };
-
-        // Left Column
-        createSection('Vehicle Details', startX1, 55);
-
-        const vehicleDetails = [
-            ['Vehicle No:', vehicle.vehicleNumber],
-            ['Description:', vehicle.vehicleDescription],
-            ['Lot Number:', vehicle.lotNumber || 'Open'],
-            ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
-            ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
-            ['Rent/Day:', `INR ${vehicle.rentPrice}`],
-            ['Duration:', `${numberOfDays} days`],
-            ['Total:', `INR ${totalAmount}`]
-        ];
-
-        doc.autoTable({
-            startY: 60,
-            margin: { left: startX1 },
-            head: [],
-            body: vehicleDetails,
-            theme: 'plain',
-            styles: { 
-                fontSize: 12,
-                cellPadding: 3,
-                font: 'helvetica',
-                textColor: [44, 62, 80]
-            },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 35 },
-                1: { cellWidth: 50 }
+            if (customDaysOverride !== null) {
+                // Use custom days
+                numberOfDays = customDaysOverride;
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + numberOfDays - 1);
+                endDate.setHours(23, 59, 59, 999); // Set to end of day
+            } else {
+                // Use current date logic
+                endDate = new Date(); // Current date
+                endDate.setHours(0, 0, 0, 0); // Set to start of day (12:00 AM)
+                const diffTime = endDate.getTime() - startDate.getTime();
+                numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
             }
-        });
 
-        createSection('Agreement Details', startX1, doc.autoTable.previous.finalY + 15);
+            // Calculate total amount
+            const totalAmount = vehicle.rentPrice * numberOfDays;
 
-        const agreementDetails = [
-            ['Start Date:', startDate.toLocaleDateString('en-GB')],
-            ['End Date:', endDate.toLocaleDateString('en-GB')],
-            ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
-        ];
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const columnWidth = 85;
+            const startX1 = 15;
+            const startX2 = 110;
 
-        doc.autoTable({
-            startY: doc.autoTable.previous.finalY + 20,
-            margin: { left: startX1 },
-            head: [],
-            body: agreementDetails,
-            theme: 'plain',
-            styles: { 
-                fontSize: 12,
-                cellPadding: 3,
-                font: 'helvetica',
-                textColor: [44, 62, 80]
-            },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 35 },
-                1: { cellWidth: 50 }
-            }
-        });
+            // Modern Header with Gradient
+            doc.setFillColor(21, 101, 192); // RGB for #1565C0
+            doc.rect(0, 0, pageWidth, 40, 'F');  // Reduced height from 45 to 40
 
-        // Add Vehicle Image Section
-        if (vehicle.vehicleImage?.url) {
+            // Add Logo (placeholder - replace with your logo later)
+            const logoUrl = 'SP_Car_Parking_bg.png'; // Placeholder logo
             try {
-                const imgResponse = await fetch(vehicle.vehicleImage.url);
-                const imgBlob = await imgResponse.blob();
-                const imgBase64 = await new Promise((resolve) => {
+                const logoResponse = await fetch(logoUrl);
+                const logoBlob = await logoResponse.blob();
+                const logoBase64 = await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(imgBlob);
+                    reader.readAsDataURL(logoBlob);
                 });
 
-                // Center image in left column
-                const imageWidth = 70;
-                const imageX = startX1 + ((columnWidth - imageWidth) / 2);
+                // Add logo to the left with increased top padding
+                doc.addImage(logoBase64, 'PNG', 15, 2, 30, 30);
+            } catch (logoError) {
+                console.error('Error loading logo:', logoError);
+            }
 
-                doc.addImage(
-                    imgBase64, 
-                    'JPEG', 
-                    imageX,
-                    doc.autoTable.previous.finalY + 5,
-                    imageWidth,
-                    50
-                );
+            // Title and Text with adjusted positions
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(24);
+            doc.text('SP CAR PARKING', pageWidth / 2 + 10, 15, { align: 'center' });
 
-                // Add invoice generation date and time in IST below the image
-                const nowDailyImg = new Date();
-                const istDateDailyImg = nowDailyImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
-                const istTimeDailyImg = nowDailyImg.toLocaleTimeString('en-GB', { 
-                    timeZone: 'Asia/Kolkata',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                doc.setFontSize(8);
-                doc.setFont("helvetica", "normal");
+            // Add motto under the title with increased font size and reduced gap
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.text('"Your Car Is Under Safe Hands"', pageWidth / 2 + 10, 22, { align: 'center' });
+
+            // Subtitle inside the header
+            doc.setFontSize(11); // Increased font size for address
+            doc.setFont("helvetica", "normal");
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth / 2 + 10, 30, { align: 'center' });
+
+            // Reset color and set modern font
+            doc.setTextColor(44, 62, 80);
+            doc.setFont("helvetica", "bold");
+
+            // Section Styling Function
+            const createSection = (title, x, y) => {
+                doc.setFontSize(16);
+                doc.setTextColor(21, 101, 192);  // Changed to header blue color
+                doc.setFont("helvetica", "bold");
+                doc.text(title, x, y);
+                doc.setDrawColor(21, 101, 192);  // Changed to header blue color
+                doc.setLineWidth(0.5);
+                doc.line(x, y + 2, x + columnWidth, y + 2);
                 doc.setTextColor(44, 62, 80);
-                doc.text(`Generated on: ${istDateDailyImg} at ${istTimeDailyImg} IST`, startX1, doc.autoTable.previous.finalY + 5 + 50 + 8);
-            } catch (imgError) {
-                console.error('Error loading vehicle image:', imgError);
+            };
+
+            // Left Column
+            createSection('Vehicle Details', startX1, 55);
+
+            const vehicleDetails = [
+                ['Vehicle No:', vehicle.vehicleNumber],
+                ['Description:', vehicle.vehicleDescription],
+                ['Lot Number:', vehicle.lotNumber || 'Open'],
+                ['Status:', vehicle.status === 'active' ? 'Paid' : 'Not Paid'],
+                ['Rental Type:', capitalizeFirst(vehicle.rentalType)],
+                ['Rent/Day:', `INR ${vehicle.rentPrice}`],
+                ['Duration:', `${numberOfDays} days`],
+                ['Total:', `INR ${totalAmount}`]
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX1 },
+                head: [],
+                body: vehicleDetails,
+                theme: 'plain',
+                styles: {
+                    fontSize: 12,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            createSection('Agreement Details', startX1, doc.autoTable.previous.finalY + 15);
+
+            const agreementDetails = [
+                ['Start Date:', startDate.toLocaleDateString('en-GB')],
+                ['End Date:', endDate.toLocaleDateString('en-GB')],
+                ['Agreement ID:', vehicle._id?.slice(-8) || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 20,
+                margin: { left: startX1 },
+                head: [],
+                body: agreementDetails,
+                theme: 'plain',
+                styles: {
+                    fontSize: 12,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Add Vehicle Image Section
+            if (vehicle.vehicleImage?.url) {
+                try {
+                    const imgResponse = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResponse.blob();
+                    const imgBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(imgBlob);
+                    });
+
+                    // Center image in left column
+                    const imageWidth = 70;
+                    const imageX = startX1 + ((columnWidth - imageWidth) / 2);
+
+                    doc.addImage(
+                        imgBase64,
+                        'JPEG',
+                        imageX,
+                        doc.autoTable.previous.finalY + 5,
+                        imageWidth,
+                        50
+                    );
+
+                    // Add invoice generation date and time in IST below the image
+                    const nowDailyImg = new Date();
+                    const istDateDailyImg = nowDailyImg.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+                    const istTimeDailyImg = nowDailyImg.toLocaleTimeString('en-GB', {
+                        timeZone: 'Asia/Kolkata',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(44, 62, 80);
+                    doc.text(`Generated on: ${istDateDailyImg} at ${istTimeDailyImg} IST`, startX1, doc.autoTable.previous.finalY + 5 + 50 + 8);
+                } catch (imgError) {
+                    console.error('Error loading vehicle image:', imgError);
+                }
             }
+
+
+            // Right Column
+            createSection('Owner Details', startX2, 55);
+
+            const ownerDetails = [
+                ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
+                ['Contact:', vehicle.contactNumber || 'N/A'],
+                ['Address:', vehicle.ownerAddress || 'N/A']
+            ];
+
+            doc.autoTable({
+                startY: 60,
+                margin: { left: startX2 },
+                head: [],
+                body: ownerDetails,
+                theme: 'plain',
+                styles: {
+                    fontSize: 12,
+                    cellPadding: 3,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 35 },
+                    1: { cellWidth: 50 }
+                }
+            });
+
+            // Terms and Conditions
+            createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
+
+            const terms = [
+                ['1.', 'Rent must be paid before 5th of each month.'],
+                ['2.', 'Parking spot must be kept clean.'],
+                ['3.', 'No unauthorized vehicle transfers.'],
+                ['4.', 'Save Water and Electricity']
+            ];
+
+            doc.autoTable({
+                startY: doc.autoTable.previous.finalY + 15,
+                margin: { left: startX2 },
+                head: [],
+                body: terms,
+                theme: 'plain',
+                styles: {
+                    fontSize: 12,
+                    cellPadding: 2,
+                    font: 'helvetica',
+                    textColor: [44, 62, 80]
+                },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 10 },
+                    1: { cellWidth: 75 }
+                }
+            });
+
+            // QR Code Section
+            doc.setFontSize(16);
+            doc.setTextColor(21, 101, 192);
+            doc.setFont("helvetica", "bold");
+            doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
+            doc.setFontSize(10);
+            doc.setTextColor(21, 101, 192);
+            doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 16);
+            doc.setDrawColor(21, 101, 192);
+            doc.setLineWidth(0.5);
+            doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
+            doc.setTextColor(44, 62, 80);
+
+            // QR Code Section with updated amount
+            const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
+            const qrDataUrl = await QRCode.toDataURL(qrData, {
+                width: 30,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
+
+            // Center QR code
+            const qrWidth = 60;
+            const qrX = startX2 + ((columnWidth - qrWidth) / 2);
+
+            doc.addImage(
+                qrDataUrl,
+                'PNG',
+                qrX,
+                doc.autoTable.previous.finalY + 25,
+                qrWidth,
+                60
+            );
+
+            // Modern Footer
+            doc.setDrawColor(21, 101, 192);
+            doc.setLineWidth(0.5);
+            doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+
+            doc.setFontSize(9);
+            doc.setTextColor(44, 62, 80);
+            const footer = "JESUS LEADS YOU";
+            doc.text(footer, pageWidth / 2, pageHeight - 8, { align: 'center' });
+
+            const fileName = customDaysOverride !== null ?
+                `SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily_${numberOfDays}days.pdf` :
+                `SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`;
+
+            doc.save(fileName);
+            toast.success('Receipt generated successfully');
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            toast.error('Failed to generate receipt');
         }
-
-       
-        // Right Column
-        createSection('Owner Details', startX2, 55);
-
-        const ownerDetails = [
-            ['Name:', 'MR. ' + vehicle.ownerName || 'N/A'],
-            ['Contact:', vehicle.contactNumber || 'N/A'],
-            ['Address:', vehicle.ownerAddress || 'N/A']
-        ];
-
-        doc.autoTable({
-            startY: 60,
-            margin: { left: startX2 },
-            head: [],
-            body: ownerDetails,
-            theme: 'plain',
-            styles: { 
-                fontSize: 12,
-                cellPadding: 3,
-                font: 'helvetica',
-                textColor: [44, 62, 80]
-            },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 35 },
-                1: { cellWidth: 50 }
-            }
-        });
-
-        // Terms and Conditions
-        createSection('Terms & Conditions', startX2, doc.autoTable.previous.finalY + 10);
-
-        const terms = [
-            ['1.', 'Rent must be paid before 5th of each month.'],
-            ['2.', 'Parking spot must be kept clean.'],
-            ['3.', 'No unauthorized vehicle transfers.'],
-            ['4.', 'Save Water and Electricity']
-        ];
-
-        doc.autoTable({
-            startY: doc.autoTable.previous.finalY + 15,
-            margin: { left: startX2 },
-            head: [],
-            body: terms,
-            theme: 'plain',
-            styles: { 
-                fontSize: 12,
-                cellPadding: 2,
-                font: 'helvetica',
-                textColor: [44, 62, 80]
-            },
-            columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 10 },
-                1: { cellWidth: 75 }
-            }
-        });
-
-        // QR Code Section
-        doc.setFontSize(16);
-        doc.setTextColor(21, 101, 192);
-        doc.setFont("helvetica", "bold");
-        doc.text('Scan QR to Pay', startX2, doc.autoTable.previous.finalY + 10);
-        doc.setFontSize(10);
-        doc.setTextColor(21, 101, 192);
-        doc.text('(Ignore if already paid)', startX2, doc.autoTable.previous.finalY + 16);
-        doc.setDrawColor(21, 101, 192);
-        doc.setLineWidth(0.5);
-        doc.line(startX2, doc.autoTable.previous.finalY + 12, startX2 + columnWidth, doc.autoTable.previous.finalY + 12);
-        doc.setTextColor(44, 62, 80);
-
-        // QR Code Section with updated amount
-        const qrData = `upi://pay?pa=paulcars2000@uboi&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
-        const qrDataUrl = await QRCode.toDataURL(qrData, {
-            width: 30,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#ffffff'
-            }
-        });
-
-        // Center QR code
-        const qrWidth = 60;
-        const qrX = startX2 + ((columnWidth - qrWidth) / 2);
-
-        doc.addImage(
-            qrDataUrl, 
-            'PNG', 
-            qrX,
-            doc.autoTable.previous.finalY + 25,
-            qrWidth,
-            60
-        );
-
-        // Modern Footer
-        doc.setDrawColor(21, 101, 192);
-        doc.setLineWidth(0.5);
-        doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(44, 62, 80);
-        const footer = "JESUS LEADS YOU";
-        doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
-
-        const fileName = customDaysOverride !== null ? 
-            `SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily_${numberOfDays}days.pdf` : 
-            `SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`;
-        
-        doc.save(fileName);
-        toast.success('Receipt generated successfully');
-    } catch (error) {
-        console.error('Error generating receipt:', error);
-        toast.error('Failed to generate receipt');
-    }
-};
+    };
 
     // WhatsApp Reminder Function
     const sendNotificationToOwner = (vehicle) => {
@@ -724,7 +793,7 @@ export function ManageVehicles() {
             const startDate = new Date(vehicle.endDate);
             startDate.setDate(startDate.getDate() + 1);
             startDate.setHours(0, 0, 0, 0);
-            
+
             const endDate = new Date();
             endDate.setHours(0, 0, 0, 0);
 
@@ -734,8 +803,8 @@ export function ManageVehicles() {
         }
 
         return (
-            <div 
-                key={vehicle._id} 
+            <div
+                key={vehicle._id}
                 className={`p-4 hover:shadow-md cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                 onClick={() => setSelectedVehicle(vehicle)}
             >
@@ -783,7 +852,7 @@ export function ManageVehicles() {
                     <p className="text-sm text-gray-500">{vehicle.vehicleDescription}</p>
                     <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm text-gray-500">
-                            {vehicle.rentalType === 'daily' 
+                            {vehicle.rentalType === 'daily'
                                 ? `Daily - ₹${vehicle.rentPrice} for ${vehicle.numberOfDays} days`
                                 : `Monthly - ₹${vehicle.rentPrice}`}
                         </p>
@@ -823,11 +892,11 @@ export function ManageVehicles() {
         const previewMessage = `Dear ${vehicle.ownerName}, your monthly parking rent of Rs.${vehicle.rentPrice} for vehicle ${vehicle.vehicleNumber} is due on 5th of this month. Please make the payment before the due date. - SP Car Parking`;
 
         return (
-            <div 
+            <div
                 className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200 ${isClosing ? 'bg-black/0 backdrop-blur-none' : isDarkMode ? 'bg-black/80 backdrop-blur-sm' : 'bg-black/50 backdrop-blur-sm'}`}
                 onClick={handleClose}
             >
-                <div 
+                <div
                     className={`rounded-xl shadow-xl w-full max-w-md transform transition-all duration-200 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                     onClick={e => e.stopPropagation()}
                     style={{
@@ -931,502 +1000,490 @@ export function ManageVehicles() {
     };
 
     const DailyInvoiceModal = ({ vehicle, onClose }) => {
-    const { isDarkMode } = useTheme(); // Use the theme hook directly
-    const [isClosing, setIsClosing] = useState(false);
-    const [inputDays, setInputDays] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [inputMode, setInputMode] = useState('days'); // 'days' or 'date'
-    const [isGenerating, setIsGenerating] = useState(false);
+        const { isDarkMode } = useTheme(); // Use the theme hook directly
+        const [isClosing, setIsClosing] = useState(false);
+        const [inputDays, setInputDays] = useState('');
+        const [endDate, setEndDate] = useState('');
+        const [inputMode, setInputMode] = useState('days'); // 'days' or 'date'
+        const [isGenerating, setIsGenerating] = useState(false);
 
-    if (!vehicle) return null;
+        if (!vehicle) return null;
 
-    const handleClose = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            onClose();
+        const handleClose = () => {
+            setIsClosing(true);
+            setTimeout(() => {
+                onClose();
+                setInputDays('');
+                setEndDate('');
+                setInputMode('days');
+            }, 200);
+        };
+
+        // Calculate current due days and amount
+        const startDate = new Date(vehicle.endDate);
+        startDate.setDate(startDate.getDate() + 1);
+        startDate.setHours(0, 0, 0, 0);
+
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+
+        const diffTime = currentDate.getTime() - startDate.getTime();
+        const currentDueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const currentDueAmount = vehicle.rentPrice * currentDueDays;
+
+        // Calculate custom days based on input mode
+        let customDays = 0;
+        if (inputMode === 'days') {
+            customDays = parseInt(inputDays) || 0;
+        } else if (inputMode === 'date' && endDate) {
+            const selectedEndDate = new Date(endDate);
+            selectedEndDate.setHours(23, 59, 59, 999);
+
+            if (selectedEndDate >= startDate) {
+                const timeDiff = selectedEndDate.getTime() - startDate.getTime();
+                customDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+            }
+        }
+
+        const customAmount = customDays > 0 ? vehicle.rentPrice * customDays : 0;
+
+        // Format date for display
+        const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        };
+
+        // Get minimum date (tomorrow from vehicle end date)
+        const getMinDate = () => {
+            const minDate = new Date(startDate);
+            return minDate.toISOString().split('T')[0];
+        };
+
+        const handleGenerateCurrentInvoice = async () => {
+            setIsGenerating(true);
+            try {
+                await handlePrintDailyInvoice(vehicle);
+                handleClose();
+            } catch (error) {
+                console.error('Error generating current invoice:', error);
+            } finally {
+                setIsGenerating(false);
+            }
+        };
+
+        const handleGenerateCustomInvoice = async () => {
+            if (customDays <= 0) {
+                toast.error('Please enter a valid number of days or select an end date');
+                return;
+            }
+
+            setIsGenerating(true);
+            try {
+                await handlePrintDailyInvoice(vehicle, customDays);
+                handleClose();
+            } catch (error) {
+                console.error('Error generating custom invoice:', error);
+            } finally {
+                setIsGenerating(false);
+            }
+        };
+
+        const handleModeSwitch = (mode) => {
+            setInputMode(mode);
             setInputDays('');
             setEndDate('');
-            setInputMode('days');
-        }, 200);
-    };
+        };
 
-    // Calculate current due days and amount
-    const startDate = new Date(vehicle.endDate);
-    startDate.setDate(startDate.getDate() + 1);
-    startDate.setHours(0, 0, 0, 0);
-    
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-
-    const diffTime = currentDate.getTime() - startDate.getTime();
-    const currentDueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    const currentDueAmount = vehicle.rentPrice * currentDueDays;
-
-    // Calculate custom days based on input mode
-    let customDays = 0;
-    if (inputMode === 'days') {
-        customDays = parseInt(inputDays) || 0;
-    } else if (inputMode === 'date' && endDate) {
-        const selectedEndDate = new Date(endDate);
-        selectedEndDate.setHours(23, 59, 59, 999);
-        
-        if (selectedEndDate >= startDate) {
-            const timeDiff = selectedEndDate.getTime() - startDate.getTime();
-            customDays = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-        }
-    }
-    
-    const customAmount = customDays > 0 ? vehicle.rentPrice * customDays : 0;
-
-    // Format date for display
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-IN', { 
-            day: '2-digit', 
-            month: 'short', 
-            year: 'numeric' 
-        });
-    };
-
-    // Get minimum date (tomorrow from vehicle end date)
-    const getMinDate = () => {
-        const minDate = new Date(startDate);
-        return minDate.toISOString().split('T')[0];
-    };
-
-    const handleGenerateCurrentInvoice = async () => {
-        setIsGenerating(true);
-        try {
-            await handlePrintDailyInvoice(vehicle);
-            handleClose();
-        } catch (error) {
-            console.error('Error generating current invoice:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleGenerateCustomInvoice = async () => {
-        if (customDays <= 0) {
-            toast.error('Please enter a valid number of days or select an end date');
-            return;
-        }
-        
-        setIsGenerating(true);
-        try {
-            await handlePrintDailyInvoice(vehicle, customDays);
-            handleClose();
-        } catch (error) {
-            console.error('Error generating custom invoice:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleModeSwitch = (mode) => {
-        setInputMode(mode);
-        setInputDays('');
-        setEndDate('');
-    };
-
-    return (
-        <div 
-            className={`fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 transition-all duration-300 ${
-                isClosing 
-                    ? 'bg-black/0' 
-                    : isDarkMode 
-                        ? 'bg-black/80 backdrop-blur-sm' 
+        return (
+            <div
+                className={`fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 transition-all duration-300 ${isClosing
+                    ? 'bg-black/0'
+                    : isDarkMode
+                        ? 'bg-black/80 backdrop-blur-sm'
                         : 'bg-black/50 backdrop-blur-sm'
-            }`}
-            onClick={handleClose}
-        >
-            <div 
-                className={`w-full max-w-md md:max-w-5xl mx-auto rounded-lg shadow-xl max-h-[95vh] overflow-hidden transform transition-all duration-300 ${
-                    isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-                } ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                }`}
-                onClick={e => e.stopPropagation()}
+                    }`}
+                onClick={handleClose}
             >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 md:p-6 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-0 left-0 w-16 h-16 bg-white rounded-full -translate-x-8 -translate-y-8"></div>
-                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-white rounded-full translate-x-6 translate-y-6"></div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="flex items-center space-x-3">
-                            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg border border-white/30">
-                                <PrinterIcon className="w-5 h-5 text-white" />
-                            </div>
-                            <h2 className="text-lg md:text-xl font-semibold text-white">Generate Invoice</h2>
+                <div
+                    className={`w-full max-w-md md:max-w-5xl mx-auto rounded-lg shadow-xl max-h-[95vh] overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                        } ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 md:p-6 relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-0 left-0 w-16 h-16 bg-white rounded-full -translate-x-8 -translate-y-8"></div>
+                            <div className="absolute bottom-0 right-0 w-12 h-12 bg-white rounded-full translate-x-6 translate-y-6"></div>
                         </div>
+
+                        <div className="flex items-center justify-between relative z-10">
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg border border-white/30">
+                                    <PrinterIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <h2 className="text-lg md:text-xl font-semibold text-white">Generate Invoice</h2>
+                            </div>
+                            <button
+                                onClick={handleClose}
+                                className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all duration-200"
+                                disabled={isGenerating}
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content - Responsive Layout */}
+                    <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
+                        {/* Mobile Layout */}
+                        <div className="md:hidden">
+                            {/* Vehicle Info - Mobile */}
+                            <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <h3 className={`font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Vehicle:</span>
+                                        <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description:</span>
+                                        <span className={`font-medium text-right ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Owner:</span>
+                                        <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Daily Rate:</span>
+                                        <span className="font-semibold text-orange-600">₹{vehicle.rentPrice}/day</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Current Outstanding - Mobile */}
+                            <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
+                                    <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                                        {currentDueDays} days
+                                    </span>
+                                </div>
+                                <div className="text-center mb-4">
+                                    <div className={`text-3xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
+                                    <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {currentDueDays} × ₹{vehicle.rentPrice}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleGenerateCurrentInvoice}
+                                    disabled={isGenerating}
+                                    className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <PrinterIcon className="w-4 h-4 mr-2" />
+                                    )}
+                                    Generate Current Invoice
+                                </button>
+                            </div>
+
+                            {/* Custom Invoice - Mobile */}
+                            <div className="p-4">
+                                <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
+
+                                {/* Mode Toggle */}
+                                <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                    <button
+                                        onClick={() => handleModeSwitch('days')}
+                                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${inputMode === 'days'
+                                            ? isDarkMode
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        Days
+                                    </button>
+                                    <button
+                                        onClick={() => handleModeSwitch('date')}
+                                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${inputMode === 'date'
+                                            ? isDarkMode
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        End Date
+                                    </button>
+                                </div>
+
+                                {/* Input Fields */}
+                                {inputMode === 'days' ? (
+                                    <div className="mb-4">
+                                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            Number of Days
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="999"
+                                            value={inputDays}
+                                            onChange={(e) => setInputDays(e.target.value)}
+                                            placeholder="Enter days"
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${isDarkMode
+                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
+                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                                                }`}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="mb-4">
+                                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            Invoice End Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            min={getMinDate()}
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${isDarkMode
+                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
+                                                : 'border-gray-300 bg-white text-gray-900'
+                                                }`}
+                                        />
+                                        {endDate && (
+                                            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                Selected: {formatDate(endDate)}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Calculation Display */}
+                                {customDays > 0 && (
+                                    <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
+                                        <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
+                                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            {customDays} × ₹{vehicle.rentPrice}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleGenerateCustomInvoice}
+                                    disabled={isGenerating || customDays <= 0}
+                                    className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <PrinterIcon className="w-4 h-4 mr-2" />
+                                    )}
+                                    Generate Custom Invoice
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Desktop Layout - 3 Columns */}
+                        <div className="hidden md:grid md:grid-cols-3 md:gap-6 md:p-6">
+                            {/* Column 1: Vehicle Details */}
+                            <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
+                                <div className="space-y-3">
+                                    <div className="text-center">
+                                        <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>VEHICLE</div>
+                                        <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</div>
+                                    </div>
+                                    <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                        <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DESCRIPTION</div>
+                                        <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</div>
+                                    </div>
+                                    <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                        <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>OWNER</div>
+                                        <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</div>
+                                    </div>
+                                    <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                        <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DAILY RATE</div>
+                                        <div className="text-lg font-bold text-orange-600">₹{vehicle.rentPrice}/day</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 2: Current Outstanding */}
+                            <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <div className="text-center mb-4">
+                                    <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
+                                    <span className={`inline-block text-xs px-2 py-1 rounded mt-2 ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                                        {currentDueDays} days
+                                    </span>
+                                </div>
+                                <div className="text-center mb-6">
+                                    <div className={`text-4xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
+                                    <div className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {currentDueDays} × ₹{vehicle.rentPrice}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleGenerateCurrentInvoice}
+                                    disabled={isGenerating}
+                                    className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <PrinterIcon className="w-4 h-4 mr-2" />
+                                    )}
+                                    Generate Invoice
+                                </button>
+                            </div>
+
+                            {/* Column 3: Custom Invoice */}
+                            <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
+
+                                {/* Mode Toggle */}
+                                <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                    <button
+                                        onClick={() => handleModeSwitch('days')}
+                                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${inputMode === 'days'
+                                            ? isDarkMode
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        Days
+                                    </button>
+                                    <button
+                                        onClick={() => handleModeSwitch('date')}
+                                        className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${inputMode === 'date'
+                                            ? isDarkMode
+                                                ? 'bg-gray-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-900 shadow-sm'
+                                            : isDarkMode
+                                                ? 'text-gray-300 hover:text-white'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        End Date
+                                    </button>
+                                </div>
+
+                                {/* Input Fields */}
+                                {inputMode === 'days' ? (
+                                    <div className="mb-4">
+                                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            Number of Days
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="999"
+                                            value={inputDays}
+                                            onChange={(e) => setInputDays(e.target.value)}
+                                            placeholder="Enter days"
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${isDarkMode
+                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
+                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
+                                                }`}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="mb-4">
+                                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            Invoice End Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            min={getMinDate()}
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${isDarkMode
+                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
+                                                : 'border-gray-300 bg-white text-gray-900'
+                                                }`}
+                                        />
+                                        {endDate && (
+                                            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                Selected: {formatDate(endDate)}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Calculation Display */}
+                                {customDays > 0 && (
+                                    <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
+                                        <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
+                                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            {customDays} × ₹{vehicle.rentPrice}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleGenerateCustomInvoice}
+                                    disabled={isGenerating || customDays <= 0}
+                                    className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <PrinterIcon className="w-4 h-4 mr-2" />
+                                    )}
+                                    Generate Custom Invoice
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className={`flex justify-end p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'}`}>
                         <button
                             onClick={handleClose}
-                            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all duration-200"
                             disabled={isGenerating}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDarkMode
+                                ? 'text-gray-300 hover:bg-gray-700'
+                                : 'text-gray-700 hover:bg-gray-100'
+                                }`}
                         >
-                            <X className="w-5 h-5" />
+                            Cancel
                         </button>
                     </div>
                 </div>
-
-                {/* Content - Responsive Layout */}
-                <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
-                    {/* Mobile Layout */}
-                    <div className="md:hidden">
-                        {/* Vehicle Info - Mobile */}
-                        <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <h3 className={`font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Vehicle:</span>
-                                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description:</span>
-                                    <span className={`font-medium text-right ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Owner:</span>
-                                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Daily Rate:</span>
-                                    <span className="font-semibold text-orange-600">₹{vehicle.rentPrice}/day</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Current Outstanding - Mobile */}
-                        <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
-                                <span className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
-                                    {currentDueDays} days
-                                </span>
-                            </div>
-                            <div className="text-center mb-4">
-                                <div className={`text-3xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
-                                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {currentDueDays} × ₹{vehicle.rentPrice}
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleGenerateCurrentInvoice}
-                                disabled={isGenerating}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <PrinterIcon className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Current Invoice
-                            </button>
-                        </div>
-
-                        {/* Custom Invoice - Mobile */}
-                        <div className="p-4">
-                            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
-                            
-                            {/* Mode Toggle */}
-                            <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                <button
-                                    onClick={() => handleModeSwitch('days')}
-                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                                        inputMode === 'days'
-                                            ? isDarkMode 
-                                                ? 'bg-gray-600 text-white shadow-sm'
-                                                : 'bg-white text-gray-900 shadow-sm'
-                                            : isDarkMode
-                                                ? 'text-gray-300 hover:text-white'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    Days
-                                </button>
-                                <button
-                                    onClick={() => handleModeSwitch('date')}
-                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                                        inputMode === 'date'
-                                            ? isDarkMode 
-                                                ? 'bg-gray-600 text-white shadow-sm'
-                                                : 'bg-white text-gray-900 shadow-sm'
-                                            : isDarkMode
-                                                ? 'text-gray-300 hover:text-white'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    End Date
-                                </button>
-                            </div>
-
-                            {/* Input Fields */}
-                            {inputMode === 'days' ? (
-                                <div className="mb-4">
-                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        Number of Days
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="999"
-                                        value={inputDays}
-                                        onChange={(e) => setInputDays(e.target.value)}
-                                        placeholder="Enter days"
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                            isDarkMode 
-                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
-                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-                                        }`}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="mb-4">
-                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        Invoice End Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        min={getMinDate()}
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                            isDarkMode 
-                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
-                                                : 'border-gray-300 bg-white text-gray-900'
-                                        }`}
-                                    />
-                                    {endDate && (
-                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            Selected: {formatDate(endDate)}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Calculation Display */}
-                            {customDays > 0 && (
-                                <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
-                                    <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
-                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {customDays} × ₹{vehicle.rentPrice}
-                                    </div>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handleGenerateCustomInvoice}
-                                disabled={isGenerating || customDays <= 0}
-                                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <PrinterIcon className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Custom Invoice
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Desktop Layout - 3 Columns */}
-                    <div className="hidden md:grid md:grid-cols-3 md:gap-6 md:p-6">
-                        {/* Column 1: Vehicle Details */}
-                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vehicle Details</h3>
-                            <div className="space-y-3">
-                                <div className="text-center">
-                                    <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>VEHICLE</div>
-                                    <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</div>
-                                </div>
-                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DESCRIPTION</div>
-                                    <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleDescription}</div>
-                                </div>
-                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>OWNER</div>
-                                    <div className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.ownerName}</div>
-                                </div>
-                                <div className={`border-t pt-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                    <div className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>DAILY RATE</div>
-                                    <div className="text-lg font-bold text-orange-600">₹{vehicle.rentPrice}/day</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Column 2: Current Outstanding */}
-                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <div className="text-center mb-4">
-                                <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Outstanding</h3>
-                                <span className={`inline-block text-xs px-2 py-1 rounded mt-2 ${isDarkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800'}`}>
-                                    {currentDueDays} days
-                                </span>
-                            </div>
-                            <div className="text-center mb-6">
-                                <div className={`text-4xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>₹{currentDueAmount}</div>
-                                <div className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {currentDueDays} × ₹{vehicle.rentPrice}
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleGenerateCurrentInvoice}
-                                disabled={isGenerating}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <PrinterIcon className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Invoice
-                            </button>
-                        </div>
-
-                        {/* Column 3: Custom Invoice */}
-                        <div className={`border rounded-lg p-4 h-fit ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                            <h3 className={`font-semibold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Custom Invoice</h3>
-                            
-                            {/* Mode Toggle */}
-                            <div className={`flex rounded-lg p-1 mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                <button
-                                    onClick={() => handleModeSwitch('days')}
-                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                                        inputMode === 'days'
-                                            ? isDarkMode 
-                                                ? 'bg-gray-600 text-white shadow-sm'
-                                                : 'bg-white text-gray-900 shadow-sm'
-                                            : isDarkMode
-                                                ? 'text-gray-300 hover:text-white'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    Days
-                                </button>
-                                <button
-                                    onClick={() => handleModeSwitch('date')}
-                                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                                        inputMode === 'date'
-                                            ? isDarkMode 
-                                                ? 'bg-gray-600 text-white shadow-sm'
-                                                : 'bg-white text-gray-900 shadow-sm'
-                                            : isDarkMode
-                                                ? 'text-gray-300 hover:text-white'
-                                                : 'text-gray-600 hover:text-gray-900'
-                                    }`}
-                                >
-                                    End Date
-                                </button>
-                            </div>
-
-                            {/* Input Fields */}
-                            {inputMode === 'days' ? (
-                                <div className="mb-4">
-                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        Number of Days
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="999"
-                                        value={inputDays}
-                                        onChange={(e) => setInputDays(e.target.value)}
-                                        placeholder="Enter days"
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                            isDarkMode 
-                                                ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400'
-                                                : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'
-                                        }`}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="mb-4">
-                                    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        Invoice End Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        min={getMinDate()}
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
-                                            isDarkMode 
-                                                ? 'border-gray-600 bg-gray-700 text-white [color-scheme:dark]'
-                                                : 'border-gray-300 bg-white text-gray-900'
-                                        }`}
-                                    />
-                                    {endDate && (
-                                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            Selected: {formatDate(endDate)}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Calculation Display */}
-                            {customDays > 0 && (
-                                <div className={`rounded-lg p-3 mb-4 text-center ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
-                                    <div className={`text-2xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>₹{customAmount}</div>
-                                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {customDays} × ₹{vehicle.rentPrice}
-                                    </div>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handleGenerateCustomInvoice}
-                                disabled={isGenerating || customDays <= 0}
-                                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <PrinterIcon className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Custom Invoice
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className={`flex justify-end p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'}`}>
-                    <button
-                        onClick={handleClose}
-                        disabled={isGenerating}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                            isDarkMode 
-                                ? 'text-gray-300 hover:bg-gray-700'
-                                : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                        Cancel
-                    </button>
-                </div>
             </div>
-        </div>
-    );
-};
+        );
+    };
 
     const generateDatabaseReport = async () => {
         try {
             const doc = new jsPDF('landscape');
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            
+
             // Modern header with gradient
             doc.setFillColor(220, 38, 38);
             doc.rect(0, 0, pageWidth, 35, 'F');
-            
+
             // Company name
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
             doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
-            
+
             // Report title and date
             doc.setFontSize(14);
             const currentDate = new Date().toLocaleDateString('en-GB');
@@ -1445,7 +1502,7 @@ export function ManageVehicles() {
                     const startDate = new Date(v.endDate);
                     startDate.setDate(startDate.getDate() + 1);
                     startDate.setHours(0, 0, 0, 0);
-                    
+
                     const endDate = new Date();
                     endDate.setHours(0, 0, 0, 0);
 
@@ -1466,7 +1523,7 @@ export function ManageVehicles() {
                 daysOverdue: 25,
                 dueAmount: 45
             };
-            
+
             const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
             const leftMargin = (pageWidth - totalTableWidth) / 2;
 
@@ -1562,7 +1619,7 @@ export function ManageVehicles() {
                 alternateRowStyles: {
                     fillColor: [254, 242, 242]
                 },
-                margin: { 
+                margin: {
                     left: leftMargin,
                     right: leftMargin,
                     bottom: 20
@@ -1574,14 +1631,14 @@ export function ManageVehicles() {
                     overflow: 'linebreak',
                     cellWidth: 'auto'
                 },
-                didParseCell: function(data) {
+                didParseCell: function (data) {
                     // For amount column, use monospace font and bold style
                     if (data.column.dataKey === 'dueAmount') {
                         data.cell.styles.font = 'courier';
                         data.cell.styles.fontStyle = 'bold';
                     }
                 },
-                didDrawCell: function(data) {
+                didDrawCell: function (data) {
                     // Make contact number a clickable tel: link
                     if (data.column.dataKey === 'contactNumber' && data.cell.raw) {
                         const phone = String(data.cell.raw).replace(/[^0-9+]/g, '');
@@ -1644,23 +1701,23 @@ export function ManageVehicles() {
                         // Draw right side amount boxes
                         drawTotalBox(
                             finalY,
-                            'Monthly Due :', 
+                            'Monthly Due :',
                             totalMonthlyDue
                         );
                         drawTotalBox(
                             finalY + lineSpacing,
-                            'Daily Due :', 
+                            'Daily Due :',
                             totalDailyDue
                         );
                         drawTotalBox(
                             finalY + (lineSpacing * 2),
-                            'Total Due :', 
+                            'Total Due :',
                             totalMonthlyDue + totalDailyDue,
                             true
                         );
                     }
                 },
-                didDrawPage: function(data) {
+                didDrawPage: function (data) {
                     // Store current page info for later
                     pageNumbers.push({
                         pageNumber: doc.internal.getCurrentPageInfo().pageNumber,
@@ -1693,20 +1750,20 @@ export function ManageVehicles() {
     return (
         <div className={`max-w-6xl mx-auto shadow-xl rounded-xl overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
             <Toaster position="top-right" />
-            
+
             <div className="bg-gradient-to-r from-red-500 to-orange-600 p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl sm:text-3xl font-bold text-white">Outstanding Vehicles</h1>
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={generateDatabaseReport}
                             className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
                             title="Generate Database Report"
                         >
                             <PrinterIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
-                        <button 
-                            onClick={fetchExpiredVehicles} 
+                        <button
+                            onClick={fetchExpiredVehicles}
                             className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
                         >
                             <RefreshCwIcon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -1715,11 +1772,38 @@ export function ManageVehicles() {
                 </div>
             </div>
 
+            {/* Stats Cards */}
+            <div className="p-4 pb-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <StatCard
+                        title="Total Outstanding"
+                        amount={stats.total}
+                        icon={IndianRupee}
+                        gradient="from-blue-50 to-blue-100"
+                        iconColor="text-blue-600"
+                    />
+                    <StatCard
+                        title="Monthly Outstanding"
+                        amount={stats.monthly}
+                        icon={Calendar}
+                        gradient="from-green-50 to-green-100"
+                        iconColor="text-green-600"
+                    />
+                    <StatCard
+                        title="Daily Outstanding"
+                        amount={stats.daily}
+                        icon={Clock}
+                        gradient="from-orange-50 to-orange-100"
+                        iconColor="text-orange-600"
+                    />
+                </div>
+            </div>
+
             <div className="p-4">
                 <div className="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search by vehicle number, description, owner name, or lot number..." 
+                    <input
+                        type="text"
+                        placeholder="Search by vehicle number, description, owner name, or lot number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm sm:text-base ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
@@ -1827,8 +1911,8 @@ export function ManageVehicles() {
             )}
 
             {selectedVehicle && (
-                <VehicleActions 
-                    vehicle={selectedVehicle} 
+                <VehicleActions
+                    vehicle={selectedVehicle}
                     onClose={() => setSelectedVehicle(null)}
                     onRefresh={fetchExpiredVehicles}
                 />
