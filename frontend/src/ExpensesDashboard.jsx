@@ -133,7 +133,7 @@ export function ExpensesDashboard() {
     const fetchStats = async () => {
         setIsStatsLoading(true);
         try {
-            const statsRes = await fetch(`http://localhost:5000/expenses/stats?month=${selectedMonth}&year=${selectedYear}`);
+            const statsRes = await fetch(`https://spcarparkingbknd.onrender.com/expenses/stats?month=${selectedMonth}&year=${selectedYear}`);
             const statsData = await statsRes.json();
 
             // Calculate totals from stats
@@ -158,10 +158,10 @@ export function ExpensesDashboard() {
     const fetchTransactions = async () => {
         setIsExpensesLoading(true);
         try {
-            let expensesUrl = `http://localhost:5000/expenses?month=${selectedMonth}&year=${selectedYear}`;
+            let expensesUrl = `https://spcarparkingbknd.onrender.com/expenses?month=${selectedMonth}&year=${selectedYear}`;
             // If searching, ignore month/year and search globally
             if (debouncedSearchQuery) {
-                expensesUrl = `http://localhost:5000/expenses?search=${encodeURIComponent(debouncedSearchQuery)}`;
+                expensesUrl = `https://spcarparkingbknd.onrender.com/expenses?search=${encodeURIComponent(debouncedSearchQuery)}`;
             }
 
             const expensesRes = await fetch(expensesUrl);
@@ -184,7 +184,7 @@ export function ExpensesDashboard() {
         if (isAddingExpense) return; // Prevent double submission
         setIsAddingExpense(true);
         try {
-            const response = await fetch('http://localhost:5000/expenses', {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/expenses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -547,7 +547,7 @@ export function ExpensesDashboard() {
 
     const confirmDelete = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/expenses/${expenseToDelete.id}`, {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${expenseToDelete.id}`, {
                 method: 'DELETE',
             });
 
@@ -590,7 +590,7 @@ export function ExpensesDashboard() {
             if (editingExpense.expenseType === 'Miscellaneous') {
                 body.description = editExpenseForm.description;
             }
-            const response = await fetch(`http://localhost:5000/expenses/${editingExpense._id}`, {
+            const response = await fetch(`https://spcarparkingbknd.onrender.com/expenses/${editingExpense._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
