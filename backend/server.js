@@ -1022,14 +1022,32 @@ app.post('/expenses', async (req, res) => {
     }
 });
 
-// Get expenses with optional month/year filter
+// Get expenses with optional global search or month/year filter
 app.get('/expenses', async (req, res) => {
     try {
-        const { month, year } = req.query;
-        const query = {};
+        const { month, year, search } = req.query;
+        let query = {};
 
-        if (month !== undefined) query.month = parseInt(month);
-        if (year !== undefined) query.year = parseInt(year);
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            const searchConditions = [
+                { description: searchRegex },
+                { expenseType: searchRegex },
+                { spentBy: searchRegex }
+            ];
+
+            // If search term is a number, include amount in search
+            if (!isNaN(search)) {
+                searchConditions.push({ amount: Number(search) });
+            }
+
+            query = {
+                $or: searchConditions
+            };
+        } else {
+            if (month !== undefined) query.month = parseInt(month);
+            if (year !== undefined) query.year = parseInt(year);
+        }
 
         const expenses = await Expense.find(query).sort({ transactionDate: -1 });
         res.json(expenses);
