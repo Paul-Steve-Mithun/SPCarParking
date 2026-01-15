@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TrashIcon, RefreshCwIcon, SearchIcon, PencilIcon, UserCog2Icon, PrinterIcon } from 'lucide-react';
+import { TrashIcon, RefreshCwIcon, SearchIcon, PencilIcon, UserCog2Icon, PrinterIcon, AlertCircle, AlertTriangle } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import VehicleEdit from './VehicleEdit';
 import jsPDF from 'jspdf';
@@ -73,8 +73,8 @@ export function AdminPanel() {
 
     const handlePrintInvoice = async (vehicle) => {
         try {
-            const totalAmount = vehicle.rentalType === 'daily' ? 
-                vehicle.rentPrice * vehicle.numberOfDays : 
+            const totalAmount = vehicle.rentalType === 'daily' ?
+                vehicle.rentPrice * vehicle.numberOfDays :
                 vehicle.rentPrice;
 
             const doc = new jsPDF();
@@ -83,28 +83,28 @@ export function AdminPanel() {
             const columnWidth = 85;
             const startX1 = 15;
             const startX2 = 110;
-            
+
             // Modern Header with Gradient - Reduced top margin
             const gradient = doc.setFillColor(0, 128, 0);
             doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced from 40 to 35
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 15, { align: 'center' });  // Moved up from 20 to 15
-            
+            doc.text('SP CAR PARKING', pageWidth / 2, 15, { align: 'center' });  // Moved up from 20 to 15
+
             // Welcome text with smaller font
             doc.setFontSize(18);
-            doc.text('Welcomes You', pageWidth/2, 25, { align: 'center' });  // Moved up from 30 to 25
-            
+            doc.text('Welcomes You', pageWidth / 2, 25, { align: 'center' });  // Moved up from 30 to 25
+
             // Subtitle inside the header
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 33, { align: 'center' });  // Moved up from 38 to 33
-            
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth / 2, 33, { align: 'center' });  // Moved up from 38 to 33
+
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
-            
+
             // Section Styling Function
             const createSection = (title, x, y) => {
                 doc.setFontSize(16);
@@ -131,8 +131,8 @@ export function AdminPanel() {
                 ['Start Date:', new Date(vehicle.startDate).toLocaleDateString('en-GB')],
                 ['Advance:', `INR ${vehicle.advanceAmount}`],
                 ['Rent:', `INR ${vehicle.rentPrice}`],
-                ['Duration:', vehicle.rentalType === 'daily' ? 
-                    `${vehicle.numberOfDays} days` : 'Every Month']  ];
+                ['Duration:', vehicle.rentalType === 'daily' ?
+                    `${vehicle.numberOfDays} days` : 'Every Month']];
 
             doc.autoTable({
                 startY: startY + 8,
@@ -140,7 +140,7 @@ export function AdminPanel() {
                 head: [],
                 body: vehicleDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
@@ -168,7 +168,7 @@ export function AdminPanel() {
                 head: [],
                 body: ownerDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
@@ -195,8 +195,8 @@ export function AdminPanel() {
                     const imageX = startX1 + ((columnWidth - imageWidth) / 2);
 
                     doc.addImage(
-                        imgBase64, 
-                        'JPEG', 
+                        imgBase64,
+                        'JPEG',
                         imageX,
                         doc.autoTable.previous.finalY + 5,
                         imageWidth,
@@ -224,7 +224,7 @@ export function AdminPanel() {
                 head: [],
                 body: facilities,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Reduced from 3
                     font: 'helvetica',
@@ -253,7 +253,7 @@ export function AdminPanel() {
                 head: [],
                 body: terms,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Reduced from 3
                     font: 'helvetica',
@@ -280,7 +280,7 @@ export function AdminPanel() {
                 head: [],
                 body: contacts,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,
                     font: 'helvetica',
@@ -320,8 +320,8 @@ export function AdminPanel() {
             const qrX = startX2 + ((columnWidth - qrWidth) / 2);
 
             doc.addImage(
-                qrDataUrl, 
-                'PNG', 
+                qrDataUrl,
+                'PNG',
                 qrX,
                 qrY + 10,  // Changed from 20 to 15
                 qrWidth,
@@ -332,11 +332,11 @@ export function AdminPanel() {
             doc.setDrawColor(0, 128, 0);
             doc.setLineWidth(0.5);
             doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
-            
+
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
             const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
+            doc.text(footer, pageWidth / 2, pageHeight - 8, { align: 'center' });
 
             doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}.pdf`);
             toast.success('Receipt generated successfully');
@@ -350,7 +350,7 @@ export function AdminPanel() {
         try {
             const startDate = new Date(vehicle.startDate);
             startDate.setHours(0, 0, 0, 0);
-            
+
             const endDate = new Date(vehicle.endDate);
             endDate.setHours(0, 0, 0, 0);
 
@@ -362,28 +362,28 @@ export function AdminPanel() {
             const columnWidth = 85;
             const startX1 = 15;
             const startX2 = 110;
-            
+
             // Modern Header with Gradient - Reduced top margin
             const gradient = doc.setFillColor(0, 128, 0);
             doc.rect(0, 0, pageWidth, 35, 'F');  // Reduced from 40 to 35
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(28);
-            doc.text('SP CAR PARKING', pageWidth/2, 15, { align: 'center' });  // Moved up from 20 to 15
-            
+            doc.text('SP CAR PARKING', pageWidth / 2, 15, { align: 'center' });  // Moved up from 20 to 15
+
             // Welcome text with smaller font
             doc.setFontSize(18);
-            doc.text('Welcomes You', pageWidth/2, 25, { align: 'center' });  // Moved up from 30 to 25
-            
+            doc.text('Welcomes You', pageWidth / 2, 25, { align: 'center' });  // Moved up from 30 to 25
+
             // Subtitle inside the header
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth/2, 33, { align: 'center' });  // Moved up from 38 to 33
-            
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road, Madurai. (Opp. to Our Lady School)', pageWidth / 2, 33, { align: 'center' });  // Moved up from 38 to 33
+
             // Reset color and set modern font
             doc.setTextColor(44, 62, 80);
             doc.setFont("helvetica", "bold");
-            
+
             // Section Styling Function
             const createSection = (title, x, y) => {
                 doc.setFontSize(16);
@@ -420,7 +420,7 @@ export function AdminPanel() {
                 head: [],
                 body: vehicleDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Changed from 2 to 3
                     font: 'helvetica',
@@ -448,7 +448,7 @@ export function AdminPanel() {
                 head: [],
                 body: ownerDetails,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Changed from 2 to 3
                     font: 'helvetica',
@@ -475,8 +475,8 @@ export function AdminPanel() {
                     const imageX = startX1 + ((columnWidth - imageWidth) / 2);
 
                     doc.addImage(
-                        imgBase64, 
-                        'JPEG', 
+                        imgBase64,
+                        'JPEG',
                         imageX,
                         doc.autoTable.previous.finalY + 5,
                         imageWidth,
@@ -503,7 +503,7 @@ export function AdminPanel() {
                 head: [],
                 body: facilities,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Changed from 2 to 3
                     font: 'helvetica',
@@ -532,7 +532,7 @@ export function AdminPanel() {
                 head: [],
                 body: terms,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Changed from 2 to 3
                     font: 'helvetica',
@@ -559,7 +559,7 @@ export function AdminPanel() {
                 head: [],
                 body: contacts,
                 theme: 'plain',
-                styles: { 
+                styles: {
                     fontSize: 12,
                     cellPadding: 3,  // Changed from 2 to 3
                     font: 'helvetica',
@@ -599,8 +599,8 @@ export function AdminPanel() {
             const qrX = startX2 + ((columnWidth - qrWidth) / 2);
 
             doc.addImage(
-                qrDataUrl, 
-                'PNG', 
+                qrDataUrl,
+                'PNG',
                 qrX,
                 qrY + 15,  // Changed from 20 to 15
                 qrWidth,
@@ -611,11 +611,11 @@ export function AdminPanel() {
             doc.setDrawColor(0, 128, 0);
             doc.setLineWidth(0.5);
             doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
-            
+
             doc.setFontSize(9);
             doc.setTextColor(44, 62, 80);
             const footer = "JESUS LEADS YOU";
-            doc.text(footer, pageWidth/2, pageHeight - 8, { align: 'center' });
+            doc.text(footer, pageWidth / 2, pageHeight - 8, { align: 'center' });
 
             doc.save(`SP_Parking_Receipt_${vehicle.vehicleNumber}_Daily.pdf`);
             toast.success('Receipt generated successfully');
@@ -634,7 +634,7 @@ export function AdminPanel() {
                 vehicle.vehicleDescription.toLowerCase().includes(searchTermLower) ||
                 vehicle.contactNumber.toLowerCase().includes(searchTermLower) ||
                 // Check for both lot number and "open" parking
-                (vehicle.lotNumber 
+                (vehicle.lotNumber
                     ? vehicle.lotNumber.toLowerCase().includes(searchTermLower)
                     : searchTermLower === 'open')
             );
@@ -651,7 +651,7 @@ export function AdminPanel() {
             if (expired) {
                 return "bg-red-100 text-red-800 border-red-200";
             }
-            return status === 'active' 
+            return status === 'active'
                 ? "bg-green-100 text-green-800 border-green-200"
                 : "bg-gray-100 text-gray-800 border-gray-200";
         };
@@ -668,14 +668,22 @@ export function AdminPanel() {
         const end = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const diff = end - now;
-    
+
         if (diff < 0) return <p className="text-xs text-red-500 mt-1"> Rental Period Ended: {new Date(endDate).toLocaleDateString('en-GB')} </p>;
-    
+
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
         if (days > 0) return `${days}d ${hours}h remaining`;
         return `${hours}h remaining`;
+    };
+
+    const getMissingDocs = (vehicle) => {
+        const missing = [];
+        if (!vehicle.vehicleImage?.url) missing.push('Vehicle Photo');
+        if (!vehicle.document1Image?.url) missing.push('Aadhaar Card');
+        if (!vehicle.document2Image?.url) missing.push('RC/License');
+        return missing;
     };
 
     const renderRentalInfo = (vehicle) => {
@@ -691,13 +699,13 @@ export function AdminPanel() {
             const startDate = new Date(vehicle.endDate);
             startDate.setDate(startDate.getDate() + 1);
             startDate.setHours(0, 0, 0, 0);
-            
+
             const endDate = new Date();
             endDate.setHours(0, 0, 0, 0);
 
             const diffTime = endDate.getTime() - startDate.getTime();
             const numberOfDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            
+
             return vehicle.rentPrice * numberOfDays;
         }
         return 0;
@@ -708,17 +716,17 @@ export function AdminPanel() {
             const doc = new jsPDF('landscape');
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            
+
             // Modern header with gradient
             doc.setFillColor(79, 70, 229);
             doc.rect(0, 0, pageWidth, 35, 'F');
-            
+
             // Company name
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
             doc.text('SP CAR PARKING', pageWidth / 2, 18, { align: 'center' });
-            
+
             // Report title and date
             doc.setFontSize(14);
             const currentDate = new Date().toLocaleDateString('en-GB');
@@ -728,7 +736,7 @@ export function AdminPanel() {
             const summaryY = 45;
             const cardWidth = (pageWidth - 70) / 5; // Divide available space into 5 cards
             const cardMargin = 14;
-            
+
             // Calculate statistics
             const totalVehicles = vehicles.length;
             const activeMonthly = vehicles.filter(v => v.status === 'active' && v.rentalType === 'monthly').length;
@@ -748,17 +756,17 @@ export function AdminPanel() {
             // Draw cards
             summaryCards.forEach((card, index) => {
                 const cardX = cardMargin + (index * (cardWidth + 10));
-                
+
                 // Card background
                 doc.setFillColor(246, 246, 252);
                 doc.roundedRect(cardX, summaryY, cardWidth, 30, 2, 2, 'F');
-                
+
                 // Card title
                 doc.setTextColor(79, 70, 229);
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
                 doc.text(card.title, cardX + 5, summaryY + 12);
-                
+
                 // Card value
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'bold');
@@ -776,7 +784,7 @@ export function AdminPanel() {
                 status: 30,
                 rentPrice: 40
             };
-            
+
             const totalTableWidth = Object.values(columnWidths).reduce((sum, width) => sum + width, 0);
             const leftMargin = Math.floor((pageWidth - totalTableWidth) / 2);
 
@@ -801,7 +809,7 @@ export function AdminPanel() {
                     parkingType: vehicle.lotNumber || 'Open',
                     rentalType: `${capitalizeFirst(vehicle.rentalType)}${vehicle.rentalType === 'daily' ? ` (${vehicle.numberOfDays} days)` : ''}`,
                     status: vehicle.status === 'active' ? 'Paid' : 'Not Paid',
-                    rentPrice: vehicle.rentalType === 'daily' && dueAmount > 0 
+                    rentPrice: vehicle.rentalType === 'daily' && dueAmount > 0
                         ? `Due: INR ${dueAmount}.00`
                         : `INR ${vehicle.rentPrice}.00`,
                     isInactive: vehicle.status === 'inactive'
@@ -843,18 +851,18 @@ export function AdminPanel() {
                 alternateRowStyles: {
                     fillColor: [250, 250, 255]
                 },
-                margin: { 
+                margin: {
                     left: leftMargin,
                     right: leftMargin
                 },
                 tableWidth: totalTableWidth,
-                didParseCell: function(data) {
+                didParseCell: function (data) {
                     // Color inactive vehicle rows in red
                     if (data.row.raw && data.row.raw.isInactive) {
                         data.cell.styles.textColor = [220, 38, 38]; // Red color
                     }
                 },
-                didDrawPage: function(data) {
+                didDrawPage: function (data) {
                     doc.setFontSize(10);
                     doc.text(
                         `Page ${data.pageNumber}`,
@@ -876,19 +884,19 @@ export function AdminPanel() {
     return (
         <div className={`max-w-4xl mx-auto shadow-xl rounded-xl overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
             <Toaster position="top-right" />
-            
+
             <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6 flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-white">Vehicles Database</h1>
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={generateDatabaseReport}
                         className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
                         title="Generate Database Report"
                     >
                         <PrinterIcon className="w-6 h-6" />
                     </button>
-                    <button 
-                        onClick={fetchVehicles} 
+                    <button
+                        onClick={fetchVehicles}
                         className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
                     >
                         <RefreshCwIcon className="w-6 h-6" />
@@ -898,9 +906,9 @@ export function AdminPanel() {
 
             <div className="p-4">
                 <div className="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search by vehicle number, owner name, or lot number..." 
+                    <input
+                        type="text"
+                        placeholder="Search by vehicle number, owner name, or lot number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'}`}
@@ -916,15 +924,15 @@ export function AdminPanel() {
             ) : (
                 <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                     {filteredVehicles.map(vehicle => (
-                        <div 
-                            key={vehicle._id} 
+                        <div
+                            key={vehicle._id}
                             className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
                         >
                             <div className="flex-grow cursor-pointer w-full" onClick={() => setSelectedVehicle(vehicle)}>
                                 {/* Top row with vehicle number and badges */}
                                 <div className="flex flex-wrap items-center gap-2 mb-2">
                                     <p className={`font-semibold min-w-[120px] ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{vehicle.vehicleNumber}</p>
-                                    
+
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className={`px-2 py-1 rounded-full text-xs ${vehicle.vehicleType === 'own' ? (isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-600') : (isDarkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-100 text-orange-600')}`}>
                                             {vehicle.vehicleType === 'own' ? 'Own' : 'T Board'}
@@ -972,7 +980,33 @@ export function AdminPanel() {
                                 >
                                     <PrinterIcon className="w-5 h-5" />
                                 </button>*/}
-                                <button 
+                                {(() => {
+                                    const missingDocs = getMissingDocs(vehicle);
+                                    if (missingDocs.length > 0) {
+                                        const isVehiclePhotoMissing = missingDocs.includes('Vehicle Photo');
+                                        return (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toast.error(`Missing Documents: ${missingDocs.join(', ')}`, {
+                                                        duration: 4000,
+                                                        className: 'text-sm font-medium'
+                                                    });
+                                                }}
+                                                className={`transition-all p-2 animate-pulse ${isVehiclePhotoMissing ? 'text-red-500 hover:text-red-700' : 'text-yellow-500 hover:text-yellow-700'}`}
+                                                title={`Missing: ${missingDocs.join(', ')}`}
+                                            >
+                                                {isVehiclePhotoMissing ? (
+                                                    <AlertTriangle className="w-5 h-5" />
+                                                ) : (
+                                                    <AlertCircle className="w-5 h-5" />
+                                                )}
+                                            </button>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                                <button
                                     onClick={() => setSelectedVehicle(vehicle)}
                                     className={`transition-colors p-2 ${isDarkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'}`}
                                 >
@@ -985,8 +1019,8 @@ export function AdminPanel() {
             )}
 
             {selectedVehicle && (
-                <VehicleEdit 
-                    vehicle={selectedVehicle} 
+                <VehicleEdit
+                    vehicle={selectedVehicle}
                     onClose={() => setSelectedVehicle(null)}
                     onUpdate={fetchVehicles}
                     onDelete={removeVehicle}
