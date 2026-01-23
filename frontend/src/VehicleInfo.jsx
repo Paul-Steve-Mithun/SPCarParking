@@ -766,7 +766,7 @@ export function VehicleInfo() {
                     doc.setFont("helvetica", "normal");
                     // Text aligned to right margin
                     doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
-                    doc.text('SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                    doc.text('For SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
                 } catch (error) {
                     console.error('Error loading signature/stamp:', error);
                 }
@@ -1301,7 +1301,7 @@ export function VehicleInfo() {
                     doc.setTextColor(75, 85, 99);
                     doc.setFont("helvetica", "normal");
                     doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
-                    doc.text('SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                    doc.text('For SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
                 } catch (error) {
                     console.error('Error loading signature/stamp:', error);
                 }
