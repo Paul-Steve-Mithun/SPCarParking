@@ -431,8 +431,8 @@ function App() {
                 {/* Welcome Banner - Only visible on desktop */}
                 {isAuthenticated && (
                     <div className={`hidden md:block border-b transition-colors duration-300 ${isDarkMode
-                            ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-gray-700'
-                            : 'bg-gradient-to-r from-blue-100 to-blue-50 border-blue-200'
+                        ? 'bg-gradient-to-r from-gray-800 to-gray-900 border-gray-700'
+                        : 'bg-gradient-to-r from-blue-100 to-blue-50 border-blue-200'
                         }`}>
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                             <div className="flex items-center space-x-3">
