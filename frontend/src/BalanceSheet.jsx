@@ -14,7 +14,9 @@ import {
     User,
     Users,
     CalendarDays,
-    Camera
+    Camera,
+    MinusCircle,
+    Home
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import toast, { Toaster } from 'react-hot-toast';
@@ -113,6 +115,9 @@ const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName })
                                     icon={ArrowRight}
                                 />
                             </div>
+                            <div>
+                                <SnapshotMetric label="Take Home" value={data.balu.takeHome} color="#f97316" icon={Home} />
+                            </div>
                         </div>
 
                         <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
@@ -121,7 +126,7 @@ const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName })
                                     <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
                                     <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
                                 </div>
-                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.balu.thisMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.balu.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
@@ -156,6 +161,9 @@ const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName })
                                     icon={ArrowRight}
                                 />
                             </div>
+                            <div>
+                                <SnapshotMetric label="Take Home" value={data.mani.takeHome} color="#f97316" icon={Home} />
+                            </div>
                         </div>
 
                         <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
@@ -164,7 +172,7 @@ const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName })
                                     <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
                                     <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
                                 </div>
-                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.mani.thisMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.mani.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
@@ -203,14 +211,22 @@ export function BalanceSheet() {
             expenses: 0,
             netProfit: 0,
             previousMonthTakeHome: 0,
-            thisMonthTakeHome: 0
+            thisMonthTakeHome: 0,
+            cashInHand: 0,
+            takeHome: 0,
+            transfers: [],
+            takeHomeRecords: []
         },
         mani: {
             revenue: 0,
             expenses: 0,
             netProfit: 0,
             previousMonthTakeHome: 0,
-            thisMonthTakeHome: 0
+            thisMonthTakeHome: 0,
+            cashInHand: 0,
+            takeHome: 0,
+            transfers: [],
+            takeHomeRecords: []
         }
     });
     const [isLoading, setIsLoading] = useState(true);
@@ -219,6 +235,7 @@ export function BalanceSheet() {
     const [transferTo, setTransferTo] = useState('Mani');
     const [transferAmount, setTransferAmount] = useState('');
     const [transferDate, setTransferDate] = useState('');
+    const [transferDescription, setTransferDescription] = useState('');
     const [totalSummary, setTotalSummary] = useState({
         totalRevenue: 0,
         totalExpense: 0,
@@ -228,6 +245,7 @@ export function BalanceSheet() {
     });
     const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
     const [advanceExpensesTotal, setAdvanceExpensesTotal] = useState(0);
+    const [isTakeHomeMode, setIsTakeHomeMode] = useState(false); // false for Carry Forward, true for Take Home
 
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -288,7 +306,15 @@ export function BalanceSheet() {
                 .filter(record => record.userName === 'Mani' && record.type === 'transfer')
                 .reduce((sum, record) => sum + (record.amount || 0), 0);
 
-            // Calculate previous month's take home for each user (still use previous month for this)
+            // Calculate take home amounts for this month
+            const baluTakeHome = balanceSheetData
+                .filter(record => record.userName === 'Balu' && record.type === 'takehome')
+                .reduce((sum, record) => sum + (record.amount || 0), 0);
+            const maniTakeHome = balanceSheetData
+                .filter(record => record.userName === 'Mani' && record.type === 'takehome')
+                .reduce((sum, record) => sum + (record.amount || 0), 0);
+
+            // Calculate previous month's take home for each user (carry forward)
             const prevMonth = selectedMonth - 1 < 0 ? 11 : selectedMonth - 1;
             const prevYear = selectedMonth - 1 < 0 ? selectedYear - 1 : selectedYear;
             const prevBalanceSheetRes = await fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${prevMonth}&year=${prevYear}`);
@@ -304,9 +330,9 @@ export function BalanceSheet() {
             const baluNetProfit = baluRevenue - baluExpenses;
             const maniNetProfit = maniRevenue - maniExpenses;
 
-            // Calculate this month's total take home
-            const baluThisMonthTakeHome = baluPreviousMonthTakeHome + baluNetProfit + baluTransfers;
-            const maniThisMonthTakeHome = maniPreviousMonthTakeHome + maniNetProfit + maniTransfers;
+            // Calculate this month's total cash in hand (after transfers and take home)
+            const baluCashInHand = baluPreviousMonthTakeHome + baluNetProfit + baluTransfers - baluTakeHome;
+            const maniCashInHand = maniPreviousMonthTakeHome + maniNetProfit + maniTransfers - maniTakeHome;
 
             // Calculate total revenue and expense (Balu + Mani)
             const totalRevenue = baluRevenue + maniRevenue;
@@ -329,16 +355,20 @@ export function BalanceSheet() {
                     expenses: baluExpenses,
                     netProfit: baluNetProfit,
                     previousMonthTakeHome: baluPreviousMonthTakeHome,
-                    thisMonthTakeHome: baluThisMonthTakeHome,
-                    transfers: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'transfer')
+                    cashInHand: baluCashInHand,
+                    takeHome: baluTakeHome,
+                    transfers: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'transfer'),
+                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'takehome')
                 },
                 mani: {
                     revenue: maniRevenue,
                     expenses: maniExpenses,
                     netProfit: maniNetProfit,
                     previousMonthTakeHome: maniPreviousMonthTakeHome,
-                    thisMonthTakeHome: maniThisMonthTakeHome,
-                    transfers: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'transfer')
+                    cashInHand: maniCashInHand,
+                    takeHome: maniTakeHome,
+                    transfers: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'transfer'),
+                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'takehome')
                 }
             });
 
@@ -357,12 +387,6 @@ export function BalanceSheet() {
         }
     };
 
-    const handleTakeHome = async (user) => {
-        setSelectedUser(user);
-        setTakeHomeAmount('');  // Start with empty input
-        setIsModalOpen(true);
-    };
-
     const handleSubmitTakeHome = async () => {
         if (!takeHomeAmount) return;
 
@@ -372,46 +396,85 @@ export function BalanceSheet() {
             const checkResponse = await fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${selectedMonth}&year=${selectedYear}`);
             const existingRecords = await checkResponse.json();
 
-            const existingRecord = existingRecords.find(
-                record => record.userName === selectedUser &&
-                    record.month === selectedMonth &&
-                    record.year === selectedYear &&
-                    (record.type === undefined || record.type === 'normal')
-            );
+            // Check if it's carry forward (normal type) or take home
+            const isCarryForward = !isTakeHomeMode;
 
-            const endpoint = existingRecord
-                ? `https://spcarparkingbknd.onrender.com/balancesheet/${existingRecord._id}`
-                : 'https://spcarparkingbknd.onrender.com/balancesheet';
+            let endpoint, method, body;
 
-            const method = existingRecord ? 'PUT' : 'POST';
+            if (isCarryForward) {
+                const existingRecord = existingRecords.find(
+                    record => record.userName === selectedUser &&
+                        record.month === selectedMonth &&
+                        record.year === selectedYear &&
+                        (record.type === undefined || record.type === 'normal')
+                );
 
-            const response = await fetch(endpoint, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+                endpoint = existingRecord
+                    ? `https://spcarparkingbknd.onrender.com/balancesheet/${existingRecord._id}`
+                    : 'https://spcarparkingbknd.onrender.com/balancesheet';
+
+                method = existingRecord ? 'PUT' : 'POST';
+
+                body = {
                     userName: selectedUser,
                     amount: parseFloat(takeHomeAmount),
                     date: new Date(),
                     month: selectedMonth,
                     year: selectedYear,
                     type: 'normal'
-                }),
+                };
+            } else {
+                // New Take Home record - always create new
+                endpoint = 'https://spcarparkingbknd.onrender.com/balancesheet';
+                method = 'POST';
+
+                body = {
+                    userName: selectedUser,
+                    amount: parseFloat(takeHomeAmount),
+                    date: new Date(),
+                    month: selectedMonth,
+                    year: selectedYear,
+                    type: 'takehome',
+                    description: 'Take Home'
+                };
+            }
+
+            const response = await fetch(endpoint, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
             });
 
-            if (!response.ok) throw new Error('Failed to record Carry Forward amount');
+            if (!response.ok) throw new Error(`Failed to record ${isCarryForward ? 'Carry Forward' : 'Take Home'} amount`);
 
-            toast.success(`Successfully updated Carry Forward amount for ${selectedUser}`);
+            toast.success(`Successfully updated ${isCarryForward ? 'Carry Forward' : 'Take Home'} amount for ${selectedUser}`);
             setIsModalOpen(false);
             setTakeHomeAmount('');
             await fetchBalanceData();
         } catch (error) {
-            toast.error(`Failed to update Carry Forward amount for ${selectedUser}`);
+            toast.error(`Failed to update amount for ${selectedUser}`);
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // New handler for opening Take Home modal specifically
+    const handleOpenTakeHome = (user) => {
+        setSelectedUser(user);
+        setTakeHomeAmount('');
+        setIsTakeHomeMode(true);
+        setIsModalOpen(true);
+    };
+
+    // Modify existing handler to be for Carry Forward
+    const handleCarryForward = (user) => {
+        setSelectedUser(user);
+        setTakeHomeAmount('');
+        setIsTakeHomeMode(false);
+        setIsModalOpen(true);
     };
 
     const generateDetailedPDF = async (user) => {
@@ -432,6 +495,8 @@ export function BalanceSheet() {
             const userRevenue = revenueData.filter(record => record.receivedBy === user);
             const userExpenses = expensesData.filter(record => record.spentBy === user);
             const userTransfers = balanceSheetData.filter(record => record.userName === user && record.type === 'transfer');
+            const userTakeHomeRecords = balanceSheetData.filter(record => record.userName === user && record.type === 'takehome');
+
 
             // Filter out transactions with zero/null amounts and prepare data
             const combinedTransactions = [
@@ -454,6 +519,12 @@ export function BalanceSheet() {
                         ...tr,
                         type: 'transfer',
                         date: new Date(tr.date)
+                    })),
+                ...userTakeHomeRecords
+                    .map(th => ({
+                        ...th,
+                        type: 'takehome',
+                        date: new Date(th.date)
                     }))
             ].sort((a, b) => a.date - b.date);
 
@@ -535,14 +606,14 @@ export function BalanceSheet() {
                 ...combinedTransactions.map((record, index) => ({
                     sno: (index + 2).toString(),
                     date: formatDateForPDF(record.date),
-                    type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : (record.type === 'expense' ? record.expenseType : 'Transfer'),
+                    type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : (record.type === 'expense' ? record.expenseType : (record.type === 'transfer' ? 'Transfer' : 'Take Home')),
                     description: record.type === 'revenue'
                         ? (record.vehicleDescription || '-').toUpperCase()
                         : (record.type === 'expense'
                             ? (record.description || '-').toUpperCase()
                             : (record.description || '-').toUpperCase()),
                     mode: record.transactionMode || '-',
-                    expense: record.type === 'expense' ? formatAmount(record.amount) : (record.type === 'transfer' && record.amount < 0 ? formatAmount(Math.abs(record.amount)) : '-'),
+                    expense: record.type === 'expense' ? formatAmount(record.amount) : (record.type === 'transfer' && record.amount < 0 ? formatAmount(Math.abs(record.amount)) : (record.type === 'takehome' ? formatAmount(record.amount) : '-')),
                     revenue: record.type === 'revenue' ? formatAmount(record.revenueAmount) : (record.type === 'transfer' && record.amount > 0 ? formatAmount(record.amount) : '-')
                 }))
             ];
@@ -555,7 +626,10 @@ export function BalanceSheet() {
                 .filter(tr => tr.amount < 0)
                 .reduce((sum, tr) => sum + Math.abs(tr.amount), 0);
 
-            const totalExpense = userExpenses.reduce((sum, exp) => sum + exp.amount, 0) + transferOut;
+            // Calculate take home total
+            const totalTakeHome = userTakeHomeRecords.reduce((sum, th) => sum + th.amount, 0);
+
+            const totalExpense = userExpenses.reduce((sum, exp) => sum + exp.amount, 0) + transferOut + totalTakeHome;
             const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0) +
                 balanceData[user.toLowerCase()].previousMonthTakeHome + transferIn;
             const cashInHand = totalRevenue - totalExpense;
@@ -719,8 +793,16 @@ export function BalanceSheet() {
 
                         // Draw total rows with cell formatting
                         drawTotalRow(finalY, 'Total:', totalExpense, totalRevenue);
+                        if (totalTakeHome > 0) {
+                            drawTotalRow(
+                                finalY + (lineSpacing * 1),
+                                `Total Take Home:`,
+                                totalTakeHome,
+                                null
+                            );
+                        }
                         drawTotalRow(
-                            finalY + (lineSpacing * 1),
+                            finalY + (lineSpacing * (totalTakeHome > 0 ? 2 : 1)),
                             `${monthNames[selectedMonth]} - Cash in Hand:`,
                             null,
                             cashInHand,
@@ -808,6 +890,7 @@ export function BalanceSheet() {
         setTransferFrom(fromUser);
         setTransferTo(fromUser === 'Balu' ? 'Mani' : 'Balu');
         setTransferDate(new Date().toISOString().split('T')[0]);
+        setTransferDescription('');
         setIsTransferModalOpen(true);
     };
 
@@ -831,7 +914,7 @@ export function BalanceSheet() {
         }
 
         return (
-            <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200 
+            <div className={`rounded-xl p-2 sm:p-3 border shadow-sm hover:shadow-md transition-all duration-200
                 ${isDarkMode
                     ? 'border-gray-700 bg-gray-800/90'
                     : `bg-gradient-to-br ${bgGradient} border-white/50`
@@ -850,7 +933,7 @@ export function BalanceSheet() {
         );
     };
 
-    const UserSection = ({ user, data, onTakeHome, isLoading }) => {
+    const UserSection = ({ user, data, onCarryForward, onTakeHome, isLoading }) => {
         // Calculate transfer out for this user (amounts sent to the other user)
         const transferOut = (data.transfers || [])
             .filter(tr => tr.amount < 0)
@@ -860,38 +943,49 @@ export function BalanceSheet() {
             <div className={`rounded-xl shadow-lg overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="p-3 sm:p-4">
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 gap-3 sm:gap-0">
-                        <div className="flex items-center gap-3">
-                            <div className={`rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold ${user === 'Balu' ? (isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700') : (isDarkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700')}`}>{user[0]}</div>
-                            <span className={`text-lg sm:text-xl font-extrabold tracking-wide ${isDarkMode ? 'text-gray-100' : ''}`}>{user === 'Balu' ? 'Balu' : 'Mani'}</span>
+                    <div className="flex flex-col mb-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold ${user === 'Balu' ? (isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700') : (isDarkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700')}`}>{user[0]}</div>
+                            <span className={`text-2xl font-extrabold tracking-wide ${isDarkMode ? 'text-gray-100' : ''}`}>{user === 'Balu' ? 'Balu' : 'Mani'}</span>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+
+                        {/* Action Buttons Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                             <button
                                 onClick={() => generateDetailedPDF(user)}
                                 disabled={isLoading}
-                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                className={`w-full px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 text-sm font-semibold sm:order-1 ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
                                 title="Download Statement"
                             >
-                                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <Download className="w-4 h-4" />
                                 <span>Statement</span>
-                            </button>
-                            <button
-                                onClick={() => onTakeHome(user)}
-                                disabled={isLoading}
-                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
-                                title="Take Home"
-                            >
-                                <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                <span>Carry Forward</span>
                             </button>
                             <button
                                 onClick={() => handleTransfer(user)}
                                 disabled={isLoading}
-                                className={`w-full sm:w-auto px-2 sm:px-3 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-colors disabled:opacity-50 text-xs sm:text-sm font-semibold justify-center ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                className={`w-full px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 text-sm font-semibold sm:order-2 ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
                                 title="Transfer Cash"
                             >
-                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <ArrowRight className="w-4 h-4" />
                                 <span>Transfer Cash</span>
+                            </button>
+                            <button
+                                onClick={() => onTakeHome(user)}
+                                disabled={isLoading}
+                                className={`w-full px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 text-sm font-semibold sm:order-4 ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                title="Take Home"
+                            >
+                                <Home className="w-4 h-4" />
+                                <span>Take Home</span>
+                            </button>
+                            <button
+                                onClick={() => onCarryForward(user)}
+                                disabled={isLoading}
+                                className={`w-full px-4 py-2.5 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50 text-sm font-semibold sm:order-3 ${isDarkMode ? 'bg-gray-700 text-blue-300 hover:bg-gray-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                                title="Carry Forward"
+                            >
+                                <Receipt className="w-4 h-4" />
+                                <span>Carry Forward</span>
                             </button>
                         </div>
                     </div>
@@ -950,9 +1044,18 @@ export function BalanceSheet() {
                         </div>
                         <div className="col-span-2">
                             <BalanceCard
+                                title="Take Home"
+                                icon={<Home className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />}
+                                value={data.takeHome}
+                                bgGradient="from-orange-50 to-orange-100"
+                                isLoading={isLoading}
+                            />
+                        </div>
+                        <div className="col-span-2">
+                            <BalanceCard
                                 title={`${monthNames[selectedMonth]} - Cash in Hand`}
                                 icon={<ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />}
-                                value={data.thisMonthTakeHome}
+                                value={data.cashInHand}
                                 bgGradient="from-emerald-50 to-emerald-100"
                                 isLoading={isLoading}
                             />
@@ -1168,13 +1271,15 @@ export function BalanceSheet() {
                 <UserSection
                     user="Balu"
                     data={balanceData.balu}
-                    onTakeHome={handleTakeHome}
+                    onCarryForward={handleCarryForward}
+                    onTakeHome={handleOpenTakeHome}
                     isLoading={isLoading}
                 />
                 <UserSection
                     user="Mani"
                     data={balanceData.mani}
-                    onTakeHome={handleTakeHome}
+                    onCarryForward={handleCarryForward}
+                    onTakeHome={handleOpenTakeHome}
                     isLoading={isLoading}
                 />
             </div>
@@ -1197,8 +1302,8 @@ export function BalanceSheet() {
                                         <Wallet className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Carry Forward Amount</h3>
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Carry Forward for {monthNames[selectedMonth]} {selectedYear}</p>
+                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{isTakeHomeMode ? 'Take Home Amount' : 'Carry Forward Amount'}</h3>
+                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s {isTakeHomeMode ? 'Take Home' : 'Carry Forward'} for {monthNames[selectedMonth]} {selectedYear}</p>
                                     </div>
                                 </div>
                                 <button
@@ -1255,7 +1360,7 @@ export function BalanceSheet() {
                                     ) : (
                                         <>
                                             <Download className="w-4 h-4" />
-                                            Carry Forward
+                                            {isTakeHomeMode ? 'Take Home' : 'Carry Forward'}
                                         </>
                                     )}
                                 </button>
@@ -1321,6 +1426,29 @@ export function BalanceSheet() {
                                     min={new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0]}
                                 />
                             </div>
+                            {/* Description Input */}
+                            <div className="mb-4">
+                                <label className={`text-sm font-medium mb-2 flex items-center justify-between ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Receipt className="w-4 h-4 text-blue-600" /> Description
+                                    </div>
+                                    <span className={`text-xs ${transferDescription.length >= 25 ? 'text-red-500' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {transferDescription.length}/25
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={transferDescription}
+                                    onChange={e => {
+                                        if (e.target.value.length <= 25) {
+                                            setTransferDescription(e.target.value);
+                                        }
+                                    }}
+                                    maxLength={25}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base transition-shadow ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300 text-gray-900'}`}
+                                    placeholder="Enter description (optional)"
+                                />
+                            </div>
                             {/* Amount Input */}
                             <div className="mb-8">
                                 <label className={`text-sm font-medium mb-2 flex items-center gap-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> <IndianRupee className="w-4 h-4 text-blue-600" /> Amount </label>
@@ -1367,7 +1495,8 @@ export function BalanceSheet() {
                                                     amount: parseFloat(transferAmount),
                                                     date: new Date(transferDate),
                                                     month: selectedMonth,
-                                                    year: selectedYear
+                                                    year: selectedYear,
+                                                    description: transferDescription
                                                 })
                                             });
                                             if (!res.ok) throw new Error('Transfer failed');
@@ -1375,6 +1504,7 @@ export function BalanceSheet() {
                                             setIsTransferModalOpen(false);
                                             setTransferAmount('');
                                             setTransferDate('');
+                                            setTransferDescription('');
                                             await fetchBalanceData();
                                         } catch (err) {
                                             toast.error('Transfer failed');

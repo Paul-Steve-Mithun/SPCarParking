@@ -187,7 +187,7 @@ const BalancesheetSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['normal', 'transfer'],
+        enum: ['normal', 'transfer', 'takehome'],
         default: 'normal'
     },
     description: {
@@ -1192,10 +1192,13 @@ app.post('/revenue', async (req, res) => {
 // Add Balancesheet endpoints
 app.post('/balancesheet/transfer', async (req, res) => {
     try {
-        const { fromUser, toUser, amount, date, month, year } = req.body;
+        const { fromUser, toUser, amount, date, month, year, description } = req.body;
         if (!fromUser || !toUser || !amount) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
+
+        const descriptionPrefix = description ? `${description} - ` : '';
+
         // Deduct from sender
         const senderRecord = new Balancesheet({
             userName: fromUser,
@@ -1204,7 +1207,7 @@ app.post('/balancesheet/transfer', async (req, res) => {
             month: month !== undefined ? month : new Date().getMonth(),
             year: year !== undefined ? year : new Date().getFullYear(),
             type: 'transfer',
-            description: `Transfer to ${toUser}`
+            description: `${descriptionPrefix}Transfer to ${toUser}`
         });
         // Add to receiver
         const receiverRecord = new Balancesheet({
@@ -1214,7 +1217,7 @@ app.post('/balancesheet/transfer', async (req, res) => {
             month: month !== undefined ? month : new Date().getMonth(),
             year: year !== undefined ? year : new Date().getFullYear(),
             type: 'transfer',
-            description: `Received from ${fromUser}`
+            description: `${descriptionPrefix}Received from ${fromUser}`
         });
         await senderRecord.save();
         await receiverRecord.save();
