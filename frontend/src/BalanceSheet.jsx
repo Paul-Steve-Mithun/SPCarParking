@@ -13,12 +13,182 @@ import {
     ArrowRight,
     User,
     Users,
-    CalendarDays
+    CalendarDays,
+    Camera
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import toast, { Toaster } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { AdvanceExpensesModal } from './AdvanceExpensesModal';
+
+const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName }) => {
+    return (
+        <div
+            id={id}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: -9999,
+                width: '1200px',
+                minHeight: '800px',
+                zIndex: -1,
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                backgroundColor: '#ffffff',
+                padding: '32px'
+            }}
+        >
+            {/* Header with Gradient */}
+            <div
+                style={{
+                    background: 'linear-gradient(to right, #2563eb, #4338ca)',
+                    color: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '32px',
+                    marginBottom: '32px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                }}
+            >
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#ffffff' }}>Balance Sheet Snapshot</h1>
+                        <p className="mt-2 text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>SP Car Parking Management System</p>
+                    </div>
+                    <div className="text-right">
+                        <h2 className="text-2xl font-bold" style={{ color: '#ffffff' }}>{month} {year}</h2>
+                        <p className="mt-1" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Generated: {new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Summary Section */}
+            <div className="mb-10">
+                <h3 className="text-xl font-bold mb-6" style={{ color: '#1f2937' }}>
+                    Monthly Overview
+                </h3>
+                <div className="grid grid-cols-5 gap-4">
+                    {[
+                        { label: 'Total Revenue', value: summary.totalRevenue, color: '#15803d', bg: '#f0fdf4', border: '#dcfce7' },
+                        { label: 'Total Expense', value: summary.totalExpense, color: '#b91c1c', bg: '#fef2f2', border: '#fee2e2' },
+                        { label: 'Net Income', value: summary.netIncome, color: summary.netIncome >= 0 ? '#4338ca' : '#b91c1c', bg: summary.netIncome >= 0 ? '#eef2ff' : '#fef2f2', border: summary.netIncome >= 0 ? '#e0e7ff' : '#fee2e2' },
+                        { label: 'Total Advance', value: summary.totalAdvance, color: '#b45309', bg: '#fffbeb', border: '#fef3c7' },
+                        { label: 'Advance In Hand', value: summary.advanceInHand, color: '#0e7490', bg: '#ecfeff', border: '#cffafe' }
+                    ].map((item, idx) => (
+                        <div key={idx} style={{ backgroundColor: item.bg, borderColor: item.border, borderWidth: '1px', borderStyle: 'solid' }} className="rounded-xl p-5 shadow-sm">
+                            <p className="text-sm font-semibold mb-1 uppercase tracking-wide" style={{ color: '#4b5563' }}>{item.label}</p>
+                            <p className="text-xl font-bold" style={{ color: item.color }}>₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Users Comparison Section */}
+            <div className="grid grid-cols-2 gap-8">
+                {/* Balu's Card */}
+                <div className="rounded-2xl shadow-lg overflow-hidden" style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}>
+                    <div className="p-6 border-b flex items-center gap-4" style={{ backgroundColor: '#eff6ff', borderColor: '#f3f4f6' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dbeafe', color: '#1d4ed8', fontSize: '20px', fontWeight: 'bold', lineHeight: '48px' }}>B</div>
+                        <div>
+                            <h3 className="text-xl font-bold" style={{ color: '#111827' }}>Balu</h3>
+                        </div>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mb-6">
+                            <SnapshotMetric label="Revenue" value={data.balu.revenue} color="#16a34a" icon={IndianRupee} />
+                            <SnapshotMetric label="Expenses" value={data.balu.expenses} color="#dc2626" icon={Receipt} />
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="border-t pt-4" style={{ borderColor: '#f3f4f6' }}>
+                                <SnapshotMetric label="Net Income" value={data.balu.netProfit} color="#4f46e5" icon={Wallet} />
+                            </div>
+                            <div>
+                                <SnapshotMetric label={`${previousMonthName} - Brought Forward`} value={data.balu.previousMonthTakeHome} color="#9333ea" icon={Calendar} />
+                            </div>
+                            <div>
+                                <SnapshotMetric
+                                    label="Transfer to Mani"
+                                    value={(data.balu.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0)}
+                                    color="#2563eb"
+                                    icon={ArrowRight}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
+                            <div className="flex justify-between items-start p-4 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+                                <div className="flex flex-col">
+                                    <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
+                                    <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
+                                </div>
+                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.balu.thisMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mani's Card */}
+                <div className="rounded-2xl shadow-lg overflow-hidden" style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}>
+                    <div className="p-6 border-b flex items-center gap-4" style={{ backgroundColor: '#f0fdf4', borderColor: '#f3f4f6' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dcfce7', color: '#15803d', fontSize: '20px', fontWeight: 'bold', lineHeight: '48px' }}>M</div>
+                        <div>
+                            <h3 className="text-xl font-bold" style={{ color: '#111827' }}>Mani</h3>
+                        </div>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mb-6">
+                            <SnapshotMetric label="Revenue" value={data.mani.revenue} color="#16a34a" icon={IndianRupee} />
+                            <SnapshotMetric label="Expenses" value={data.mani.expenses} color="#dc2626" icon={Receipt} />
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="border-t pt-4" style={{ borderColor: '#f3f4f6' }}>
+                                <SnapshotMetric label="Net Income" value={data.mani.netProfit} color="#4f46e5" icon={Wallet} />
+                            </div>
+                            <div>
+                                <SnapshotMetric label={`${previousMonthName} - Brought Forward`} value={data.mani.previousMonthTakeHome} color="#9333ea" icon={Calendar} />
+                            </div>
+                            <div>
+                                <SnapshotMetric
+                                    label="Transfer to Balu"
+                                    value={(data.mani.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0)}
+                                    color="#2563eb"
+                                    icon={ArrowRight}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
+                            <div className="flex justify-between items-start p-4 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
+                                <div className="flex flex-col">
+                                    <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
+                                    <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
+                                </div>
+                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.mani.thisMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-12 pt-6 flex justify-between items-center" style={{ borderTop: '1px solid #f3f4f6' }}>
+                <p className="text-sm font-medium" style={{ color: '#9ca3af' }}>© {new Date().getFullYear()} SP Car Parking. All rights reserved.</p>
+                <p className="text-sm font-bold" style={{ color: '#6b7280' }}>STEVE ENTERPRISES</p>
+            </div>
+        </div>
+    );
+};
+
+const SnapshotMetric = ({ label, value, color, icon: Icon }) => (
+    <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            {Icon && <Icon size={14} style={{ color: '#6b7280', flexShrink: 0, marginTop: '1px' }} />}
+            <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: '14px' }}>{label}</p>
+        </div>
+        <p style={{ color: color, fontSize: '18px', fontWeight: 'bold', margin: 0, lineHeight: '1.3' }}>₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+    </div>
+);
 
 export function BalanceSheet() {
     const { isDarkMode } = useTheme();
@@ -230,14 +400,14 @@ export function BalanceSheet() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to record Withdraw amount');
+            if (!response.ok) throw new Error('Failed to record Carry Forward amount');
 
-            toast.success(`Successfully updated Withdraw amount for ${selectedUser}`);
+            toast.success(`Successfully updated Carry Forward amount for ${selectedUser}`);
             setIsModalOpen(false);
             setTakeHomeAmount('');
             await fetchBalanceData();
         } catch (error) {
-            toast.error(`Failed to update Withdraw amount for ${selectedUser}`);
+            toast.error(`Failed to update Carry Forward amount for ${selectedUser}`);
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
@@ -597,6 +767,43 @@ export function BalanceSheet() {
         }
     };
 
+    const handleSnapshot = async () => {
+        const element = document.getElementById('balance-sheet-snapshot');
+        if (!element) {
+            toast.error('Snapshot template not found');
+            return;
+        }
+
+        const toastId = toast.loading('Generating snapshot...');
+
+        try {
+            // Wait a brief moment to ensure fonts and layout are stable
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const canvas = await html2canvas(element, {
+                scale: 2, // Higher quality
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: 1200, // Force the width
+                height: element.offsetHeight
+            });
+
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `BalanceSheet_Snapshot_${monthNames[selectedMonth]}_${selectedYear}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            toast.success('Snapshot downloaded successfully!', { id: toastId });
+        } catch (error) {
+            console.error('Snapshot failed:', error);
+            toast.error('Failed to generate snapshot', { id: toastId });
+        }
+    };
+
     const handleTransfer = (fromUser) => {
         setTransferFrom(fromUser);
         setTransferTo(fromUser === 'Balu' ? 'Mani' : 'Balu');
@@ -675,7 +882,7 @@ export function BalanceSheet() {
                                 title="Take Home"
                             >
                                 <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                <span>Withdraw</span>
+                                <span>Carry Forward</span>
                             </button>
                             <button
                                 onClick={() => handleTransfer(user)}
@@ -768,6 +975,17 @@ export function BalanceSheet() {
                             Balance Sheet Dashboard
                         </h1>
                         <div className="flex flex-col gap-3 w-full sm:flex-row sm:gap-4 sm:w-auto items-center">
+                            <button
+                                onClick={handleSnapshot}
+                                className={`w-full sm:w-auto px-4 py-3 rounded-xl shadow-md transition-all duration-200 group flex items-center justify-center gap-2 ${isDarkMode
+                                    ? 'bg-gray-800 text-blue-300 border border-gray-700 hover:bg-gray-700'
+                                    : 'bg-white text-blue-600 hover:bg-gray-50'
+                                    }`}
+                                title="Download Snapshot Image"
+                            >
+                                <Camera className="w-5 h-5 transition-transform group-hover:scale-110" />
+                                <span className="font-medium">Snapshot</span>
+                            </button>
                             <div className="relative w-full sm:w-48">
                                 <select
                                     value={selectedMonth}
@@ -979,8 +1197,8 @@ export function BalanceSheet() {
                                         <Wallet className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div>
-                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Withdraw Amount</h3>
-                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Withdraw for {monthNames[selectedMonth]} {selectedYear}</p>
+                                        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Carry Forward Amount</h3>
+                                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{selectedUser ? (selectedUser === 'Balu' ? 'Balu' : 'Mani') : ''}'s Carry Forward for {monthNames[selectedMonth]} {selectedYear}</p>
                                     </div>
                                 </div>
                                 <button
@@ -1037,7 +1255,7 @@ export function BalanceSheet() {
                                     ) : (
                                         <>
                                             <Download className="w-4 h-4" />
-                                            Withdraw
+                                            Carry Forward
                                         </>
                                     )}
                                 </button>
@@ -1190,6 +1408,16 @@ export function BalanceSheet() {
                 onUpdate={fetchBalanceData}
                 totalAdvance={totalSummary.totalAdvance}
                 isDarkMode={isDarkMode}
+            />
+
+            {/* Hidden Snapshot Template - Always rendered but off-screen */}
+            <SnapshotTemplate
+                id="balance-sheet-snapshot"
+                data={balanceData}
+                summary={totalSummary}
+                month={monthNames[selectedMonth]}
+                year={selectedYear}
+                previousMonthName={monthNames[(selectedMonth - 1 + 12) % 12]}
             />
         </div>
     );
