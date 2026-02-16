@@ -23,6 +23,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { AdvanceExpensesModal } from './AdvanceExpensesModal';
+import { TakeHomeHistoryModal } from './TakeHomeHistoryModal';
 
 const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName }) => {
     return (
@@ -247,6 +248,15 @@ export function BalanceSheet() {
     const [advanceExpensesTotal, setAdvanceExpensesTotal] = useState(0);
     const [isTakeHomeMode, setIsTakeHomeMode] = useState(false); // false for Carry Forward, true for Take Home
 
+    // Take Home History State
+    const [isTakeHomeHistoryModalOpen, setIsTakeHomeHistoryModalOpen] = useState(false);
+    const [takeHomeHistory, setTakeHomeHistory] = useState({ balu: [], mani: [] });
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+    // Advance Expenses State
+    const [advanceExpensesList, setAdvanceExpensesList] = useState([]);
+    const [isLoadingAdvanceList, setIsLoadingAdvanceList] = useState(false);
+
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
@@ -385,6 +395,93 @@ export function BalanceSheet() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const fetchTakeHomeHistory = async () => {
+        setIsLoadingHistory(true);
+        try {
+            const history = { balu: [], mani: [] };
+            const startDate = new Date(2026, 1); // Feb 2026
+            const currentDate = new Date();
+
+            // Create a list of months to fetch
+            let monthsToFetch = [];
+            let iterator = new Date(startDate);
+
+            while (iterator <= currentDate) {
+                monthsToFetch.push({
+                    month: iterator.getMonth(),
+                    year: iterator.getFullYear()
+                });
+                iterator.setMonth(iterator.getMonth() + 1);
+            }
+
+            // Fetch data for all months
+            const promises = monthsToFetch.map(({ month, year }) =>
+                fetch(`https://spcarparkingbknd.onrender.com/balancesheet?month=${month}&year=${year}`)
+                    .then(res => res.json())
+                    .then(data => ({ month, year, data }))
+            );
+
+            const results = await Promise.all(promises);
+
+            results.forEach(({ month, year, data }) => {
+                const baluAmt = data
+                    .filter(record => record.userName === 'Balu' && record.type === 'takehome')
+                    .reduce((sum, record) => sum + (record.amount || 0), 0);
+
+                const maniAmt = data
+                    .filter(record => record.userName === 'Mani' && record.type === 'takehome')
+                    .reduce((sum, record) => sum + (record.amount || 0), 0);
+
+                if (baluAmt > 0) history.balu.push({ month, year, amount: baluAmt });
+                if (maniAmt > 0) history.mani.push({ month, year, amount: maniAmt });
+            });
+
+            setTakeHomeHistory(history);
+            setIsTakeHomeHistoryModalOpen(true);
+        } catch (error) {
+            console.error('Error fetching history:', error);
+            toast.error('Failed to fetch take home history');
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    const handleOpenTakeHomeHistory = () => {
+        fetchTakeHomeHistory();
+    };
+
+    const fetchAdvanceExpensesList = async () => {
+        setIsLoadingAdvanceList(true);
+        try {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/advance-expenses');
+            if (response.ok) {
+                const data = await response.json();
+                setAdvanceExpensesList(data);
+                setIsAdvanceModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching advance expenses:', error);
+            toast.error('Failed to fetch advance expenses');
+        } finally {
+            setIsLoadingAdvanceList(false);
+        }
+    };
+
+    const handleOpenAdvanceModal = () => {
+        fetchAdvanceExpensesList();
+    };
+
+    const handleAdvanceUpdate = async () => {
+        // Refresh both totals and the list
+        await Promise.all([
+            fetchBalanceData(),
+            fetch('https://spcarparkingbknd.onrender.com/advance-expenses')
+                .then(res => res.json())
+                .then(data => setAdvanceExpensesList(data))
+                .catch(err => console.error('Error refreshing advance list:', err))
+        ]);
     };
 
     const handleSubmitTakeHome = async () => {
@@ -1134,7 +1231,7 @@ export function BalanceSheet() {
                             </p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4">
                         {/* Total Revenue */}
                         {isLoading ? (
                             <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-green-900/20 to-green-800/10 border-green-700/30' : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200'}`}>
@@ -1248,17 +1345,46 @@ export function BalanceSheet() {
                             </div>
                         ) : (
                             <div
-                                onClick={() => setIsAdvanceModalOpen(true)}
+                                onClick={handleOpenAdvanceModal}
                                 className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg cursor-pointer transform hover:scale-[1.02] ${isDarkMode ? 'bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 border-cyan-700/30' : 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border-cyan-200'}`}
                             >
                                 <div className="flex items-center justify-between mb-2">
                                     <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100'}`}>
                                         <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-cyan-600" />
                                     </div>
+                                    {isLoadingAdvanceList && <div className="w-4 h-4 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin"></div>}
                                 </div>
                                 <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Advance in Hand</p>
                                 <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>
                                     ₹{totalSummary.advanceInHand.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                        )}
+                        {/* Take Home Summary Card */}
+                        {isLoading ? (
+                            <div className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md ${isDarkMode ? 'bg-gradient-to-br from-orange-900/20 to-orange-800/10 border-orange-700/30' : 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-2 rounded-lg animate-pulse ${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
+                                        <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 rounded ${isDarkMode ? 'bg-orange-700/50' : 'bg-orange-300/50'}`}></div>
+                                    </div>
+                                </div>
+                                <div className={`h-3 sm:h-3.5 mb-2 rounded animate-pulse ${isDarkMode ? 'bg-orange-700/30' : 'bg-orange-200/50'}`} style={{ width: '60%' }}></div>
+                                <div className={`h-6 sm:h-7 md:h-8 rounded animate-pulse ${isDarkMode ? 'bg-orange-700/40' : 'bg-orange-300/60'}`} style={{ width: '80%' }}></div>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={handleOpenTakeHomeHistory}
+                                className={`rounded-xl p-3 sm:p-4 md:p-5 border shadow-md transition-all duration-200 hover:shadow-lg cursor-pointer transform hover:scale-[1.02] ${isDarkMode ? 'bg-gradient-to-br from-orange-900/20 to-orange-800/10 border-orange-700/30' : 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-200'}`}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`p-1.5 sm:p-2 rounded-lg ${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
+                                        <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-orange-600" />
+                                    </div>
+                                    {isLoadingHistory && <div className="w-4 h-4 rounded-full border-2 border-orange-500 border-t-transparent animate-spin"></div>}
+                                </div>
+                                <p className={`text-[10px] sm:text-xs md:text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Take Home</p>
+                                <p className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                                    ₹{(balanceData.balu.takeHome + balanceData.mani.takeHome).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                             </div>
                         )}
@@ -1535,8 +1661,16 @@ export function BalanceSheet() {
             <AdvanceExpensesModal
                 isOpen={isAdvanceModalOpen}
                 onClose={() => setIsAdvanceModalOpen(false)}
-                onUpdate={fetchBalanceData}
+                onUpdate={handleAdvanceUpdate}
                 totalAdvance={totalSummary.totalAdvance}
+                initialExpenses={advanceExpensesList}
+                isDarkMode={isDarkMode}
+            />
+
+            <TakeHomeHistoryModal
+                isOpen={isTakeHomeHistoryModalOpen}
+                onClose={() => setIsTakeHomeHistoryModalOpen(false)}
+                historyData={takeHomeHistory}
                 isDarkMode={isDarkMode}
             />
 
