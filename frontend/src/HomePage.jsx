@@ -1044,11 +1044,16 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                     </p>
                                     {vehiclesList && vehiclesList.length > 0 && (
                                         <ul className="mt-1 space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
-                                            {vehiclesList.map((v, i) => (
+                                            {vehiclesList.slice(0, 8).map((v, i) => (
                                                 <li key={i} className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                     <span className="font-semibold">{v.description}</span>
                                                 </li>
                                             ))}
+                                            {vehiclesList.length > 8 && (
+                                                <li className={`text-xs italic pt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                    + {vehiclesList.length - 8} more...
+                                                </li>
+                                            )}
                                         </ul>
                                     )}
                                 </div>
