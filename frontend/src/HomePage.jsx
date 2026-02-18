@@ -32,12 +32,13 @@ import { useSpring, animated } from 'react-spring';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from './contexts/ThemeContext';
 import {
-    AreaChart,
-    Area,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
+    Legend,
     ResponsiveContainer
 } from 'recharts';
 
@@ -896,7 +897,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         const [chartData, setChartData] = useState([]);
         const [advances, setAdvances] = useState([]);
         const [isLoading, setIsLoading] = useState(true);
-        const [selectedYear, setSelectedYear] = useState('All');
+        const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
         const [filteredCounts, setFilteredCounts] = useState({ new: 0, exits: 0 });
 
         const monthNames = [
@@ -966,11 +967,18 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                         monthly: 0,
                         refunds: 0,
                         total: 0,
-                        date: new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+                        date: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+                        newVehicles: [],
+                        exitVehicles: []
                     };
                 }
 
                 groupedData[periodKey].monthly++;
+                const vehicleDetails = vehicles.find(v => v.vehicleNumber === advance.vehicleNumber) || advance;
+                groupedData[periodKey].newVehicles.push({
+                    number: advance.vehicleNumber,
+                    description: vehicleDetails.vehicleDescription || 'No description'
+                });
             });
 
             // Process refunds (vehicles that left)
@@ -984,11 +992,18 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                         monthly: 0,
                         refunds: 0,
                         total: 0,
-                        date: new Date(refundDate.getFullYear(), refundDate.getMonth(), 1)
+                        date: new Date(refundDate.getFullYear(), refundDate.getMonth(), 1),
+                        newVehicles: [],
+                        exitVehicles: []
                     };
                 }
 
                 groupedData[periodKey].refunds++;
+                const vehicleDetails = vehicles.find(v => v.vehicleNumber === advance.vehicleNumber) || advance;
+                groupedData[periodKey].exitVehicles.push({
+                    number: advance.vehicleNumber,
+                    description: vehicleDetails.vehicleDescription || 'No description'
+                });
             });
 
             // Compute totals for each period
@@ -1008,20 +1023,35 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
 
         const CustomTooltip = ({ active, payload, label }) => {
             if (active && payload && payload.length) {
+                const data = payload[0].payload;
                 return (
-                    <div className={`rounded-lg border shadow-lg p-4 transition-colors duration-300 ${isDarkMode
+                    <div className={`rounded-lg border shadow-lg p-4 transition-colors duration-300 max-w-xs max-h-96 overflow-y-auto ${isDarkMode
                         ? 'bg-gray-800 border-gray-600'
                         : 'bg-white border-gray-200'
                         }`}>
                         <p className={`font-semibold mb-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
                             }`}>{label}</p>
                         {payload.map((entry, index) => {
-                            const labelText = entry.dataKey === 'monthly' ? 'New' : 'Exits';
+                            const isNew = entry.dataKey === 'monthly';
+                            const labelText = isNew ? 'New' : 'Exits';
+                            const vehiclesList = isNew ? data.newVehicles : data.exitVehicles;
+
                             return (
-                                <p key={index} className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                    }`} style={{ color: entry.color }}>
-                                    {labelText}: {entry.value}
-                                </p>
+                                <div key={index} className="mb-3 last:mb-0">
+                                    <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                                        }`} style={{ color: entry.color }}>
+                                        {labelText}: {entry.value}
+                                    </p>
+                                    {vehiclesList && vehiclesList.length > 0 && (
+                                        <ul className="mt-1 space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+                                            {vehiclesList.map((v, i) => (
+                                                <li key={i} className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    <span className="font-semibold">{v.description}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
                             );
                         })}
                     </div>
@@ -1170,7 +1200,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             </div>
                             {/* Year filter buttons - mobile friendly horizontal scroll */}
                             <div className="-mx-1 px-1 overflow-x-auto whitespace-nowrap flex items-center gap-2 pb-1">
-                                {['All', 2023, 2024, 2025, 2026].map(y => (
+                                {['All', ...Array.from({ length: new Date().getFullYear() - 2023 + 1 }, (_, i) => 2023 + i)].map(y => (
                                     <button
                                         key={y}
                                         onClick={() => setSelectedYear(y)}
@@ -1213,21 +1243,22 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
 
                             <div className="h-64 sm:h-80 lg:h-96 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
+                                    <BarChart data={chartData} margin={{ top: 10, right: 15, left: 10, bottom: 15 }}>
                                         <defs>
                                             <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-                                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.3} />
                                             </linearGradient>
                                             <linearGradient id="refundGradient" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8} />
-                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.3} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid
                                             strokeDasharray="3 3"
                                             stroke={isDarkMode ? '#374151' : '#E5E7EB'}
                                             opacity={0.5}
+                                            vertical={false}
                                         />
                                         <XAxis
                                             dataKey="period"
@@ -1249,59 +1280,36 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             axisLine={false}
                                             width={window.innerWidth < 640 ? 25 : window.innerWidth < 1024 ? 28 : 30}
                                         />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Area
-                                            type="monotone"
+                                        <Tooltip
+                                            content={<CustomTooltip />}
+                                            cursor={{ fill: isDarkMode ? '#374151' : '#F3F4F6', opacity: 0.4 }}
+                                        />
+                                        <Legend
+                                            verticalAlign="top"
+                                            height={36}
+                                            iconType="circle"
+                                            formatter={(value) => (
+                                                <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{value}</span>
+                                            )}
+                                        />
+                                        <Bar
+                                            name="New"
                                             dataKey="monthly"
-                                            stroke="#3B82F6"
                                             fill="url(#colorGradient)"
-                                            strokeWidth={window.innerWidth < 640 ? 1.5 : 2}
-                                            dot={{
-                                                fill: '#3B82F6',
-                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2,
-                                                r: window.innerWidth < 640 ? 2 : 3
-                                            }}
-                                            activeDot={{
-                                                r: window.innerWidth < 640 ? 4 : 5,
-                                                stroke: '#3B82F6',
-                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2,
-                                                fill: '#ffffff'
-                                            }}
+                                            radius={[4, 4, 0, 0]}
+                                            maxBarSize={50}
+                                            animationDuration={1500}
                                         />
-                                        <Area
-                                            type="monotone"
+                                        <Bar
+                                            name="Exits (Refunds)"
                                             dataKey="refunds"
-                                            stroke="#EF4444"
                                             fill="url(#refundGradient)"
-                                            strokeWidth={window.innerWidth < 640 ? 1.5 : 2}
-                                            dot={{
-                                                fill: '#EF4444',
-                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2,
-                                                r: window.innerWidth < 640 ? 2 : 3
-                                            }}
-                                            activeDot={{
-                                                r: window.innerWidth < 640 ? 4 : 5,
-                                                stroke: '#EF4444',
-                                                strokeWidth: window.innerWidth < 640 ? 1.5 : 2,
-                                                fill: '#ffffff'
-                                            }}
+                                            radius={[4, 4, 0, 0]}
+                                            maxBarSize={50}
+                                            animationDuration={1500}
                                         />
-                                    </AreaChart>
+                                    </BarChart>
                                 </ResponsiveContainer>
-                            </div>
-
-                            {/* Legend */}
-                            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 mt-4">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                    <span className={`text-xs font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                        }`}>New</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                    <span className={`text-xs font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                        }`}>Exits (Refunds)</span>
-                                </div>
                             </div>
                         </div>
 
@@ -1393,8 +1401,8 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             {/* Net Growth removed as requested */}
                         </div>
                     </div>
-                </motion.div>
-            </div>
+                </motion.div >
+            </div >
         );
     };
 
