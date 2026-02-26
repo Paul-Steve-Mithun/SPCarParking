@@ -46,9 +46,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
             if (confirmationType === 'monthly') {
                 const currentDate = new Date();
                 const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
-        
-                const rentPriceToUse = customRentPrice === '' ? 
-                    vehicle.rentPrice : 
+
+                const rentPriceToUse = customRentPrice === '' ?
+                    vehicle.rentPrice :
                     Number(customRentPrice);
 
                 const response = await fetch(`https://spcarparkingbknd.onrender.com/reactivateVehicle/${vehicle._id}`, {
@@ -61,10 +61,12 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                         endDate: nextMonth,
                         transactionMode: transactionMode,
                         rentPrice: rentPriceToUse,
-                        receivedBy: receivedBy
+                        receivedBy: receivedBy,
+                        ownerName: vehicle.ownerName,
+                        contactNumber: vehicle.contactNumber
                     })
                 });
-        
+
                 if (response.ok) {
                     toast.success('Vehicle reactivated for one month');
                     onRefresh();
@@ -76,10 +78,12 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                 const response = await fetch(`https://spcarparkingbknd.onrender.com/extendRental/${vehicle._id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         additionalDays: Number(additionalDays),
                         transactionMode: transactionMode,
-                        receivedBy: receivedBy
+                        receivedBy: receivedBy,
+                        ownerName: vehicle.ownerName,
+                        contactNumber: vehicle.contactNumber
                     }),
                 });
 
@@ -137,7 +141,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         <div className="flex flex-col gap-1">
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center gap-3">
-                                                    <h2 
+                                                    <h2
                                                         onClick={handleVehicleNumberClick}
                                                         className="text-xl font-bold text-white cursor-pointer hover:text-gray-100 transition-colors duration-200"
                                                     >
@@ -147,7 +151,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                         {vehicle.lotNumber || 'Open'}
                                                     </span>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={handleClose}
                                                     disabled={loading}
                                                     className="text-white hover:text-gray-200 disabled:opacity-50"
@@ -162,7 +166,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                     <span className="text-sm text-white/90">{vehicle.ownerName}</span>
                                                 </div>
                                                 <span className="text-white/50">•</span>
-                                                <a 
+                                                <a
                                                     href={`tel:${vehicle.contactNumber}`}
                                                     className="text-sm text-white/90 hover:text-white flex items-center gap-1"
                                                     onClick={(e) => e.stopPropagation()}
@@ -305,7 +309,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                                         <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Leave empty to use current rent price</p>
                                                     </div>
 
-                                                    <button 
+                                                    <button
                                                         onClick={handlePaidRent}
                                                         disabled={loading}
                                                         className={`w-full flex items-center justify-center px-4 py-3 rounded transition-colors disabled:opacity-50 text-base font-medium gap-2 ${isDarkMode ? 'bg-green-700 text-white hover:bg-green-800' : 'bg-green-500 text-white hover:bg-green-600'}`}
@@ -335,9 +339,9 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
 
             {/* Confirmation Modal */}
             <Transition appear show={showConfirmModal && !isClosing} as={Fragment}>
-                <Dialog 
-                    as="div" 
-                    className="relative z-[70]" 
+                <Dialog
+                    as="div"
+                    className="relative z-[70]"
                     onClose={() => setShowConfirmModal(false)}
                 >
                     <Transition.Child
@@ -365,11 +369,11 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                             >
                                 <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                     <div className="flex items-center justify-center mb-6">
-                                        <div className={`rounded-full p-3 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'}`}> 
+                                        <div className={`rounded-full p-3 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'}`}>
                                             <AlertCircle className="h-6 w-6 text-red-600" />
                                         </div>
                                     </div>
-                                    
+
                                     <Dialog.Title
                                         as="h3"
                                         className={`text-lg font-bold text-center mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}
@@ -377,7 +381,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                         Confirm Extension
                                     </Dialog.Title>
 
-                                    <div className={`rounded-lg p-4 mb-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}> 
+                                    <div className={`rounded-lg p-4 mb-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
                                         <div className="space-y-2">
                                             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                 <span className="font-medium">Vehicle:</span> {vehicle.vehicleNumber}
@@ -387,7 +391,7 @@ const VehicleActions = ({ vehicle, onClose, onRefresh }) => {
                                             </p>
                                             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                                 <span className="font-medium">Contact:</span>{' '}
-                                                <a 
+                                                <a
                                                     href={`tel:${vehicle.contactNumber}`}
                                                     className={`hover:underline ${isDarkMode ? 'text-blue-400 hover:text-blue-200' : 'text-blue-600 hover:text-blue-800'}`}
                                                     onClick={(e) => e.stopPropagation()}

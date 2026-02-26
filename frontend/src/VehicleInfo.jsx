@@ -154,8 +154,8 @@ export function VehicleInfo() {
                 rentPrice: latest.rentPrice || 0,
                 numberOfDays: latest.numberOfDays || 0,
                 status: 'archived',
-                ownerName: '-',
-                contactNumber: '-',
+                ownerName: latest.ownerName || '-',
+                contactNumber: latest.contactNumber || '-',
                 // Use advance/refund info if available, else fallback
                 advanceAmount: advanceInfo ? advanceInfo.advanceAmount : 0,
                 startDate: advanceInfo ? advanceInfo.startDate : latest.transactionDate,
