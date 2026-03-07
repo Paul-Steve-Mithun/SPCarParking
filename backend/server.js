@@ -322,10 +322,13 @@ app.post('/addVehicle', upload.fields([
             endDate = setStandardEndTime(previousDay);
         }
 
+        // Use the startDate from the frontend if provided, otherwise use current time
+        const registrationDate = vehicleData.startDate ? new Date(vehicleData.startDate) : new Date();
+
         const newVehicle = new Vehicle({
             ...vehicleData,
             status: isZeroDayDaily ? 'inactive' : 'active',
-            startDate: new Date(),
+            startDate: registrationDate,
             endDate: endDate // Will be handled by schema for monthly and normal daily rentals
         });
         await newVehicle.save();
@@ -337,10 +340,10 @@ app.post('/addVehicle', upload.fields([
                 vehicleDescription: vehicleData.vehicleDescription,
                 lotNumber: vehicleData.lotNumber,
                 transactionMode: vehicleData.transactionMode,
-                startDate: new Date(),
+                startDate: registrationDate,
                 advanceAmount: vehicleData.advanceAmount,
-                month: new Date().getMonth(),
-                year: new Date().getFullYear(),
+                month: registrationDate.getMonth(),
+                year: registrationDate.getFullYear(),
                 parkingType: vehicleData.parkingType,
                 receivedBy: vehicleData.receivedBy
             });
@@ -358,8 +361,8 @@ app.post('/addVehicle', upload.fields([
                 rentalType: vehicleData.rentalType,
                 rentPrice: vehicleData.rentPrice,
                 numberOfDays: vehicleData.numberOfDays,
-                month: new Date().getMonth(),
-                year: new Date().getFullYear(),
+                month: registrationDate.getMonth(),
+                year: registrationDate.getFullYear(),
                 revenueAmount: vehicleData.rentPrice * vehicleData.numberOfDays,
                 transactionType: 'New',
                 transactionMode: vehicleData.transactionMode,
