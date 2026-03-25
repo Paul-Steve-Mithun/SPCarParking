@@ -51,8 +51,8 @@ export function NewVehicle() {
         const aLots = Array.from({ length: 19 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 21 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`); // C1-C22
-        const dLots = Array.from({ length: 10 }, (_, i) => `D${i + 1}`); // D1-D10
-        const eLots = Array.from({ length: 10 }, (_, i) => `E${i + 1}`); // E1-D20
+        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`); // D1-D10
+        const eLots = Array.from({ length: 20 }, (_, i) => `E${i + 1}`); // E1-D20
         return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots];
     };
 
@@ -388,7 +388,7 @@ export function NewVehicle() {
                                                         : 'bg-gray-100 text-gray-700'
                                                     }`}
                                             >
-                                                D Wing (D1-D10)
+                                                D Wing (D1-D20)
                                             </button>
                                             <button
                                                 type="button"
@@ -400,7 +400,7 @@ export function NewVehicle() {
                                                         : 'bg-gray-100 text-gray-700'
                                                     }`}
                                             >
-                                                E Wing (D1-D10)
+                                                E Wing (E1-E20)
                                             </button>
                                         </div>
                                     </div>
