@@ -15,7 +15,7 @@ const modalAnimation = {
 
 const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const { isDarkMode } = useTheme();
-    const [updatedVehicle, setUpdatedVehicle] = useState({ 
+    const [updatedVehicle, setUpdatedVehicle] = useState({
         ...vehicle,
         vehicleType: vehicle.vehicleType || 'own'
     });
@@ -68,8 +68,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 <div className="relative w-24 h-24 flex-shrink-0">
                     {previews[field] ? (
                         <div className="relative w-full h-full">
-                            <img 
-                                src={previews[field]} 
+                            <img
+                                src={previews[field]}
                                 alt={label}
                                 className="w-full h-full object-cover rounded-lg"
                             />
@@ -126,9 +126,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 ...updatedVehicle,
                 removeImages: removedImages
             };
-            
+
             formData.append('vehicleData', JSON.stringify(vehicleDataWithRemovals));
-            
+
             if (files.vehicleImage) formData.append('vehicleImage', files.vehicleImage);
             if (files.document1Image) formData.append('document1Image', files.document1Image);
             if (files.document2Image) formData.append('document2Image', files.document2Image);
@@ -216,8 +216,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         const aLots = Array.from({ length: 19 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 21 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
-        const dLots = Array.from({ length: 10 }, (_, i) => `D${i + 1}`);
-        const eLots = Array.from({ length: 10 }, (_, i) => `E${i + 1}`);
+        const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
+        const eLots = Array.from({ length: 20 }, (_, i) => `E${i + 1}`);
         return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots];
     };
 
@@ -229,16 +229,16 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 const occupiedLots = vehicles
                     .filter(v => v._id !== vehicle._id) // Exclude current vehicle
                     .map(v => v.lotNumber);
-                
+
                 // Calculate available lots
                 const allLots = generateAllLots();
                 const available = allLots.filter(lot => !occupiedLots.includes(lot));
-                
+
                 // Include current vehicle's lot
                 if (vehicle.lotNumber && !available.includes(vehicle.lotNumber)) {
                     available.push(vehicle.lotNumber);
                 }
-                
+
                 setAvailableLots(available);
             } catch (error) {
                 console.error('Error fetching lots:', error);
@@ -252,10 +252,10 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     const getFilteredLots = () => {
         // Always include exactly one Open button
         const openButton = ['Open'];
-        
+
         // Filter out any "Open" values from availableLots to prevent duplicates
         const filteredAvailableLots = availableLots.filter(lot => lot && lot !== 'Open');
-        
+
         switch (selectedLotType) {
             case 'a':
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('A'))];
@@ -280,11 +280,11 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
                         <h1 className="text-xl sm:text-3xl font-bold text-white text-center sm:text-left">Edit Vehicle Details</h1>
                         <div className="flex items-center gap-2">
-                            <button 
+                            <button
                                 onClick={() => {
                                     if (isEditMode) {
                                         // Cancel edit - reset to original values
-                                        setUpdatedVehicle({ 
+                                        setUpdatedVehicle({
                                             ...vehicle,
                                             vehicleType: vehicle.vehicleType || 'own'
                                         });
@@ -301,7 +301,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                 <span>{isEditMode ? 'Cancel Edit' : 'Edit Details'}</span>
                             </button>
-                            <button 
+                            <button
                                 onClick={onClose}
                                 className="text-white hover:bg-white/20 p-2 rounded-lg transition-all"
                             >
@@ -322,7 +322,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Number</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             value={updatedVehicle.vehicleNumber}
                                             onChange={(e) => handleTextInput(e, 'vehicleNumber')}
@@ -332,7 +332,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     </div>
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Description</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             value={updatedVehicle.vehicleDescription}
                                             onChange={(e) => handleTextInput(e, 'vehicleDescription')}
@@ -345,7 +345,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 type="button"
-                                                onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'own'})}
+                                                onClick={() => isEditMode && setUpdatedVehicle({ ...updatedVehicle, vehicleType: 'own' })}
                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${updatedVehicle.vehicleType === 'own' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
@@ -356,7 +356,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => isEditMode && setUpdatedVehicle({...updatedVehicle, vehicleType: 'tboard'})}
+                                                onClick={() => isEditMode && setUpdatedVehicle({ ...updatedVehicle, vehicleType: 'tboard' })}
                                                 className={`relative px-4 py-2 rounded-lg flex items-center justify-center transition-all duration-200 ${updatedVehicle.vehicleType === 'tboard' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 transform scale-[1.02]' : isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} ${!isEditMode && 'opacity-50 cursor-not-allowed'}`}
                                                 disabled={!isEditMode}
                                             >
@@ -369,7 +369,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     </div>
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Lot Number</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             value={
                                                 updatedVehicle.parkingType === 'open'
@@ -379,7 +379,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}
                                             disabled={true}
                                         />
-                                        
+
                                         {isEditMode && (
                                             <>
                                                 {/* Lot Type Selector */}
@@ -388,67 +388,62 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('a')}
-                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
-                                                                selectedLotType === 'a' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'a'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
                                                                     : 'bg-gray-100 text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             A Wing (A1-A19)
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('b')}
-                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
-                                                                selectedLotType === 'b' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'b'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
                                                                     : 'bg-gray-100 text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             B Wing (B1-B21)
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('c')}
-                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
-                                                                selectedLotType === 'c' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'c'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
                                                                     : 'bg-gray-100 text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             C Wing (C1-C22)
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('d')}
-                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
-                                                                selectedLotType === 'd' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'd'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
                                                                     : 'bg-gray-100 text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
-                                                            D Wing (D1-D10)
+                                                            D Wing (D1-D20)
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedLotType('e')}
-                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${
-                                                                selectedLotType === 'e' 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : isDarkMode 
-                                                                        ? 'bg-gray-600 text-gray-300' 
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'e'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
                                                                     : 'bg-gray-100 text-gray-700'
-                                                            }`}
+                                                                }`}
                                                         >
-                                                            E Wing (E1-E10)
+                                                            E Wing (E1-E20)
                                                         </button>
                                                     </div>
                                                 </div>
@@ -464,13 +459,13 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                 onClick={() => {
                                                                     if (lot === 'Open') {
                                                                         setUpdatedVehicle({
-                                                                            ...updatedVehicle, 
-                                                                            lotNumber: '', 
+                                                                            ...updatedVehicle,
+                                                                            lotNumber: '',
                                                                             parkingType: 'open'
                                                                         });
                                                                     } else {
                                                                         setUpdatedVehicle({
-                                                                            ...updatedVehicle, 
+                                                                            ...updatedVehicle,
                                                                             lotNumber: lot,
                                                                             parkingType: 'private'
                                                                         });
@@ -497,7 +492,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Owner Name</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             value={updatedVehicle.ownerName}
                                             onChange={(e) => handleTextInput(e, 'ownerName')}
@@ -507,7 +502,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     </div>
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Contact Number</label>
-                                        <input 
+                                        <input
                                             type="text"
                                             value={updatedVehicle.contactNumber}
                                             onChange={(e) => handleTextInput(e, 'contactNumber')}
@@ -519,7 +514,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     {/* Document Upload Section */}
                                     <div className="mt-6 space-y-4">
                                         <h3 className={`text-xl font-semibold border-b pb-2 mb-4 ${isDarkMode ? 'text-gray-100 border-gray-700' : 'text-gray-800 border-gray-200'}`}>Document Upload</h3>
-                                        
+
                                         {/* Vehicle Image Upload */}
                                         <div className="space-y-2">
                                             <label className={`block font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Vehicle Photo</label>
@@ -622,9 +617,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Parking Type</label>
-                                        <select 
+                                        <select
                                             value={updatedVehicle.parkingType}
-                                            onChange={(e) => setUpdatedVehicle({...updatedVehicle, parkingType: e.target.value})}
+                                            onChange={(e) => setUpdatedVehicle({ ...updatedVehicle, parkingType: e.target.value })}
                                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'} ${!isEditMode ? (isDarkMode ? 'bg-gray-900' : 'bg-gray-100') : ''}`}
                                             disabled={!isEditMode}
                                         >
@@ -635,7 +630,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
                                     <div>
                                         <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rental Type</label>
-                                        <select 
+                                        <select
                                             value={updatedVehicle.rentalType}
                                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
                                             disabled={true}
@@ -648,7 +643,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     {updatedVehicle.rentalType === 'daily' && (
                                         <div>
                                             <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Number of Days</label>
-                                            <input 
+                                            <input
                                                 type="number"
                                                 value={updatedVehicle.numberOfDays}
                                                 onChange={(e) => handleNumberInput(e, 'numberOfDays')}
@@ -663,15 +658,15 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     <div>
                                         <div className="flex justify-between items-center">
                                             <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Rental Price (₹)</label>
-                                            {updatedVehicle.rentalType === 'daily' && 
-                                             updatedVehicle.numberOfDays && 
-                                             updatedVehicle.rentPrice && (
-                                                <span className="text-blue-700 font-medium">
-                                                    Total: ₹{Number(updatedVehicle.numberOfDays) * Number(updatedVehicle.rentPrice)}
-                                                </span>
-                                            )}
+                                            {updatedVehicle.rentalType === 'daily' &&
+                                                updatedVehicle.numberOfDays &&
+                                                updatedVehicle.rentPrice && (
+                                                    <span className="text-blue-700 font-medium">
+                                                        Total: ₹{Number(updatedVehicle.numberOfDays) * Number(updatedVehicle.rentPrice)}
+                                                    </span>
+                                                )}
                                         </div>
-                                        <input 
+                                        <input
                                             type="number"
                                             value={updatedVehicle.rentPrice}
                                             onChange={(e) => handleNumberInput(e, 'rentPrice')}
@@ -685,7 +680,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                     {updatedVehicle.rentalType === 'monthly' && (
                                         <div>
                                             <label className={`block font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Advance Amount (₹)</label>
-                                            <input 
+                                            <input
                                                 type="number"
                                                 value={updatedVehicle.advanceAmount}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100' : 'border-gray-300 text-gray-900'}`}
@@ -702,7 +697,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 {/* Action Buttons */}
                 <div className={`sticky bottom-0 p-4 sm:p-6 border-t ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <button 
+                        <button
                             onClick={handleSubmit}
                             className="flex-1 flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2.5 sm:py-3 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm sm:text-base"
                             disabled={!isEditMode || isLoading}
@@ -714,7 +709,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                             )}
                             {isLoading ? 'Saving...' : 'Save Changes'}
                         </button>
-                        <button 
+                        <button
                             onClick={handleEndContract}
                             className="flex-1 flex items-center justify-center bg-red-500 text-white py-2.5 sm:py-3 rounded-lg hover:bg-red-600 transition-all disabled:opacity-50 text-sm sm:text-base"
                             disabled={!isEditMode || isLoading}
@@ -731,26 +726,24 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
             </div>
 
             {showDeleteConfirm && (
-                <div 
+                <div
                     className="fixed inset-0 z-[60] overflow-y-auto"
-                    aria-labelledby="modal-title" 
-                    role="dialog" 
+                    aria-labelledby="modal-title"
+                    role="dialog"
                     aria-modal="true"
                 >
                     <div className="flex items-center justify-center min-h-screen p-4">
                         {/* Backdrop with blur */}
-                        <div 
-                            className={`fixed inset-0 backdrop-blur-sm bg-black/30 ${modalAnimation.enter} ${
-                                showDeleteConfirm ? 'bg-opacity-50' : 'bg-opacity-0'
-                            } ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`} 
+                        <div
+                            className={`fixed inset-0 backdrop-blur-sm bg-black/30 ${modalAnimation.enter} ${showDeleteConfirm ? 'bg-opacity-50' : 'bg-opacity-0'
+                                } ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`}
                             aria-hidden="true"
                         ></div>
 
                         {/* Modal */}
-                        <div 
-                            className={`relative bg-white rounded-lg max-w-sm w-full mx-4 ${modalAnimation.enter} ${
-                                showDeleteConfirm ? modalAnimation.enterTo : modalAnimation.leaveTo
-                            } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+                        <div
+                            className={`relative bg-white rounded-lg max-w-sm w-full mx-4 ${modalAnimation.enter} ${showDeleteConfirm ? modalAnimation.enterTo : modalAnimation.leaveTo
+                                } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                         >
                             <div className="p-6">
                                 <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
@@ -781,9 +774,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
             {/* Save Changes Confirmation Modal */}
             <Transition appear show={showSaveModal} as={Fragment}>
-                <Dialog 
-                    as="div" 
-                    className="relative z-50" 
+                <Dialog
+                    as="div"
+                    className="relative z-50"
                     onClose={() => setShowSaveModal(false)}
                 >
                     <Transition.Child
@@ -868,9 +861,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
 
             {/* End Contract Confirmation Modal */}
             <Transition appear show={showEndContractModal} as={Fragment}>
-                <Dialog 
-                    as="div" 
-                    className="relative z-50" 
+                <Dialog
+                    as="div"
+                    className="relative z-50"
                     onClose={() => setShowEndContractModal(false)}
                 >
                     <Transition.Child
