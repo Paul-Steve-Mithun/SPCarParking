@@ -218,7 +218,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
         const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
         const eLots = Array.from({ length: 20 }, (_, i) => `E${i + 1}`);
-        return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots];
+        const oLots = Array.from({ length: 16 }, (_, i) => `O${i + 1}`); // O1-O16
+        return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots, ...oLots];
     };
 
     useEffect(() => {
@@ -267,6 +268,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('D'))];
             case 'e':
                 return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('E'))];
+            case 'o':
+                return [...openButton, ...filteredAvailableLots.filter(lot => lot.startsWith('O'))];
             default:
                 return [...openButton, ...filteredAvailableLots]; // Show all non-empty lots
         }
@@ -444,6 +447,18 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                 }`}
                                                         >
                                                             E Wing (E1-E20)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedLotType('o')}
+                                                            className={`px-3 py-2 min-w-[110px] rounded-md text-sm sm:text-base transition-all ${selectedLotType === 'o'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : isDarkMode
+                                                                    ? 'bg-gray-600 text-gray-300'
+                                                                    : 'bg-gray-100 text-gray-700'
+                                                                }`}
+                                                        >
+                                                            O Wing (O1-O16)
                                                         </button>
                                                     </div>
                                                 </div>
