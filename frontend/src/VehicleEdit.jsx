@@ -375,9 +375,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <input
                                             type="text"
                                             value={
-                                                updatedVehicle.parkingType === 'open'
-                                                    ? 'Open'
-                                                    : updatedVehicle.lotNumber || ''
+                                                updatedVehicle.lotNumber
+                                                    ? updatedVehicle.lotNumber
+                                                    : updatedVehicle.parkingType === 'open' ? 'Open' : ''
                                             }
                                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-100 placeholder-gray-400' : 'border-gray-300 text-gray-900 placeholder-gray-500'} ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}
                                             disabled={true}
@@ -482,11 +482,23 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                         setUpdatedVehicle({
                                                                             ...updatedVehicle,
                                                                             lotNumber: lot,
-                                                                            parkingType: 'private'
+                                                                            parkingType: lot.startsWith('O') ? 'open' : 'private'
                                                                         });
                                                                     }
                                                                 }}
-                                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${((updatedVehicle.parkingType === 'open' && lot === 'Open') || updatedVehicle.lotNumber === lot) ? (lot === 'Open' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white') : lot === 'Open' ? (isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200') : (isDarkMode ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')}`}
+                                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                                    lot === 'Open'
+                                                                        ? updatedVehicle.parkingType === 'open' && !updatedVehicle.lotNumber
+                                                                            ? 'bg-green-600 text-white'
+                                                                            : isDarkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                        : lot.startsWith('O')
+                                                                            ? updatedVehicle.lotNumber === lot
+                                                                                ? 'bg-green-600 text-white'
+                                                                                : isDarkMode ? 'bg-green-900/30 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                            : updatedVehicle.lotNumber === lot
+                                                                                ? 'bg-blue-600 text-white'
+                                                                                : isDarkMode ? 'bg-blue-900 text-blue-300 hover:bg-blue-800' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                                }`}
                                                             >
                                                                 {lot}
                                                             </button>

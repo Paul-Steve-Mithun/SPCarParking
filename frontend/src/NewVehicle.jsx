@@ -333,7 +333,7 @@ export function NewVehicle() {
                                     <input
                                         type="text"
                                         placeholder="Select a lot number"
-                                        value={vehicle.parkingType === 'open' ? 'Open' : vehicle.lotNumber}
+                                        value={vehicle.lotNumber ? vehicle.lotNumber : vehicle.parkingType === 'open' ? 'Open' : ''}
                                         onChange={(e) => handleTextInput(e, 'lotNumber')}
                                         className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${isDarkMode
                                             ? 'bg-gray-600 border-gray-500 text-gray-100 placeholder-gray-400'
@@ -433,7 +433,7 @@ export function NewVehicle() {
                                                     lotNumber: '',
                                                     parkingType: 'open'
                                                 })}
-                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${vehicle.parkingType === 'open'
+                                                className={`px-3 py-1 text-sm rounded-md transition-colors ${vehicle.parkingType === 'open' && !vehicle.lotNumber
                                                     ? 'bg-green-600 text-white'
                                                     : isDarkMode
                                                         ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50'
@@ -449,13 +449,19 @@ export function NewVehicle() {
                                                     onClick={() => setVehicle({
                                                         ...vehicle,
                                                         lotNumber: lot,
-                                                        parkingType: 'private'
+                                                        parkingType: lot.startsWith('O') ? 'open' : 'private'
                                                     })}
-                                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${vehicle.lotNumber === lot && vehicle.parkingType !== 'open'
-                                                        ? 'bg-blue-600 text-white'
-                                                        : isDarkMode
-                                                            ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
-                                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${lot.startsWith('O')
+                                                        ? vehicle.lotNumber === lot
+                                                            ? 'bg-green-600 text-white'
+                                                            : isDarkMode
+                                                                ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50'
+                                                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                        : vehicle.lotNumber === lot
+                                                            ? 'bg-blue-600 text-white'
+                                                            : isDarkMode
+                                                                ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50'
+                                                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                                         }`}
                                                 >
                                                     {lot}
@@ -697,7 +703,7 @@ export function NewVehicle() {
                                     </div>
                                     <input
                                         type="number"
-                                        placeholder={vehicle.rentalType === 'monthly' ? 'Enter monthly rent - ₹2000/-' : 'Enter daily rent - ₹100/-'}
+                                        placeholder={vehicle.rentalType === 'monthly' ? 'Enter monthly rent - ₹2200/-' : 'Enter daily rent - ₹100/-'}
                                         value={vehicle.rentPrice}
                                         onChange={(e) => setVehicle({ ...vehicle, rentPrice: e.target.value })}
                                         className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${isDarkMode
