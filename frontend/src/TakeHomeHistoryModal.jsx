@@ -2,15 +2,18 @@ import React, { useEffect } from 'react';
 import { X, Home, Calendar, TrendingUp } from 'lucide-react';
 
 export function TakeHomeHistoryModal({ isOpen, onClose, historyData, isDarkMode }) {
-    if (!isOpen) return null;
-
     useEffect(() => {
-        // Prevent background scrolling when modal is open
-        document.body.style.overflow = 'hidden';
+        if (isOpen) {
+            // Prevent background scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+        }
         return () => {
-            document.body.style.overflow = 'unset';
+            // Always restore scroll on cleanup
+            document.body.style.overflow = '';
         };
     }, [isOpen]);
+
+    if (!isOpen) return null;
 
     // Theme values
     const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
