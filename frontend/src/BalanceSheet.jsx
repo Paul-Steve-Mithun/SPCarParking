@@ -316,6 +316,14 @@ export function BalanceSheet() {
                 .filter(record => record.userName === 'Mani' && record.type === 'transfer')
                 .reduce((sum, record) => sum + (record.amount || 0), 0);
 
+            // Calculate advance transfer amounts received this month (from advance pool)
+            const baluAdvanceTransfers = balanceSheetData
+                .filter(record => record.userName === 'Balu' && record.type === 'advance_transfer')
+                .reduce((sum, record) => sum + (record.amount || 0), 0);
+            const maniAdvanceTransfers = balanceSheetData
+                .filter(record => record.userName === 'Mani' && record.type === 'advance_transfer')
+                .reduce((sum, record) => sum + (record.amount || 0), 0);
+
             // Calculate take home amounts for this month
             const baluTakeHome = balanceSheetData
                 .filter(record => record.userName === 'Balu' && record.type === 'takehome')
@@ -340,9 +348,9 @@ export function BalanceSheet() {
             const baluNetProfit = baluRevenue - baluExpenses;
             const maniNetProfit = maniRevenue - maniExpenses;
 
-            // Calculate this month's total cash in hand (after transfers and take home)
-            const baluCashInHand = baluPreviousMonthTakeHome + baluNetProfit + baluTransfers - baluTakeHome;
-            const maniCashInHand = maniPreviousMonthTakeHome + maniNetProfit + maniTransfers - maniTakeHome;
+            // Calculate this month's total cash in hand (transfers + advance transfers + net profit)
+            const baluCashInHand = baluPreviousMonthTakeHome + baluNetProfit + baluTransfers + baluAdvanceTransfers - baluTakeHome;
+            const maniCashInHand = maniPreviousMonthTakeHome + maniNetProfit + maniTransfers + maniAdvanceTransfers - maniTakeHome;
 
             // Calculate total revenue and expense (Balu + Mani)
             const totalRevenue = baluRevenue + maniRevenue;
@@ -368,7 +376,8 @@ export function BalanceSheet() {
                     cashInHand: baluCashInHand,
                     takeHome: baluTakeHome,
                     transfers: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'transfer'),
-                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'takehome')
+                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'takehome'),
+                    advanceTransferRecords: balanceSheetData.filter(record => record.userName === 'Balu' && record.type === 'advance_transfer')
                 },
                 mani: {
                     revenue: maniRevenue,
@@ -378,7 +387,8 @@ export function BalanceSheet() {
                     cashInHand: maniCashInHand,
                     takeHome: maniTakeHome,
                     transfers: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'transfer'),
-                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'takehome')
+                    takeHomeRecords: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'takehome'),
+                    advanceTransferRecords: balanceSheetData.filter(record => record.userName === 'Mani' && record.type === 'advance_transfer')
                 }
             });
 
@@ -593,7 +603,7 @@ export function BalanceSheet() {
             const userExpenses = expensesData.filter(record => record.spentBy === user);
             const userTransfers = balanceSheetData.filter(record => record.userName === user && record.type === 'transfer');
             const userTakeHomeRecords = balanceSheetData.filter(record => record.userName === user && record.type === 'takehome');
-
+            const userAdvanceTransfers = balanceSheetData.filter(record => record.userName === user && record.type === 'advance_transfer');
 
             // Filter out transactions with zero/null amounts and prepare data
             const combinedTransactions = [
@@ -622,6 +632,12 @@ export function BalanceSheet() {
                         ...th,
                         type: 'takehome',
                         date: new Date(th.date)
+                    })),
+                ...userAdvanceTransfers
+                    .map(at => ({
+                        ...at,
+                        type: 'advance_transfer',
+                        date: new Date(at.date)
                     }))
             ].sort((a, b) => a.date - b.date);
 
@@ -703,15 +719,31 @@ export function BalanceSheet() {
                 ...combinedTransactions.map((record, index) => ({
                     sno: (index + 2).toString(),
                     date: formatDateForPDF(record.date),
-                    type: record.type === 'revenue' ? (record.vehicleNumber || 'N/A') : (record.type === 'expense' ? record.expenseType : (record.type === 'transfer' ? 'Transfer' : 'Take Home')),
+                    type: record.type === 'revenue'
+                        ? (record.vehicleNumber || 'N/A')
+                        : record.type === 'expense'
+                            ? record.expenseType
+                            : record.type === 'transfer'
+                                ? 'Transfer'
+                                : record.type === 'advance_transfer'
+                                    ? 'Adv.Transfer'
+                                    : 'Take Home',
                     description: record.type === 'revenue'
                         ? (record.vehicleDescription || '-').toUpperCase()
-                        : (record.type === 'expense'
-                            ? (record.description || '-').toUpperCase()
-                            : (record.description || '-').toUpperCase()),
+                        : (record.description || '-').toUpperCase(),
                     mode: record.transactionMode || '-',
-                    expense: record.type === 'expense' ? formatAmount(record.amount) : (record.type === 'transfer' && record.amount < 0 ? formatAmount(Math.abs(record.amount)) : (record.type === 'takehome' ? formatAmount(record.amount) : '-')),
-                    revenue: record.type === 'revenue' ? formatAmount(record.revenueAmount) : (record.type === 'transfer' && record.amount > 0 ? formatAmount(record.amount) : '-')
+                    expense: record.type === 'expense'
+                        ? formatAmount(record.amount)
+                        : (record.type === 'transfer' && record.amount < 0
+                            ? formatAmount(Math.abs(record.amount))
+                            : (record.type === 'takehome' ? formatAmount(record.amount) : '-')),
+                    revenue: record.type === 'revenue'
+                        ? formatAmount(record.revenueAmount)
+                        : (record.type === 'transfer' && record.amount > 0
+                            ? formatAmount(record.amount)
+                            : (record.type === 'advance_transfer'
+                                ? formatAmount(record.amount)
+                                : '-'))
                 }))
             ];
 
@@ -726,9 +758,12 @@ export function BalanceSheet() {
             // Calculate take home total
             const totalTakeHome = userTakeHomeRecords.reduce((sum, th) => sum + th.amount, 0);
 
+            // Calculate advance transfers received (shown as revenue)
+            const advanceTransferTotal = userAdvanceTransfers.reduce((sum, at) => sum + at.amount, 0);
+
             const totalExpense = userExpenses.reduce((sum, exp) => sum + exp.amount, 0) + transferOut + totalTakeHome;
             const totalRevenue = userRevenue.reduce((sum, rev) => sum + rev.revenueAmount, 0) +
-                balanceData[user.toLowerCase()].previousMonthTakeHome + transferIn;
+                balanceData[user.toLowerCase()].previousMonthTakeHome + transferIn + advanceTransferTotal;
             const cashInHand = totalRevenue - totalExpense;
 
             let isLastCellProcessed = false;
