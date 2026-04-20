@@ -189,7 +189,7 @@ const BalancesheetSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['normal', 'transfer', 'takehome'],
+        enum: ['normal', 'transfer', 'takehome', 'advance_transfer'],
         default: 'normal'
     },
     description: {
