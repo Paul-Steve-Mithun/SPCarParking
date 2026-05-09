@@ -97,7 +97,7 @@ export function TakeHomeHistoryModal({ isOpen, onClose, historyData, isDarkMode 
                         </div>
                         <div>
                             <h2 className={`text-xl font-bold ${textColor}`}>Take Home History</h2>
-                            <p className={`${subTextColor} text-sm mt-0.5`}>Monthly breakdown since February 2026</p>
+                            <p className={`${subTextColor} text-sm mt-0.5`}>Monthly breakdown since May 2026</p>
                         </div>
                     </div>
                     <button
