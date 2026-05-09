@@ -25,7 +25,7 @@ import 'jspdf-autotable';
 import { AdvanceExpensesModal } from './AdvanceExpensesModal';
 import { TakeHomeHistoryModal } from './TakeHomeHistoryModal';
 
-const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName }) => {
+const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName, totalTakeHome }) => {
     return (
         <div
             id={id}
@@ -69,112 +69,117 @@ const SnapshotTemplate = ({ id, data, summary, month, year, previousMonthName })
                 <h3 className="text-xl font-bold mb-6" style={{ color: '#1f2937' }}>
                     Monthly Overview
                 </h3>
-                <div className="grid grid-cols-5 gap-4">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                     {[
                         { label: 'Total Revenue', value: summary.totalRevenue, color: '#15803d', bg: '#f0fdf4', border: '#dcfce7' },
                         { label: 'Total Expense', value: summary.totalExpense, color: '#b91c1c', bg: '#fef2f2', border: '#fee2e2' },
                         { label: 'Net Income', value: summary.netIncome, color: summary.netIncome >= 0 ? '#4338ca' : '#b91c1c', bg: summary.netIncome >= 0 ? '#eef2ff' : '#fef2f2', border: summary.netIncome >= 0 ? '#e0e7ff' : '#fee2e2' },
                         { label: 'Total Advance', value: summary.totalAdvance, color: '#b45309', bg: '#fffbeb', border: '#fef3c7' },
-                        { label: 'Advance In Hand', value: summary.advanceInHand, color: '#0e7490', bg: '#ecfeff', border: '#cffafe' }
+                        { label: 'Advance In Hand', value: summary.advanceInHand, color: '#0e7490', bg: '#ecfeff', border: '#cffafe' },
+                        { label: 'Total Take Home', value: totalTakeHome, color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' }
                     ].map((item, idx) => (
-                        <div key={idx} style={{ backgroundColor: item.bg, borderColor: item.border, borderWidth: '1px', borderStyle: 'solid' }} className="rounded-xl p-5 shadow-sm">
-                            <p className="text-sm font-semibold mb-1 uppercase tracking-wide" style={{ color: '#4b5563' }}>{item.label}</p>
-                            <p className="text-xl font-bold" style={{ color: item.color }}>₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                        <div key={idx} style={{ backgroundColor: item.bg, borderColor: item.border, borderWidth: '1px', borderStyle: 'solid', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
+                            <p style={{ color: '#4b5563', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{item.label}</p>
+                            <p style={{ color: item.color, fontSize: '20px', fontWeight: '800' }}>₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Users Comparison Section */}
-            <div className="grid grid-cols-2 gap-8">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                 {/* Balu's Card */}
-                <div className="rounded-2xl shadow-lg overflow-hidden" style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}>
-                    <div className="p-6 border-b flex items-center gap-4" style={{ backgroundColor: '#eff6ff', borderColor: '#f3f4f6' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dbeafe', color: '#1d4ed8', fontSize: '20px', fontWeight: 'bold', lineHeight: '48px' }}>B</div>
+                <div style={{ borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>
+                    <div style={{ padding: '20px 24px', borderBottom: '1px solid #e9edf5', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '52px', height: '52px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dbeafe', color: '#1d4ed8', fontSize: '22px', fontWeight: '800' }}>B</div>
                         <div>
-                            <h3 className="text-xl font-bold" style={{ color: '#111827' }}>Balu</h3>
+                            <h3 style={{ color: '#111827', fontSize: '20px', fontWeight: '800', margin: 0 }}>Balu</h3>
+                            <p style={{ color: '#6b7280', fontSize: '12px', margin: '2px 0 0 0' }}>{month} {year} Statement</p>
                         </div>
                     </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mb-6">
-                            <SnapshotMetric label="Revenue" value={data.balu.revenue} color="#16a34a" icon={IndianRupee} />
-                            <SnapshotMetric label="Expenses" value={data.balu.expenses} color="#dc2626" icon={Receipt} />
+                    <div style={{ padding: '20px 24px' }}>
+                        {/* 3×3 metrics grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Revenue</p>
+                                <p style={{ color: '#16a34a', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.balu.revenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Expenses</p>
+                                <p style={{ color: '#dc2626', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.balu.expenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#eef2ff', border: '1px solid #e0e7ff', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Net Income</p>
+                                <p style={{ color: '#4f46e5', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.balu.netProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#faf5ff', border: '1px solid #ede9fe', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Brought Fwd</p>
+                                <p style={{ color: '#9333ea', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.balu.previousMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>To Mani</p>
+                                <p style={{ color: '#2563eb', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{(data.balu.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Take Home</p>
+                                <p style={{ color: '#c2410c', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.balu.takeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
                         </div>
-
-                        <div className="space-y-6">
-                            <div className="border-t pt-4" style={{ borderColor: '#f3f4f6' }}>
-                                <SnapshotMetric label="Net Income" value={data.balu.netProfit} color="#4f46e5" icon={Wallet} />
-                            </div>
+                        {/* Cash in Hand highlight */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '14px 18px' }}>
                             <div>
-                                <SnapshotMetric label={`${previousMonthName} - Brought Forward`} value={data.balu.previousMonthTakeHome} color="#9333ea" icon={Calendar} />
+                                <span style={{ color: '#374151', fontWeight: '700', fontSize: '14px', display: 'block' }}>Cash in Hand</span>
+                                <span style={{ color: '#9ca3af', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{month} {year}</span>
                             </div>
-                            <div>
-                                <SnapshotMetric
-                                    label="Transfer to Mani"
-                                    value={(data.balu.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0)}
-                                    color="#2563eb"
-                                    icon={ArrowRight}
-                                />
-                            </div>
-                            <div>
-                                <SnapshotMetric label="Take Home" value={data.balu.takeHome} color="#f97316" icon={Home} />
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
-                            <div className="flex justify-between items-start p-4 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
-                                <div className="flex flex-col">
-                                    <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
-                                    <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
-                                </div>
-                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.balu.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
+                            <span style={{ color: '#059669', fontSize: '22px', fontWeight: '800' }}>₹{data.balu.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Mani's Card */}
-                <div className="rounded-2xl shadow-lg overflow-hidden" style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', borderWidth: '1px', borderStyle: 'solid' }}>
-                    <div className="p-6 border-b flex items-center gap-4" style={{ backgroundColor: '#f0fdf4', borderColor: '#f3f4f6' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dcfce7', color: '#15803d', fontSize: '20px', fontWeight: 'bold', lineHeight: '48px' }}>M</div>
+                <div style={{ borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>
+                    <div style={{ padding: '20px 24px', borderBottom: '1px solid #e9edf5', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '52px', height: '52px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dcfce7', color: '#15803d', fontSize: '22px', fontWeight: '800' }}>M</div>
                         <div>
-                            <h3 className="text-xl font-bold" style={{ color: '#111827' }}>Mani</h3>
+                            <h3 style={{ color: '#111827', fontSize: '20px', fontWeight: '800', margin: 0 }}>Mani</h3>
+                            <p style={{ color: '#6b7280', fontSize: '12px', margin: '2px 0 0 0' }}>{month} {year} Statement</p>
                         </div>
                     </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-6 mb-6">
-                            <SnapshotMetric label="Revenue" value={data.mani.revenue} color="#16a34a" icon={IndianRupee} />
-                            <SnapshotMetric label="Expenses" value={data.mani.expenses} color="#dc2626" icon={Receipt} />
+                    <div style={{ padding: '20px 24px' }}>
+                        {/* 3×3 metrics grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #dcfce7', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Revenue</p>
+                                <p style={{ color: '#16a34a', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.mani.revenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Expenses</p>
+                                <p style={{ color: '#dc2626', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.mani.expenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#eef2ff', border: '1px solid #e0e7ff', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Net Income</p>
+                                <p style={{ color: '#4f46e5', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.mani.netProfit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#faf5ff', border: '1px solid #ede9fe', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Brought Fwd</p>
+                                <p style={{ color: '#9333ea', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.mani.previousMonthTakeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>To Balu</p>
+                                <p style={{ color: '#2563eb', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{(data.mani.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px' }}>
+                                <p style={{ color: '#6b7280', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Take Home</p>
+                                <p style={{ color: '#c2410c', fontSize: '15px', fontWeight: '800', margin: 0 }}>₹{data.mani.takeHome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                            </div>
                         </div>
-
-                        <div className="space-y-6">
-                            <div className="border-t pt-4" style={{ borderColor: '#f3f4f6' }}>
-                                <SnapshotMetric label="Net Income" value={data.mani.netProfit} color="#4f46e5" icon={Wallet} />
-                            </div>
+                        {/* Cash in Hand highlight */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '14px 18px' }}>
                             <div>
-                                <SnapshotMetric label={`${previousMonthName} - Brought Forward`} value={data.mani.previousMonthTakeHome} color="#9333ea" icon={Calendar} />
+                                <span style={{ color: '#374151', fontWeight: '700', fontSize: '14px', display: 'block' }}>Cash in Hand</span>
+                                <span style={{ color: '#9ca3af', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{month} {year}</span>
                             </div>
-                            <div>
-                                <SnapshotMetric
-                                    label="Transfer to Balu"
-                                    value={(data.mani.transfers || []).filter(tr => tr.amount < 0).reduce((sum, tr) => sum + Math.abs(tr.amount), 0)}
-                                    color="#2563eb"
-                                    icon={ArrowRight}
-                                />
-                            </div>
-                            <div>
-                                <SnapshotMetric label="Take Home" value={data.mani.takeHome} color="#f97316" icon={Home} />
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-2" style={{ borderTop: '1px solid #f3f4f6' }}>
-                            <div className="flex justify-between items-start p-4 rounded-xl" style={{ backgroundColor: '#f9fafb' }}>
-                                <div className="flex flex-col">
-                                    <span className="font-bold" style={{ color: '#374151' }}>Cash in Hand</span>
-                                    <span className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: '#9ca3af' }}>{month} {year}</span>
-                                </div>
-                                <span className="text-2xl font-bold" style={{ color: '#059669' }}>₹{data.mani.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
+                            <span style={{ color: '#059669', fontSize: '22px', fontWeight: '800' }}>₹{data.mani.cashInHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>
@@ -1717,6 +1722,7 @@ export function BalanceSheet() {
                 month={monthNames[selectedMonth]}
                 year={selectedYear}
                 previousMonthName={monthNames[(selectedMonth - 1 + 12) % 12]}
+                totalTakeHome={balanceData.balu.takeHome + balanceData.mani.takeHome}
             />
         </div>
     );
