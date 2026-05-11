@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RefreshCwIcon, SearchIcon, PrinterIcon, Printer, Bell, X, Send, Loader2 } from 'lucide-react';
+import { RefreshCwIcon, SearchIcon, PrinterIcon, Printer, Bell, X, Send, Loader2, TriangleAlert } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import VehicleActions from './VehicleActions';
 import jsPDF from 'jspdf';
@@ -26,6 +26,8 @@ export function ManageVehicles() {
     const [showDailyInvoiceModal, setShowDailyInvoiceModal] = useState(false);
     const [selectedDailyVehicle, setSelectedDailyVehicle] = useState(null);
     const [customDays, setCustomDays] = useState('');
+    const [showCancellationModal, setShowCancellationModal] = useState(false);
+    const [selectedCancellationVehicle, setSelectedCancellationVehicle] = useState(null);
     const [stats, setStats] = useState({
         total: 0,
         monthly: 0,
@@ -1355,18 +1357,371 @@ export function ManageVehicles() {
 
     // WhatsApp Reminder Function
     const sendNotificationToOwner = (vehicle) => {
-        // Format phone number for WhatsApp (remove spaces, add country code if needed)
         let phone = vehicle.contactNumber.replace(/\D/g, '');
         if (!phone.startsWith('91') && phone.length === 10) {
-            phone = '91' + phone; // Add India country code if missing
+            phone = '91' + phone;
         }
-        // WhatsApp message
         const message = `Dear ${vehicle.ownerName}, your monthly parking rent of Rs.${vehicle.rentPrice} for vehicle ${vehicle.vehicleNumber} is due on 5th of this month. Please make the payment before the due date. - SP Car Parking`;
-        // WhatsApp click-to-chat URL
         const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         setShowNotificationModal(false);
         toast.success('WhatsApp opened. Send the message to complete the reminder.');
+    };
+
+    // Number to words helper (Indian system)
+    const numberToWords = (num) => {
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+            'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        if (num === 0) return 'Zero';
+        const convert = (n) => {
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+            if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convert(n % 100) : '');
+            if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + convert(n % 1000) : '');
+            if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + convert(n % 100000) : '');
+            return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '');
+        };
+        return convert(num);
+    };
+
+    // Cancellation Notice PDF Generator
+    const handleGenerateCancellationNotice = async (vehicle, { occupiedDays, deductedAmount, vacationDate }) => {
+        try {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
+            let y = margin;
+
+            const advanceAmount = vehicle.advanceAmount || 0;
+            const netRefund = advanceAmount - deductedAmount;
+            const netRefundWords = numberToWords(netRefund);
+
+            const noticeDate = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+            const vacDateFormatted = new Date(vacationDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
+
+            // ── TOP BORDER (SP blue, thin only) ──
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 4;
+
+            // ── LOGO ──
+            const logoUrl = 'SP_Car_Parking_bg.png';
+            try {
+                const r = await fetch(logoUrl);
+                const b = await r.blob();
+                const logoB64 = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result); fr.readAsDataURL(b); });
+                doc.addImage(logoB64, 'PNG', margin, y, 22, 22);
+            } catch (_) { }
+
+            // ── COMPANY NAME & TAGLINE ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(15);
+            doc.setTextColor(30, 58, 138);
+            doc.text('SP Car Parking', margin + 26, y + 7);
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(8);
+            doc.text('"Your Car Is Under Safe Hands"', margin + 26, y + 12);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text('SP Nagar, Ponmeni - Madakkulam Main Road', margin + 26, y + 17);
+            doc.text('Madurai (Opposite to Our Lady School)', margin + 26, y + 21);
+
+            // ── VEHICLE PHOTO (top-right, like other invoices) ──
+            const vehicleImgLoaded = !!vehicle.vehicleImage?.url;
+            if (vehicleImgLoaded) {
+                try {
+                    const imgResp = await fetch(vehicle.vehicleImage.url);
+                    const imgBlob = await imgResp.blob();
+                    const imgB64 = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result); fr.readAsDataURL(imgBlob); });
+                    const imgSize = 28;
+                    const imgX = pageWidth - margin - imgSize;
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.3);
+                    doc.rect(imgX - 1, y - 1, imgSize + 2, imgSize + 2);
+                    doc.addImage(imgB64, 'JPEG', imgX, y, imgSize, imgSize);
+                } catch (_) { }
+            }
+            y += 28;
+
+            // ── DIVIDER ──
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 5;
+
+            // ── NOTICE TITLE BAND ──
+            doc.setFillColor(153, 27, 27);
+            doc.roundedRect(margin, y, pageWidth - margin * 2, 12, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text('NOTICE OF CONTRACT CANCELLATION & REFUND', pageWidth / 2, y + 8, { align: 'center' });
+            y += 18;
+
+            // ── DATE / REF ──
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(55, 65, 81);
+            doc.text(`Date: ${noticeDate}`, margin, y);
+            doc.text(`Ref: SP/CANCEL/${vehicle.vehicleNumber}/${noticeDate.replace(/\//g, '')}`, pageWidth - margin, y, { align: 'right' });
+            y += 7;
+
+            // ── SUBJECT ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(30, 41, 59);
+            const subjectLine = `Subject: Cancellation of Parking Space Rental Agreement – Vehicle No. ${vehicle.vehicleNumber}`;
+            const subjectLines = doc.splitTextToSize(subjectLine, pageWidth - margin * 2);
+            doc.text(subjectLines, margin, y);
+            y += subjectLines.length * 5 + 4;
+
+            // ── SALUTATION ──
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(30, 41, 59);
+            doc.text(`Dear ${vehicle.ownerName},`, margin, y);
+            y += 7;
+
+            // ── BODY PARAGRAPHS ──
+            const bodyFont = { font: 'helvetica', style: 'normal', size: 9, color: [55, 65, 81] };
+            const printPara = (text) => {
+                doc.setFont(bodyFont.font, bodyFont.style);
+                doc.setFontSize(bodyFont.size);
+                doc.setTextColor(...bodyFont.color);
+                const lines = doc.splitTextToSize(text, pageWidth - margin * 2);
+                doc.text(lines, margin, y);
+                y += lines.length * 5 + 4;
+            };
+
+            // Helper to write a mixed bold/normal line segment by segment
+            const printMixed = (segments) => {
+                // segments: [{text, bold}]
+                // We render each segment inline, tracking x position
+                const lineH = 5;
+                const maxW = pageWidth - margin * 2;
+                // Build full plain text to split into lines first
+                const fullText = segments.map(s => s.text).join('');
+                const wrappedLines = doc.splitTextToSize(fullText, maxW);
+                // For simplicity, render plain with inline bold via cursor tracking
+                // We iterate segments word-by-word per line
+                let charIdx = 0;
+                for (const line of wrappedLines) {
+                    let cx = margin;
+                    let remaining = line;
+                    for (const seg of segments) {
+                        const segInLine = seg.text.substring(Math.max(0, charIdx - (fullText.indexOf(seg.text))));
+                        if (!segInLine) continue;
+                    }
+                    // Fallback: render full line normally (bold segments via manual x-tracking below)
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(55, 65, 81);
+                    doc.text(line, margin, y);
+                    y += lineH;
+                }
+                y += 4;
+            };
+
+            // Paragraph 1 – bold vehicle number and lot number
+            const p1 = `We are writing to formally inform you that your Parking Space Rental Agreement with us, pertaining to Vehicle No.  ` +
+                `${vehicle.vehicleNumber} for Parking Lot No. ${vehicle.lotNumber || 'Open'}, stands cancelled with immediate effect from the date of this notice.`;
+            {
+                const lines1 = doc.splitTextToSize(p1, pageWidth - margin * 2);
+                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+                for (const ln of lines1) {
+                    let cx = margin;
+                    const boldTerms = [vehicle.vehicleNumber, vehicle.lotNumber || 'Open'];
+                    // Simple segment render
+                    let rest = ln;
+                    while (rest.length > 0) {
+                        let matched = false;
+                        for (const term of boldTerms) {
+                            if (rest.startsWith(term)) {
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(term, cx, y);
+                                cx += doc.getTextWidth(term);
+                                rest = rest.slice(term.length);
+                                matched = true;
+                                break;
+                            }
+                        }
+                        if (!matched) {
+                            // find next bold term or end
+                            let nextIdx = rest.length;
+                            let nextTerm = null;
+                            for (const term of boldTerms) {
+                                const idx = rest.indexOf(term);
+                                if (idx !== -1 && idx < nextIdx) { nextIdx = idx; nextTerm = term; }
+                            }
+                            const plain = rest.slice(0, nextIdx);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(plain, cx, y);
+                            cx += doc.getTextWidth(plain);
+                            rest = rest.slice(nextIdx);
+                        }
+                    }
+                    y += 5;
+                }
+                y += 4;
+            }
+
+            // Paragraph 2 – bold rental amount, 5th, terminate the contract + calls/WhatsApp sentence
+            const p2a = `As per the terms and conditions of your rental agreement, the monthly rental amount of  Rs. ${vehicle.rentPrice}/- was due for payment on or before the 5th of the current month. Despite continuous calls and WhatsApp messages, there was no response from your end. We regret to note that the payment has not been received from your end until the date of this notice. Pursuant to your agreement, non-payment of rental dues beyond the 10th of the month entitles us to  terminate the contract forthwith.`;
+            {
+                const boldTerms2 = [`Rs. ${vehicle.rentPrice}/-`, '5th', 'terminate the contract'];
+                const lines2 = doc.splitTextToSize(p2a, pageWidth - margin * 2);
+                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+                for (const ln of lines2) {
+                    let cx = margin;
+                    let rest = ln;
+                    while (rest.length > 0) {
+                        let matched = false;
+                        for (const term of boldTerms2) {
+                            if (rest.startsWith(term)) {
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(term, cx, y);
+                                cx += doc.getTextWidth(term);
+                                rest = rest.slice(term.length);
+                                matched = true;
+                                break;
+                            }
+                        }
+                        if (!matched) {
+                            let nextIdx = rest.length;
+                            for (const term of boldTerms2) {
+                                const idx = rest.indexOf(term);
+                                if (idx !== -1 && idx < nextIdx) nextIdx = idx;
+                            }
+                            const plain = rest.slice(0, nextIdx);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(plain, cx, y);
+                            cx += doc.getTextWidth(plain);
+                            rest = rest.slice(nextIdx);
+                        }
+                    }
+                    y += 5;
+                }
+                y += 4;
+            }
+
+            printPara(
+                `In accordance with our refund policy, we hereby confirm that the following amounts will be refunded to you after deducting the proportionate rent for the days the parking space was occupied during the current month:`
+            );
+
+            // ── REFUND BREAKDOWN TABLE ──
+            const tableData = [
+                ['a)', 'Advance Deposit Paid', `Rs. ${advanceAmount.toLocaleString('en-IN')}/-`],
+                ['b)', `Less: Rent for ${occupiedDays} days`, `Rs. ${deductedAmount.toLocaleString('en-IN')}/-`],
+                ['c)', `Net Refund Amount Payable to You`, `Rs. ${netRefund.toLocaleString('en-IN')}/- (Rupees ${netRefundWords} Only)`],
+            ];
+
+            doc.autoTable({
+                startY: y,
+                head: [],
+                body: tableData,
+                margin: { left: margin + 4, right: margin },
+                theme: 'plain',
+                styles: { fontSize: 9, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, font: 'helvetica', lineWidth: 0, textColor: [30, 41, 59] },
+                columnStyles: {
+                    0: { cellWidth: 8, fontStyle: 'bold' },
+                    1: { cellWidth: 90 },
+                    2: { cellWidth: 'auto', fontStyle: 'bold', textColor: [153, 27, 27] }
+                },
+                didParseCell: (data) => {
+                    if (data.row.index === 2) {
+                        data.cell.styles.fillColor = [254, 242, 242];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            });
+            y = doc.autoTable.previous.finalY + 6;
+
+            // Para 3 – bold 'no later than [date]'
+            {
+                const p3 = `You are hereby requested to remove your vehicle from the allotted parking slot at the earliest and  no later than ${vacDateFormatted}. Failure to vacate the premises within the stipulated time may result in additional charges being levied, and we reserve the right to take such steps as deemed necessary under applicable law.`;
+                const boldTerms3 = [`no later than ${vacDateFormatted}`];
+                const lines3 = doc.splitTextToSize(p3, pageWidth - margin * 2);
+                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+                for (const ln of lines3) {
+                    let cx = margin;
+                    let rest = ln;
+                    while (rest.length > 0) {
+                        let matched = false;
+                        for (const term of boldTerms3) {
+                            if (rest.startsWith(term)) {
+                                doc.setFont('helvetica', 'bold');
+                                doc.text(term, cx, y);
+                                cx += doc.getTextWidth(term);
+                                rest = rest.slice(term.length);
+                                matched = true;
+                                break;
+                            }
+                        }
+                        if (!matched) {
+                            let nextIdx = rest.length;
+                            for (const term of boldTerms3) {
+                                const idx = rest.indexOf(term);
+                                if (idx !== -1 && idx < nextIdx) nextIdx = idx;
+                            }
+                            const plain = rest.slice(0, nextIdx);
+                            doc.setFont('helvetica', 'normal');
+                            doc.text(plain, cx, y);
+                            cx += doc.getTextWidth(plain);
+                            rest = rest.slice(nextIdx);
+                        }
+                    }
+                    y += 5;
+                }
+                y += 4;
+            }
+
+            printPara(
+                `We regret that it has come to this and sincerely hope for your understanding. Should you have any queries regarding the refund or the cancellation process, please do not hesitate to contact us at +91 98421 90000 or spcarparking@gmail.com during business hours.`
+            );
+
+            // Sign-off – right aligned
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(55, 65, 81);
+            doc.text('Yours faithfully,', pageWidth - margin, y, { align: 'right' });
+            y += 5;
+
+            // ── FOOTER ──
+
+            // Signature (moved up close to sign-off text)
+            try {
+                const sigRes = await fetch('signature.png');
+                const sigBlob = await sigRes.blob();
+                const sigB64 = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result); fr.readAsDataURL(sigBlob); });
+                doc.addImage(sigB64, 'PNG', pageWidth - margin - 32, y - 4, 30, 15);
+            } catch (_) { }
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(75, 85, 99);
+            doc.text('Authorized Signatory', pageWidth - margin, y + 13, { align: 'right' });
+            doc.text('For SP Car Parking', pageWidth - margin, y + 17, { align: 'right' });
+
+            // Bottom border (SP blue, thin only)
+            const footerY = pageHeight - 14;
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, footerY - 1, pageWidth - margin, footerY - 1);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.setTextColor(30, 58, 138);
+            doc.text('JESUS LEADS YOU', pageWidth / 2, footerY + 4, { align: 'center' });
+
+            doc.save(`SP_Cancellation_Notice_${vehicle.vehicleNumber}_${noticeDate.replace(/\//g, '-')}.pdf`);
+            toast.success('Cancellation notice generated! 📄');
+        } catch (err) {
+            console.error('Error generating cancellation notice:', err);
+            toast.error('Failed to generate cancellation notice');
+        }
     };
 
     const renderVehicleCard = (vehicle) => {
@@ -1392,8 +1747,21 @@ export function ManageVehicles() {
                 className={`p-4 hover:shadow-md cursor-pointer relative transform transition-all duration-200 hover:scale-[1.02] ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                 onClick={() => setSelectedVehicle(vehicle)}
             >
-                {/* Printer and Bell Buttons - Absolute positioned */}
+                {/* Printer, Bell and Warning Buttons - Absolute positioned */}
                 <div className="absolute right-4 top-4 flex items-center gap-2">
+                    {vehicle.rentalType === 'monthly' && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCancellationVehicle(vehicle);
+                                setShowCancellationModal(true);
+                            }}
+                            className={`p-2 rounded-lg transition-colors duration-200 ${isDarkMode ? 'text-amber-400 hover:bg-amber-900/40 hover:text-amber-300' : 'text-amber-600 hover:bg-amber-100 hover:text-amber-700'}`}
+                            title="Generate Cancellation Notice"
+                        >
+                            <TriangleAlert className="w-5 h-5" />
+                        </button>
+                    )}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -2091,6 +2459,212 @@ export function ManageVehicles() {
         );
     };
 
+    // ── CANCELLATION NOTICE MODAL ──
+    const CancellationNoticeModal = ({ vehicle, onClose }) => {
+        const { isDarkMode } = useTheme();
+        const [isClosing, setIsClosing] = useState(false);
+        const [isGenerating, setIsGenerating] = useState(false);
+        const [occupiedDays, setOccupiedDays] = useState('');
+        const [deductedAmount, setDeductedAmount] = useState('');
+        const [vacationDate, setVacationDate] = useState('');
+
+        // Lock background scroll while modal is open
+        useEffect(() => {
+            document.body.style.overflow = 'hidden';
+            return () => { document.body.style.overflow = ''; };
+        }, []);
+
+        if (!vehicle) return null;
+
+        const advance = vehicle.advanceAmount || 0;
+        const deducted = parseFloat(deductedAmount) || 0;
+        const netRefund = advance - deducted;
+        const isValid = occupiedDays > 0 && deductedAmount !== '' && vacationDate !== '' && netRefund >= 0;
+
+        const handleClose = () => {
+            setIsClosing(true);
+            setTimeout(onClose, 220);
+        };
+
+        const handleGenerate = async () => {
+            if (!isValid) { toast.error('Please fill all fields correctly.'); return; }
+            setIsGenerating(true);
+            try {
+                await handleGenerateCancellationNotice(vehicle, {
+                    occupiedDays: parseInt(occupiedDays),
+                    deductedAmount: deducted,
+                    vacationDate,
+                });
+                handleClose();
+            } finally {
+                setIsGenerating(false);
+            }
+        };
+
+        const inputClass = `w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all duration-200 ${isDarkMode
+            ? 'border-gray-600 bg-gray-700/80 text-white placeholder-gray-400'
+            : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400'
+            }`;
+
+        const labelClass = `block text-xs font-semibold uppercase tracking-wide mb-1.5 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'
+            }`;
+
+        return (
+            <div
+                className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-220 ${isClosing ? 'bg-black/0' : isDarkMode ? 'bg-black/80 backdrop-blur-sm' : 'bg-black/50 backdrop-blur-sm'
+                    }`}
+                onClick={handleClose}
+            >
+                <div
+                    className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-220 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                        } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="relative bg-gradient-to-r from-rose-700 via-red-700 to-orange-700 p-5 overflow-hidden">
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute -top-4 -left-4 w-24 h-24 bg-white rounded-full" />
+                            <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-white rounded-full" />
+                        </div>
+                        <div className="relative flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white/20 p-2.5 rounded-xl border border-white/30">
+                                    <TriangleAlert className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white leading-tight">Cancellation Notice</h3>
+                                    <p className="text-xs text-white/75 mt-0.5">Generate formal contract termination PDF</p>
+                                </div>
+                            </div>
+                            <button onClick={handleClose} className="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Vehicle Info Strip */}
+                    <div className={`px-5 py-3 flex items-center justify-between border-b text-sm ${isDarkMode ? 'bg-gray-900/60 border-gray-700' : 'bg-rose-50/80 border-rose-100'
+                        }`}>
+                        <div>
+                            <p className={`font-bold text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{vehicle.vehicleNumber}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{vehicle.vehicleDescription} · Lot {vehicle.lotNumber || 'Open'}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Advance Paid</p>
+                            <p className="text-lg font-bold text-rose-600">₹{advance.toLocaleString('en-IN')}</p>
+                        </div>
+                    </div>
+
+                    {/* Form */}
+                    <div className="p-5 space-y-4">
+                        {/* Row 1: Occupied Days */}
+                        <div>
+                            <label className={labelClass}>Occupied Days (1st → ?)</label>
+                            <input
+                                type="number" min="1" max="31"
+                                value={occupiedDays}
+                                onChange={e => setOccupiedDays(e.target.value)}
+                                placeholder="e.g. 10"
+                                className={inputClass}
+                            />
+                            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                Number of days the slot was used this month
+                            </p>
+                        </div>
+
+                        {/* Row 2: Rent Deducted */}
+                        <div>
+                            <label className={labelClass}>Rent Deducted (₹)</label>
+                            <input
+                                type="number" min="0"
+                                value={deductedAmount}
+                                onChange={e => setDeductedAmount(e.target.value)}
+                                placeholder={`e.g. ${Math.round(vehicle.rentPrice / 30 * (parseInt(occupiedDays) || 0))}`}
+                                className={inputClass}
+                            />
+                            {occupiedDays > 0 && (
+                                <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    Suggested: ₹{Math.round(vehicle.rentPrice / 30 * parseInt(occupiedDays))} ({parseInt(occupiedDays)} × ₹{Math.round(vehicle.rentPrice / 30)}/day)
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Row 3: Vacation Date */}
+                        <div>
+                            <label className={labelClass}>Vacate By Date</label>
+                            <input
+                                type="date"
+                                value={vacationDate}
+                                onChange={e => setVacationDate(e.target.value)}
+                                className={`${inputClass} ${isDarkMode ? '[color-scheme:dark]' : ''}`}
+                            />
+                            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                Deadline by which vehicle must be removed
+                            </p>
+                        </div>
+
+                        {/* Net Refund Preview */}
+                        {deductedAmount !== '' && (
+                            <div className={`rounded-xl p-4 border-2 ${netRefund < 0
+                                ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+                                : isDarkMode
+                                    ? 'border-emerald-700 bg-emerald-900/20'
+                                    : 'border-emerald-300 bg-emerald-50'
+                                }`}>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className={`text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                            }`}>Net Refund Payable</p>
+                                        <p className={`text-2xl font-bold mt-0.5 ${netRefund < 0 ? 'text-red-600' : isDarkMode ? 'text-emerald-400' : 'text-emerald-600'
+                                            }`}>₹{netRefund.toLocaleString('en-IN')}</p>
+                                    </div>
+                                    <div className="text-right text-xs space-y-1">
+                                        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Advance: <span className="font-semibold">₹{advance.toLocaleString('en-IN')}</span>
+                                        </div>
+                                        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Deducted: <span className="font-semibold text-rose-500">- ₹{deducted.toLocaleString('en-IN')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {netRefund < 0 && (
+                                    <p className="text-xs text-red-500 mt-2 font-medium">
+                                        ⚠ Deducted amount exceeds advance. Please correct.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer Buttons */}
+                    <div className={`flex gap-3 p-4 border-t ${isDarkMode ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-200'
+                        }`}>
+                        <button
+                            onClick={handleClose}
+                            disabled={isGenerating}
+                            className={`flex-1 py-2.5 text-sm font-medium rounded-xl transition-all ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleGenerate}
+                            disabled={!isValid || isGenerating}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-rose-700 to-red-600 text-white hover:from-rose-800 hover:to-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                        >
+                            {isGenerating ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <TriangleAlert className="w-4 h-4" />
+                            )}
+                            Generate Notice
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const generateDatabaseReport = async () => {
         try {
             const doc = new jsPDF('landscape');
@@ -2529,6 +3103,16 @@ export function ManageVehicles() {
                         setShowDailyInvoiceModal(false);
                         setSelectedDailyVehicle(null);
                         setCustomDays('');
+                    }}
+                />
+            )}
+
+            {showCancellationModal && (
+                <CancellationNoticeModal
+                    vehicle={selectedCancellationVehicle}
+                    onClose={() => {
+                        setShowCancellationModal(false);
+                        setSelectedCancellationVehicle(null);
                     }}
                 />
             )}
