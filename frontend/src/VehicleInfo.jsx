@@ -3,7 +3,6 @@ import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, Do
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import QRCode from 'qrcode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './contexts/ThemeContext';
 
@@ -659,10 +658,15 @@ export function VehicleInfo() {
             termsY += lineHeight;
 
             const terms = [
-                ['1.', 'Rent must be paid before 5th of each month.'],
-                ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
-                ['3.', 'Parking spot must be kept clean.'],
-                ['4.', 'No unauthorized vehicle transfers.'],
+                ...(invoiceTitle === 'ADVANCE RECEIPT' ? [
+                    ['1.', 'By paying the security advance amount, the customer confirms acceptance of these Terms and Conditions for use of the allotted parking space.'],
+                ] : []),
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '2.' : '1.', 'The rent shall be paid on or before the 5th calendar day of every month.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '3.' : '2.', 'If rent remains unpaid after the 5th, SP Car Parking may serve a 3-day notice by written message, WhatsApp, or call requiring immediate payment.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '4.' : '3.', 'If dues remain unpaid after the 10th calendar day of the month, the parking rental arrangement shall stand terminated, and the allotted space may be re-allotted without further consent.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '5.' : '4.', 'The customer shall remain liable for unpaid rent, applicable charges, losses, and reasonable recovery/removal costs, subject to applicable law.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '6.' : '5.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '7.' : '6.', 'Parking spot must be kept clean and no unauthorized vehicle transfer is permitted.'],
             ];
 
             // Terms table with full width
@@ -694,35 +698,6 @@ export function VehicleInfo() {
 
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
-
-            // QR Code - Left Side Bottom (ABOVE the line)
-            // QR is 30px wide. Position at margin. Center text at margin + 15
-            const qrXPos = margin + 15;
-
-            // Generate QR Code first to use in layout
-            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
-            const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 200,
-                margin: 1,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
-            });
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8);
-            doc.setTextColor(30, 58, 138);
-            doc.text('SCAN TO PAY', qrXPos, footerY - 51, { align: 'center' });
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(6);
-            doc.setTextColor(107, 114, 128);
-            doc.text('(Ignore if paid)', qrXPos, footerY - 47, { align: 'center' });
-
-            const qrSize = 30;
-            const qrX = margin;
-            doc.addImage(qrDataUrl, 'PNG', qrX, footerY - 43, qrSize, qrSize);
 
             // Add Signature & Stamp (Only if Paid/Active)
             if (vehicle.status === 'active') {
@@ -1201,10 +1176,12 @@ export function VehicleInfo() {
             termsY += lineHeight;
 
             const terms = [
-                ["1.", "Rent must be paid promptly for the number of days parked."],
-                ["2.", "Parking spot must be kept clean."],
-                ["3.", "No unauthorized vehicle transfers."],
-                ["4.", "Save Water and Electricity."],
+                ["1.", "Daily rent must be paid promptly for the number of days parked."],
+                ["2.", "If rent remains unpaid, SP Car Parking may serve a 3-day notice by written message, WhatsApp, SMS, email, or call record requiring immediate payment."],
+                ["3.", "If rental dues remain unpaid after, the parking rental arrangement shall stand terminated, and the allotted space may be re-allotted without further consent."],
+                ["4.", "The customer shall remain liable for unpaid rent, applicable charges, losses, and reasonable recovery/removal costs, subject to applicable law."],
+                ["5.", "Parking spot must be kept clean and no unauthorized vehicle transfer is permitted."],
+                ["6.", "Save Water and Electricity."],
             ];
 
             // Terms table with full width
@@ -1236,34 +1213,6 @@ export function VehicleInfo() {
 
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
-
-            // QR Code - Left Side Bottom (ABOVE the line)
-            const qrXPos = margin + 15;
-
-            // Generate QR Code
-            const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
-            const qrDataUrl = await QRCode.toDataURL(qrData, {
-                width: 200,
-                margin: 1,
-                color: {
-                    dark: "#000000",
-                    light: "#ffffff",
-                },
-            });
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8);
-            doc.setTextColor(30, 58, 138);
-            doc.text("SCAN TO PAY", qrXPos, footerY - 51, { align: "center" });
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(6);
-            doc.setTextColor(107, 114, 128);
-            doc.text("(Ignore if paid)", qrXPos, footerY - 47, { align: "center" });
-
-            const qrSize = 30;
-            const qrX = margin;
-            doc.addImage(qrDataUrl, "PNG", qrX, footerY - 43, qrSize, qrSize);
 
             // Add Signature & Stamp (Only if Paid/Active)
             if (vehicle.status === 'active') {
@@ -1813,15 +1762,10 @@ export function VehicleInfo() {
             doc.setLineWidth(0.3);
             doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
 
-            doc.setFontSize(7);
-            doc.setTextColor(107, 114, 128);
-            doc.setFont("helvetica", "normal");
-            doc.text('SP Car Parking - Vehicle History', pageWidth / 2, footerY, { align: 'center' });
-
-            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
             doc.setTextColor(30, 58, 138);
-            doc.setFontSize(7);
-            doc.text('JESUS LEADS YOU', margin, footerY);
+            doc.setFont("helvetica", "bold");
+            doc.text('JESUS LEADS YOU', pageWidth / 2, footerY, { align: 'center' });
 
             doc.save(`SP_Vehicle_Report_${vehicle.vehicleNumber}_${reportDate.replace(/\//g, '-')}.pdf`);
             toast.success('Full report downloaded successfully! 🎉');
