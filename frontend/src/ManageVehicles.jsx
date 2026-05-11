@@ -647,10 +647,15 @@ export function ManageVehicles() {
             termsY += lineHeight;
 
             const terms = [
-                ['1.', 'Rent must be paid before 5th of each month.'],
-                ['2.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
-                ['3.', 'Parking spot must be kept clean.'],
-                ['4.', 'No unauthorized vehicle transfers.'],
+                ...(invoiceTitle === 'ADVANCE RECEIPT' ? [
+                    ['1.', 'By paying the security advance amount, the customer confirms acceptance of these Terms and Conditions for use of the allotted parking space.'],
+                ] : []),
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '2.' : '1.', 'The rent shall be paid on or before the 5th calendar day of every month.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '3.' : '2.', 'If rent remains unpaid after the 5th, SP Car Parking may serve a 3-day notice by written message, WhatsApp, or call requiring immediate payment.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '4.' : '3.', 'If dues remain unpaid after the 10th calendar day of the month, the parking rental arrangement shall stand terminated, and the allotted space may be re-allotted without further consent.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '5.' : '4.', 'The customer shall remain liable for unpaid rent, applicable charges, losses, and reasonable recovery/removal costs, subject to applicable law.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '6.' : '5.', '15-day prior notice is required for vacating. Failure will incur a 15-day penalty from advance before refund.'],
+                [invoiceTitle === 'ADVANCE RECEIPT' ? '7.' : '6.', 'Parking spot must be kept clean and no unauthorized vehicle transfer is permitted.'],
             ];
 
             // Terms table with full width
@@ -683,9 +688,11 @@ export function ManageVehicles() {
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
 
-            // QR Code - Left Side Bottom (ABOVE the line)
-            // QR is 30px wide. Position at margin. Center text at margin + 15
-            const qrXPos = margin + 15;
+            // QR Code - Right Side Bottom (ABOVE the line)
+            // QR is 30px wide. Position at right margin. Center text at QR center.
+            const qrSize = 30;
+            const qrX = pageWidth - margin - qrSize;
+            const qrXPos = qrX + (qrSize / 2);
 
             // Generate QR Code first to use in layout
             const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}`;
@@ -708,8 +715,6 @@ export function ManageVehicles() {
             doc.setTextColor(107, 114, 128);
             doc.text('(Ignore if paid)', qrXPos, footerY - 47, { align: 'center' });
 
-            const qrSize = 30;
-            const qrX = margin;
             doc.addImage(qrDataUrl, 'PNG', qrX, footerY - 43, qrSize, qrSize);
 
             // Add Signature & Stamp (Only if Paid/Active)
@@ -730,8 +735,8 @@ export function ManageVehicles() {
                     // FooterY is bottom line. Signature is at footerY - 22 (top edge).
                     // So Stamp should be above footerY - 22. Say footerY - 45.
                     const stampSize = 25;
-                    // Align roughly with signature (Right aligned)
-                    const stampX = pageWidth - margin - 35;
+                    // Keep signature/stamp on the left so it does not overlap the payment QR.
+                    const stampX = margin + 5;
                     doc.addImage(stampBase64, 'PNG', stampX, footerY - 50, stampSize, stampSize);
 
                     // 2. Signature
@@ -745,16 +750,14 @@ export function ManageVehicles() {
                     });
                     const signatureWidth = 30;
                     const signatureHeight = 15;
-                    // Position signature on right align
-                    const signatureX = pageWidth - margin - signatureWidth;
+                    const signatureX = margin;
                     doc.addImage(signatureBase64, 'PNG', signatureX, footerY - 22, signatureWidth, signatureHeight);
 
                     doc.setFontSize(6);
                     doc.setTextColor(75, 85, 99);
                     doc.setFont("helvetica", "normal");
-                    // Text aligned to right margin
-                    doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
-                    doc.text('For SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                    doc.text('Authorized Signature', margin, footerY - 6);
+                    doc.text('For SP Car Parking', margin, footerY - 3);
                 } catch (error) {
                     console.error('Error loading signature/stamp:', error);
                 }
@@ -1225,10 +1228,12 @@ export function ManageVehicles() {
             termsY += lineHeight;
 
             const terms = [
-                ["1.", "Rent must be paid promptly for the number of days parked."],
-                ["2.", "Parking spot must be kept clean."],
-                ["3.", "No unauthorized vehicle transfers."],
-                ["4.", "Save Water and Electricity."],
+                ["1.", "Daily rent must be paid promptly for the number of days parked."],
+                ["2.", "If rent remains unpaid, SP Car Parking may serve a 3-day notice by written message, WhatsApp, SMS, email, or call record requiring immediate payment."],
+                ["3.", "If rental dues remain unpaid after, the parking rental arrangement shall stand terminated, and the allotted space may be re-allotted without further consent."],
+                ["4.", "The customer shall remain liable for unpaid rent, applicable charges, losses, and reasonable recovery/removal costs, subject to applicable law."],
+                ["5.", "Parking spot must be kept clean and no unauthorized vehicle transfer is permitted."],
+                ["6.", "Save Water and Electricity."],
             ];
 
             // Terms table with full width
@@ -1261,8 +1266,10 @@ export function ManageVehicles() {
             // ========== PROFESSIONAL FOOTER ==========
             const footerY = pageHeight - 12;
 
-            // QR Code - Left Side Bottom (ABOVE the line)
-            const qrXPos = margin + 15;
+            // QR Code - Right Side Bottom (ABOVE the line)
+            const qrSize = 30;
+            const qrX = pageWidth - margin - qrSize;
+            const qrXPos = qrX + (qrSize / 2);
 
             // Generate QR Code
             const qrData = `upi://pay?pa=paulcars2000@cnrb&pn=SP CAR PARKING&am=${totalAmount}&tr=${vehicle._id}&tn=SP_CAR_PARKING_${vehicle.vehicleNumber}_DAILY`;
@@ -1285,8 +1292,6 @@ export function ManageVehicles() {
             doc.setTextColor(107, 114, 128);
             doc.text("(Ignore if paid)", qrXPos, footerY - 47, { align: "center" });
 
-            const qrSize = 30;
-            const qrX = margin;
             doc.addImage(qrDataUrl, "PNG", qrX, footerY - 43, qrSize, qrSize);
 
             // Add Signature & Stamp (Only if Paid/Active)
@@ -1303,7 +1308,7 @@ export function ManageVehicles() {
                     });
 
                     const stampSize = 25;
-                    const stampX = pageWidth - margin - 35;
+                    const stampX = margin + 5;
                     doc.addImage(stampBase64, 'PNG', stampX, footerY - 50, stampSize, stampSize);
 
                     // 2. Signature
@@ -1318,14 +1323,14 @@ export function ManageVehicles() {
                     const signatureWidth = 30;
                     const signatureHeight = 15;
 
-                    const signatureX = pageWidth - margin - signatureWidth;
+                    const signatureX = margin;
                     doc.addImage(signatureBase64, 'PNG', signatureX, footerY - 22, signatureWidth, signatureHeight);
 
                     doc.setFontSize(6);
                     doc.setTextColor(75, 85, 99);
                     doc.setFont("helvetica", "normal");
-                    doc.text('Authorized Signature', pageWidth - margin, footerY - 6, { align: 'right' });
-                    doc.text('For SP Car Parking', pageWidth - margin, footerY - 3, { align: 'right' });
+                    doc.text('Authorized Signature', margin, footerY - 6);
+                    doc.text('For SP Car Parking', margin, footerY - 3);
                 } catch (error) {
                     console.error('Error loading signature/stamp:', error);
                 }
