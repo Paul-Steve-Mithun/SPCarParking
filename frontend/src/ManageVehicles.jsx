@@ -1395,8 +1395,12 @@ export function ManageVehicles() {
             let y = margin;
 
             const advanceAmount = vehicle.advanceAmount || 0;
-            const netRefund = advanceAmount - deductedAmount;
-            const netRefundWords = numberToWords(netRefund);
+            const prevMonthRent = vehicle.rentPrice || 0;
+            const prevMonthDate = new Date();
+            prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+            const prevMonthName = prevMonthDate.toLocaleString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
+            const netRefund = advanceAmount - prevMonthRent - deductedAmount;
+            const netRefundWords = numberToWords(Math.max(0, netRefund));
 
             const noticeDate = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
             const vacDateFormatted = new Date(vacationDate).toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata' });
@@ -1487,7 +1491,7 @@ export function ManageVehicles() {
             y += 7;
 
             // ── BODY PARAGRAPHS ──
-            const bodyFont = { font: 'helvetica', style: 'normal', size: 9, color: [55, 65, 81] };
+            const bodyFont = { font: 'helvetica', style: 'normal', size: 10, color: [55, 65, 81] };
             const printPara = (text) => {
                 doc.setFont(bodyFont.font, bodyFont.style);
                 doc.setFontSize(bodyFont.size);
@@ -1518,7 +1522,7 @@ export function ManageVehicles() {
                     }
                     // Fallback: render full line normally (bold segments via manual x-tracking below)
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(9);
+                    doc.setFontSize(10);
                     doc.setTextColor(55, 65, 81);
                     doc.text(line, margin, y);
                     y += lineH;
@@ -1530,8 +1534,10 @@ export function ManageVehicles() {
             const p1 = `We are writing to formally inform you that your Parking Space Rental Agreement with us, pertaining to Vehicle No.  ` +
                 `${vehicle.vehicleNumber} for Parking Lot No. ${vehicle.lotNumber || 'Open'}, stands cancelled with immediate effect from the date of this notice.`;
             {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(55, 65, 81);
                 const lines1 = doc.splitTextToSize(p1, pageWidth - margin * 2);
-                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
                 for (const ln of lines1) {
                     let cx = margin;
                     const boldTerms = [vehicle.vehicleNumber, vehicle.lotNumber || 'Open'];
@@ -1573,8 +1579,10 @@ export function ManageVehicles() {
             const p2a = `As per the terms and conditions of your rental agreement, the monthly rental amount of  Rs. ${vehicle.rentPrice}/- was due for payment on or before the 5th of the current month. Despite continuous calls and WhatsApp messages, there was no response from your end. We regret to note that the payment has not been received from your end until the date of this notice. Pursuant to your agreement, non-payment of rental dues beyond the 10th of the month entitles us to  terminate the contract forthwith.`;
             {
                 const boldTerms2 = [`Rs. ${vehicle.rentPrice}/-`, '5th', 'terminate the contract'];
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(55, 65, 81);
                 const lines2 = doc.splitTextToSize(p2a, pageWidth - margin * 2);
-                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
                 for (const ln of lines2) {
                     let cx = margin;
                     let rest = ln;
@@ -1611,12 +1619,14 @@ export function ManageVehicles() {
             printPara(
                 `In accordance with our refund policy, we hereby confirm that the following amounts will be refunded to you after deducting the proportionate rent for the days the parking space was occupied during the current month:`
             );
+            y -= 4; // Remove the trailing gap printPara adds before the refund table
 
             // ── REFUND BREAKDOWN TABLE ──
             const tableData = [
                 ['a)', 'Advance Deposit Paid', `Rs. ${advanceAmount.toLocaleString('en-IN')}/-`],
-                ['b)', `Less: Rent for ${occupiedDays} days`, `Rs. ${deductedAmount.toLocaleString('en-IN')}/-`],
-                ['c)', `Net Refund Amount Payable to You`, `Rs. ${netRefund.toLocaleString('en-IN')}/- (Rupees ${netRefundWords} Only)`],
+                ['b)', `Less: Rent for ${prevMonthName} Month`, `Rs. ${prevMonthRent.toLocaleString('en-IN')}/-`],
+                ['c)', `Less: Rent for ${occupiedDays} days (current month)`, `Rs. ${deductedAmount.toLocaleString('en-IN')}/-`],
+                ['d)', `Net Refund Amount Payable to You`, `Rs. ${Math.max(0, netRefund).toLocaleString('en-IN')}/- (Rupees ${netRefundWords} Only)`],
             ];
 
             doc.autoTable({
@@ -1628,11 +1638,11 @@ export function ManageVehicles() {
                 styles: { fontSize: 9, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, font: 'helvetica', lineWidth: 0, textColor: [30, 41, 59] },
                 columnStyles: {
                     0: { cellWidth: 8, fontStyle: 'bold' },
-                    1: { cellWidth: 90 },
+                    1: { cellWidth: 75 },
                     2: { cellWidth: 'auto', fontStyle: 'bold', textColor: [153, 27, 27] }
                 },
                 didParseCell: (data) => {
-                    if (data.row.index === 2) {
+                    if (data.row.index === 3) {
                         data.cell.styles.fillColor = [254, 242, 242];
                         data.cell.styles.fontStyle = 'bold';
                     }
@@ -1642,38 +1652,51 @@ export function ManageVehicles() {
 
             // Para 3 – bold 'no later than [date]'
             {
-                const p3 = `You are hereby requested to remove your vehicle from the allotted parking slot at the earliest and  no later than ${vacDateFormatted}. Failure to vacate the premises within the stipulated time may result in additional charges being levied, and we reserve the right to take such steps as deemed necessary under applicable law.`;
-                const boldTerms3 = [`no later than ${vacDateFormatted}`];
-                const lines3 = doc.splitTextToSize(p3, pageWidth - margin * 2);
-                doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+                const boldTerm3 = `no later than ${vacDateFormatted}`;
+                const p3 = `You are hereby requested to remove your vehicle from the allotted parking slot at the earliest and  ${boldTerm3}. Failure to vacate the premises within the stipulated time may result in additional charges being levied, and we reserve the right to take such steps as deemed necessary under applicable law.`;
+                const boldStart3 = p3.indexOf(boldTerm3);
+                const boldEnd3 = boldStart3 + boldTerm3.length;
+                const maxW3 = pageWidth - margin * 2;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(55, 65, 81);
+                const lines3 = doc.splitTextToSize(p3, maxW3);
+
+                let charOffset3 = 0;
                 for (const ln of lines3) {
                     let cx = margin;
-                    let rest = ln;
-                    while (rest.length > 0) {
-                        let matched = false;
-                        for (const term of boldTerms3) {
-                            if (rest.startsWith(term)) {
-                                doc.setFont('helvetica', 'bold');
-                                doc.text(term, cx, y);
-                                cx += doc.getTextWidth(term);
-                                rest = rest.slice(term.length);
-                                matched = true;
-                                break;
-                            }
-                        }
-                        if (!matched) {
-                            let nextIdx = rest.length;
-                            for (const term of boldTerms3) {
-                                const idx = rest.indexOf(term);
-                                if (idx !== -1 && idx < nextIdx) nextIdx = idx;
-                            }
-                            const plain = rest.slice(0, nextIdx);
+                    const lnLen = ln.length;
+                    // Bold region in line-local coordinates
+                    const bStart = Math.max(boldStart3, charOffset3) - charOffset3;
+                    const bEnd = Math.min(boldEnd3, charOffset3 + lnLen) - charOffset3;
+
+                    if (bStart >= bEnd) {
+                        // No bold overlap on this line
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(10);
+                        doc.text(ln, margin, y);
+                    } else {
+                        if (bStart > 0) {
+                            const before = ln.slice(0, bStart);
                             doc.setFont('helvetica', 'normal');
-                            doc.text(plain, cx, y);
-                            cx += doc.getTextWidth(plain);
-                            rest = rest.slice(nextIdx);
+                            doc.setFontSize(10);
+                            doc.text(before, cx, y);
+                            cx += doc.getTextWidth(before);
+                        }
+                        const boldPart = ln.slice(bStart, bEnd);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text(boldPart, cx, y);
+                        cx += doc.getTextWidth(boldPart);
+                        if (bEnd < lnLen) {
+                            const after = ln.slice(bEnd);
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(10);
+                            doc.text(after, cx, y);
                         }
                     }
+                    charOffset3 += lnLen + 1; // +1 for the space consumed at each line break
                     y += 5;
                 }
                 y += 4;
