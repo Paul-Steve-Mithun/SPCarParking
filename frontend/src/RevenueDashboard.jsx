@@ -2049,15 +2049,16 @@ export function RevenueDashboard() {
                                         className="text-lg font-bold text-white mb-4 -mx-6 -mt-6 p-6 bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-between"
                                     >
                                         <span>Edit Transaction</span>
-                                        <button
+                                        {/* <button
                                             type="button"
                                             onClick={handlePrintFromTransaction}
+                                            disabled
                                             title="Print Receipt"
-                                            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-md"
+                                            className="inline-flex items-center gap-2 bg-white/10 text-white/50 px-3 py-1.5 rounded-md cursor-not-allowed"
                                         >
                                             <Printer className="w-4 h-4" />
                                             <span className="hidden sm:inline">Receipt</span>
-                                        </button>
+                                        </button> */}
                                     </Dialog.Title>
 
                                     {editingTransaction && (
