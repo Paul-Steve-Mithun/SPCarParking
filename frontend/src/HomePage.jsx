@@ -476,6 +476,20 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             return 0;
         };
 
+        const calculateDaysLeft = (vehicle) => {
+            if (vehicle.rentalType === 'daily' && vehicle.status === 'active' && vehicle.endDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const endDate = new Date(vehicle.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                
+                const diffTime = endDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 ? diffDays : 0;
+            }
+            return null;
+        };
+
         return (
             <div className="fixed inset-0 flex items-center justify-center z-50">
                 <div
@@ -527,6 +541,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 {displayedVehicles.map(vehicle => {
                                     const dueAmount = calculateDueAmount(vehicle);
+                                    const daysLeft = calculateDaysLeft(vehicle);
 
                                     return (
                                         <div
@@ -551,25 +566,37 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                                 {vehicle.vehicleDescription || 'No description'}
                                                             </p>
                                                         </div>
-                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
-                                                            ? isDarkMode
-                                                                ? 'bg-red-900/30 text-red-300 border border-red-800'
-                                                                : 'bg-red-100 text-red-800 border border-red-200'
-                                                            : vehicle.status === 'active'
+                                                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
                                                                 ? isDarkMode
-                                                                    ? 'bg-green-900/30 text-green-300'
-                                                                    : 'bg-green-100 text-green-800'
-                                                                : isDarkMode
-                                                                    ? 'bg-red-900/30 text-red-300'
-                                                                    : 'bg-red-100 text-red-800'
-                                                            }`}>
-                                                            {vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
-                                                                ? <span className="font-bold">Due: ₹{dueAmount}</span>
+                                                                    ? 'bg-red-900/30 text-red-300 border border-red-800'
+                                                                    : 'bg-red-100 text-red-800 border border-red-200'
                                                                 : vehicle.status === 'active'
-                                                                    ? 'Active'
-                                                                    : 'Expired'
-                                                            }
-                                                        </span>
+                                                                    ? isDarkMode
+                                                                        ? 'bg-green-900/30 text-green-300'
+                                                                        : 'bg-green-100 text-green-800'
+                                                                    : isDarkMode
+                                                                        ? 'bg-red-900/30 text-red-300'
+                                                                        : 'bg-red-100 text-red-800'
+                                                                }`}>
+                                                                {vehicle.rentalType === 'daily' && vehicle.status === 'inactive'
+                                                                    ? <span className="font-bold">Due: ₹{dueAmount}</span>
+                                                                    : vehicle.status === 'active'
+                                                                        ? 'Active'
+                                                                        : 'Expired'
+                                                                }
+                                                            </span>
+                                                            {daysLeft !== null && (
+                                                                <span className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-md flex items-center gap-1 shadow-sm ${
+                                                                    isDarkMode 
+                                                                        ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                                                        : 'bg-red-50 text-red-600 border border-red-200'
+                                                                }`}>
+                                                                    <Timer className="w-3 h-3" />
+                                                                    {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
