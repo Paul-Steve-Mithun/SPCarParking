@@ -213,12 +213,12 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     };
 
     const generateAllLots = () => {
-        const aLots = Array.from({ length: 19 }, (_, i) => `A${i + 1}`);
+        const aLots = Array.from({ length: 20 }, (_, i) => `A${i + 1}`);
         const bLots = Array.from({ length: 21 }, (_, i) => `B${i + 1}`);
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
         const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
         const eLots = Array.from({ length: 20 }, (_, i) => `E${i + 1}`);
-        const oLots = Array.from({ length: 16 }, (_, i) => `O${i + 1}`); // O1-O16
+        const oLots = Array.from({ length: 18 }, (_, i) => `O${i + 1}`); // O1-O18
         return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots, ...oLots];
     };
 
@@ -398,7 +398,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                     : 'bg-gray-100 text-gray-700'
                                                                 }`}
                                                         >
-                                                            A Wing (A1-A19)
+                                                            A Wing (A1-A20)
                                                         </button>
                                                         <button
                                                             type="button"
@@ -458,7 +458,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                     : 'bg-gray-100 text-gray-700'
                                                                 }`}
                                                         >
-                                                            O Wing (O1-O16)
+                                                            O Wing (O1-O18)
                                                         </button>
                                                     </div>
                                                 </div>
