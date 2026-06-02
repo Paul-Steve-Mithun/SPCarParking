@@ -810,9 +810,31 @@ export function ExpensesDashboard() {
                                                                     </span>
                                                                 </td>
                                                                 <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-yellow-300' : 'text-gray-600'}`}>
-                                                                    <div className="flex items-center justify-center gap-1">
-                                                                        <User className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
-                                                                        {expense.spentBy}
+                                                                    <div className="flex items-center justify-center">
+                                                                        {expense.spentBy && expense.spentBy.trim().toLowerCase() === 'mani' ? (
+                                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors duration-300 ${
+                                                                                isDarkMode 
+                                                                                    ? 'bg-red-950/40 text-red-300 border-red-900/50' 
+                                                                                    : 'bg-red-50 text-red-600 border-red-100'
+                                                                            }`}>
+                                                                                <User className="w-3.5 h-3.5 animate-pulse text-red-400 dark:text-red-300" />
+                                                                                {expense.spentBy}
+                                                                            </span>
+                                                                        ) : expense.spentBy && expense.spentBy.trim().toLowerCase() === 'balu' ? (
+                                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors duration-300 ${
+                                                                                isDarkMode 
+                                                                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-900/50' 
+                                                                                    : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                                            }`}>
+                                                                                <User className="w-3.5 h-3.5 animate-pulse text-emerald-400 dark:text-emerald-300" />
+                                                                                {expense.spentBy}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <div className="flex items-center justify-center gap-1">
+                                                                                <User className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-gray-400'}`} />
+                                                                                {expense.spentBy || 'N/A'}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 </td>
                                                                 <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-yellow-100' : 'text-gray-900'}`}>
