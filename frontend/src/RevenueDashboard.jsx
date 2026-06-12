@@ -1410,6 +1410,44 @@ export function RevenueDashboard() {
         }
     };
 
+    // Rent tier helper — returns style objects for row bg and amount badge
+    // Red: ≤ 2000 | Neutral: 2001–2200 | Green: > 2200
+    const getRentTier = (amount) => {
+        if (amount <= 2000) {
+            return {
+                rowBg: isDarkMode
+                    ? 'bg-red-950/25 hover:bg-red-950/40'
+                    : 'bg-red-50/70 hover:bg-red-100/80',
+                rowBorder: isDarkMode ? 'border-l-2 border-red-700/50' : 'border-l-2 border-red-300',
+                badgeBg: isDarkMode
+                    ? 'bg-red-900/50 text-red-300 border border-red-700/60'
+                    : 'bg-red-100 text-red-700 border border-red-200',
+                dot: isDarkMode ? 'bg-red-400' : 'bg-red-500',
+            };
+        } else if (amount > 2200) {
+            return {
+                rowBg: isDarkMode
+                    ? 'bg-emerald-950/20 hover:bg-emerald-950/35'
+                    : 'bg-emerald-50/60 hover:bg-emerald-100/70',
+                rowBorder: isDarkMode ? 'border-l-2 border-emerald-700/50' : 'border-l-2 border-emerald-300',
+                badgeBg: isDarkMode
+                    ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/60'
+                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                dot: isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500',
+            };
+        } else {
+            // Neutral: 2001 – 2200 (no colour)
+            return {
+                rowBg: isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50',
+                rowBorder: '',
+                badgeBg: isDarkMode
+                    ? 'bg-gray-700 text-gray-300 border border-gray-600'
+                    : 'bg-gray-100 text-gray-700 border border-gray-200',
+                dot: isDarkMode ? 'bg-gray-400' : 'bg-gray-500',
+            };
+        }
+    };
+
     const handleVehicleNumberClick = (transaction) => {
         if (!transaction) return;
         navigate('/vehicle-info', { state: { vehicleNumber: transaction.vehicleNumber } });
@@ -1733,12 +1771,13 @@ export function RevenueDashboard() {
                                                                 <TableRowSkeleton key={index} isDarkMode={isDarkMode} />
                                                             ))
                                                         ) : (
-                                                            filteredData.map((record, index) => (
+                                                            filteredData.map((record, index) => {
+                                                                const tier = getRentTier(record.revenueAmount);
+                                                                return (
                                                                 <tr
                                                                     key={record._id}
                                                                     onClick={() => handleEditClick(record)}
-                                                                    className={`transition-colors duration-150 cursor-pointer group ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                                                                        }`}
+                                                                    className={`transition-colors duration-200 cursor-pointer group ${tier.rowBg} ${tier.rowBorder}`}
                                                                 >
                                                                     <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
                                                                         }`}>
@@ -1818,16 +1857,17 @@ export function RevenueDashboard() {
                                                                             )}
                                                                         </span>
                                                                     </td>
-                                                                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm sm:text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                                                        }`}>
-                                                                        <div className="w-full text-right font-mono">
-                                                                            <span className="inline-block w-[80px] text-right text-base">
-                                                                                {record.revenueAmount.toFixed(2)}
+                                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                                                        <div className="w-full flex justify-end">
+                                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold tabular-nums ${tier.badgeBg}`}>
+                                                                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tier.dot}`} />
+                                                                                ₹{record.revenueAmount.toFixed(2)}
                                                                             </span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
-                                                            ))
+                                                                );
+                                                            })
                                                         )}
                                                     </tbody>
                                                 </table>

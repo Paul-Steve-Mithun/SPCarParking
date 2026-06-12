@@ -490,6 +490,39 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
             return null;
         };
 
+        // Rent tier colour helper for vehicle cards
+        const getRentTier = (rentPrice, rentalType, numberOfDays) => {
+            const amount = rentalType === 'daily'
+                ? rentPrice * (numberOfDays || 1)
+                : rentPrice;
+            if (amount <= 2000) {
+                return {
+                    badgeBg: isDarkMode
+                        ? 'bg-red-900/50 text-red-300 border border-red-700/60'
+                        : 'bg-red-100 text-red-700 border border-red-200',
+                    dot: isDarkMode ? 'bg-red-400' : 'bg-red-500',
+                    leftBorder: isDarkMode ? 'border-l-4 !border-red-600/60' : 'border-l-4 !border-red-300'
+                };
+            } else if (amount > 2200) {
+                return {
+                    badgeBg: isDarkMode
+                        ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/60'
+                        : 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                    dot: isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500',
+                    leftBorder: isDarkMode ? 'border-l-4 !border-emerald-600/60' : 'border-l-4 !border-emerald-300'
+                };
+            } else {
+                // Neutral: 2001 – 2200 (no colour)
+                return {
+                    badgeBg: isDarkMode
+                        ? 'bg-gray-700 text-gray-300 border border-gray-600'
+                        : 'bg-gray-100 text-gray-700 border border-gray-200',
+                    dot: isDarkMode ? 'bg-gray-400' : 'bg-gray-500',
+                    leftBorder: ''
+                };
+            }
+        };
+
         return (
             <div className="fixed inset-0 flex items-center justify-center z-50">
                 <div
@@ -542,6 +575,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                 {displayedVehicles.map(vehicle => {
                                     const dueAmount = calculateDueAmount(vehicle);
                                     const daysLeft = calculateDaysLeft(vehicle);
+                                    const rentTier = getRentTier(vehicle.rentPrice, vehicle.rentalType, vehicle.numberOfDays);
 
                                     return (
                                         <div
@@ -549,7 +583,7 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                             className={`rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer ${isDarkMode
                                                 ? 'bg-gray-800 border-gray-700 hover:shadow-gray-900/50'
                                                 : 'bg-white border-gray-200 hover:shadow-gray-200/50'
-                                                }`}
+                                                } ${rentTier.leftBorder}`}
                                             onClick={() => handleVehicleCardClick(vehicle)}
                                         >
                                             <div className={`p-3 sm:p-4 border-b transition-colors duration-300 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
@@ -616,14 +650,13 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                                 <div className="flex items-center justify-between text-xs sm:text-sm">
                                                     <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
                                                         }`}>Rent:</span>
-                                                    <span className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                                                        }`}>
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums ${rentTier.badgeBg}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${rentTier.dot}`} />
                                                         {vehicle.rentalType === 'daily' ? (
                                                             <>
                                                                 ₹{vehicle.rentPrice * vehicle.numberOfDays}
-                                                                <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                                                    }`}>
-                                                                    {' '}({vehicle.numberOfDays} days)
+                                                                <span className="font-normal opacity-70">
+                                                                    {' '}({vehicle.numberOfDays}d)
                                                                 </span>
                                                             </>
                                                         ) : (
