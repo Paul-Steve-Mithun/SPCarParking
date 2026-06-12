@@ -686,11 +686,64 @@ export function AdminPanel() {
         return missing;
     };
 
-    const renderRentalInfo = (vehicle) => {
-        if (vehicle.rentalType === 'daily') {
-            return `Daily - ₹${vehicle.rentPrice} for ${vehicle.numberOfDays} days`;
+    // Rent tier helper — returns style objects for row bg and amount badge
+    // Red: ≤ 2000 | Neutral: 2001–2200 | Green: > 2200
+    const getRentTier = (rentPrice, rentalType, numberOfDays) => {
+        const amount = rentalType === 'daily'
+            ? rentPrice * (numberOfDays || 1)
+            : rentPrice;
+            
+        if (amount <= 2000) {
+            return {
+                rowBg: isDarkMode
+                    ? 'bg-red-950/25 hover:bg-red-950/40'
+                    : 'bg-red-50/70 hover:bg-red-100/80',
+                rowBorder: isDarkMode ? 'border-l-2 !border-red-700/50' : 'border-l-2 !border-red-300',
+                badgeBg: isDarkMode
+                    ? 'bg-red-900/50 text-red-300 border border-red-700/60'
+                    : 'bg-red-100 text-red-700 border border-red-200',
+                dot: isDarkMode ? 'bg-red-400' : 'bg-red-500',
+            };
+        } else if (amount > 2200) {
+            return {
+                rowBg: isDarkMode
+                    ? 'bg-emerald-950/20 hover:bg-emerald-950/35'
+                    : 'bg-emerald-50/60 hover:bg-emerald-100/70',
+                rowBorder: isDarkMode ? 'border-l-2 !border-emerald-700/50' : 'border-l-2 !border-emerald-300',
+                badgeBg: isDarkMode
+                    ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/60'
+                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                dot: isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500',
+            };
+        } else {
+            // Neutral: 2001 – 2200 (no colour)
+            return {
+                rowBg: isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50',
+                rowBorder: 'border-l-2 border-transparent',
+                badgeBg: isDarkMode
+                    ? 'bg-gray-700 text-gray-300 border border-gray-600'
+                    : 'bg-gray-100 text-gray-700 border border-gray-200',
+                dot: isDarkMode ? 'bg-gray-400' : 'bg-gray-500',
+            };
         }
-        return `Monthly - ₹${vehicle.rentPrice}`;
+    };
+
+    const renderRentalInfo = (vehicle, tier) => {
+        const amountDisplay = vehicle.rentalType === 'daily'
+            ? `₹${vehicle.rentPrice} × ${vehicle.numberOfDays}d`
+            : `₹${vehicle.rentPrice}`;
+            
+        return (
+            <div className="flex items-center gap-2">
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {vehicle.rentalType === 'daily' ? 'Daily:' : 'Monthly:'}
+                </span>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums ${tier.badgeBg}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tier.dot}`} />
+                    {amountDisplay}
+                </span>
+            </div>
+        );
     };
 
     // Add the due amount calculation function
@@ -923,10 +976,12 @@ export function AdminPanel() {
                 <div className={`p-6 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No vehicles found</div>
             ) : (
                 <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {filteredVehicles.map(vehicle => (
+                    {filteredVehicles.map(vehicle => {
+                        const tier = getRentTier(vehicle.rentPrice, vehicle.rentalType, vehicle.numberOfDays);
+                        return (
                         <div
                             key={vehicle._id}
-                            className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
+                            className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-colors ${tier.rowBg} ${tier.rowBorder}`}
                         >
                             <div className="flex-grow cursor-pointer w-full" onClick={() => setSelectedVehicle(vehicle)}>
                                 {/* Top row with vehicle number and badges */}
@@ -951,7 +1006,7 @@ export function AdminPanel() {
 
                                 {/* Rental info */}
                                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{renderRentalInfo(vehicle)}</p>
+                                    {renderRentalInfo(vehicle, tier)}
                                     {vehicle.rentalType === 'daily' && (
                                         <div className="flex items-center gap-2">
                                             <span className={`px-2 py-0.5 rounded-full text-xs ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
@@ -1014,7 +1069,8 @@ export function AdminPanel() {
                                 </button>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
