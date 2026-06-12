@@ -491,10 +491,22 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         };
 
         // Rent tier colour helper for vehicle cards
+        // Amber: Daily | Red: ≤ 2000 | Neutral: 2001–2200 | Green: > 2200
         const getRentTier = (rentPrice, rentalType, numberOfDays) => {
+            if (rentalType === 'daily') {
+                return {
+                    badgeBg: isDarkMode
+                        ? 'bg-amber-900/50 text-amber-300 border border-amber-700/60'
+                        : 'bg-amber-100 text-amber-700 border border-amber-200',
+                    dot: isDarkMode ? 'bg-amber-400' : 'bg-amber-500',
+                    leftBorder: isDarkMode ? 'border-l-4 !border-amber-600/60' : 'border-l-4 !border-amber-300'
+                };
+            }
+            
             const amount = rentalType === 'daily'
                 ? rentPrice * (numberOfDays || 1)
                 : rentPrice;
+                
             if (amount <= 2000) {
                 return {
                     badgeBg: isDarkMode

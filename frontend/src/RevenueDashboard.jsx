@@ -1411,9 +1411,20 @@ export function RevenueDashboard() {
     };
 
     // Rent tier helper — returns style objects for row bg and amount badge
-    // Red: ≤ 2000 | Neutral: 2001–2200 | Green: > 2200
-    const getRentTier = (amount) => {
-        if (amount <= 2000) {
+    // Amber: Daily | Red: ≤ 2000 | Neutral: 2001–2200 | Green: > 2200
+    const getRentTier = (amount, rentalType) => {
+        if (rentalType === 'daily') {
+            return {
+                rowBg: isDarkMode
+                    ? 'bg-amber-950/20 hover:bg-amber-950/35'
+                    : 'bg-amber-50/70 hover:bg-amber-100/80',
+                rowBorder: isDarkMode ? 'border-l-2 !border-amber-700/50' : 'border-l-2 !border-amber-300',
+                badgeBg: isDarkMode
+                    ? 'bg-amber-900/50 text-amber-300 border border-amber-700/60'
+                    : 'bg-amber-100 text-amber-700 border border-amber-200',
+                dot: isDarkMode ? 'bg-amber-400' : 'bg-amber-500',
+            };
+        } else if (amount <= 2000) {
             return {
                 rowBg: isDarkMode
                     ? 'bg-red-950/25 hover:bg-red-950/40'
@@ -1772,7 +1783,7 @@ export function RevenueDashboard() {
                                                             ))
                                                         ) : (
                                                             filteredData.map((record, index) => {
-                                                                const tier = getRentTier(record.revenueAmount);
+                                                                const tier = getRentTier(record.revenueAmount, record.rentalType);
                                                                 return (
                                                                 <tr
                                                                     key={record._id}
