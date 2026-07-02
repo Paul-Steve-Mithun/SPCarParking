@@ -314,16 +314,16 @@ app.post('/addVehicle', upload.fields([
         // Handle special case for daily rental with 0 days
         const isZeroDayDaily = vehicleData.rentalType === 'daily' && Number(vehicleData.numberOfDays) === 0;
 
-        // For zero-day daily rentals, set end date to previous day with standard time
+        // Use the startDate from the frontend if provided, otherwise use current time
+        const registrationDate = vehicleData.startDate ? new Date(vehicleData.startDate) : new Date();
+
+        // For zero-day daily rentals, set end date to ONE DAY BEFORE the (custom) start date
         let endDate;
         if (isZeroDayDaily) {
-            const previousDay = new Date();
+            const previousDay = new Date(registrationDate);
             previousDay.setDate(previousDay.getDate() - 1);
             endDate = setStandardEndTime(previousDay);
         }
-
-        // Use the startDate from the frontend if provided, otherwise use current time
-        const registrationDate = vehicleData.startDate ? new Date(vehicleData.startDate) : new Date();
 
         const newVehicle = new Vehicle({
             ...vehicleData,
