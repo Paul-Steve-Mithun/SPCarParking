@@ -94,12 +94,21 @@ const TableRowSkeleton = ({ isDarkMode }) => {
 export function RevenueDashboard() {
     const { isDarkMode } = useTheme();
     const navigate = useNavigate();
+
+    // Determine if the current logged-in user is admin (Balu)
+    const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+    const isAdmin = auth.role === 'admin';
+
     const [revenueData, setRevenueData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    // Step-1 delete modal (large info modal)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    // Step-2 delete modal (small final confirmation)
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [error, setError] = useState('');
     const [sortConfig, setSortConfig] = useState({
@@ -313,6 +322,8 @@ export function RevenueDashboard() {
     };
 
     const handleDeleteTransaction = async (transactionId) => {
+        if (isDeleting) return;
+        setIsDeleting(true);
         try {
             const response = await fetch(`https://spcarparkingbknd.onrender.com/revenue/${transactionId}`, {
                 method: 'DELETE',
@@ -328,6 +339,8 @@ export function RevenueDashboard() {
             toast.error('Failed to delete transaction');
             console.error('Error deleting transaction:', error);
         } finally {
+            setIsDeleting(false);
+            setIsDeleteConfirmOpen(false);
             setIsDeleteDialogOpen(false);
             setSelectedTransaction(null);
         }
@@ -1892,13 +1905,16 @@ export function RevenueDashboard() {
                 </div>
             </div>
 
-            {/* Delete Confirmation Dialog */}
+            {/* ─────────────────────────────────────────────────────────────────
+                STEP-1  DELETE MODAL  — Large info card with full record details
+            ───────────────────────────────────────────────────────────────── */}
             <Transition appear show={isDeleteDialogOpen} as={Fragment}>
                 <Dialog
                     as="div"
                     className="relative z-50"
-                    onClose={() => setIsDeleteDialogOpen(false)}
+                    onClose={() => { if (!isDeleteConfirmOpen) setIsDeleteDialogOpen(false); }}
                 >
+                    {/* Blurred + dark overlay */}
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -1908,71 +1924,245 @@ export function RevenueDashboard() {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/25" />
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
                     </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
-                        <div className="flex min-h-full items-center justify-center p-4 text-center">
-                            <Transition.Child
-                                as={Fragment}
-                                enter="ease-out duration-300"
-                                enterFrom="opacity-0 scale-95"
-                                enterTo="opacity-100 scale-100"
-                                leave="ease-in duration-200"
-                                leaveFrom="opacity-100 scale-100"
-                                leaveTo="opacity-0 scale-95"
-                            >
-                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'
-                                    }`}>
-                                    <Dialog.Title
-                                        as="h3"
-                                        className={`text-lg font-bold leading-6 transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                                            }`}
-                                    >
-                                        Delete Transaction
-                                    </Dialog.Title>
-                                    <div className="mt-2">
-                                        <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                            }`}>
-                                            Are you sure you want to delete this transaction? This action cannot be undone.
+                    {/* Scroll-locked, centered panel */}
+                    <div className="fixed inset-0 overflow-hidden flex items-center justify-center p-4">
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0 scale-95 translate-y-4"
+                            enterTo="opacity-100 scale-100 translate-y-0"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100 scale-100 translate-y-0"
+                            leaveTo="opacity-0 scale-95 translate-y-4"
+                        >
+                            <Dialog.Panel className={`w-full max-w-lg transform overflow-hidden rounded-2xl shadow-2xl transition-all ${
+                                isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-100'
+                            }`}>
+
+                                {/* Header — danger gradient */}
+                                <div className="bg-gradient-to-r from-red-600 to-rose-600 px-6 py-5 flex items-center gap-3">
+                                    <div className="flex-shrink-0 p-2 bg-white/20 rounded-xl">
+                                        <Trash2 className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <Dialog.Title as="h3" className="text-lg font-bold text-white leading-tight">
+                                            Delete Revenue Record
+                                        </Dialog.Title>
+                                        <p className="text-red-100 text-xs mt-0.5">
+                                            ⚠️ This action is permanent and cannot be rolled back
                                         </p>
-                                        {selectedTransaction && (
-                                            <div className={`mt-4 p-4 rounded-lg transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                                                }`}>
-                                                <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                                                    }`}>Transaction Details:</p>
-                                                <div className={`mt-2 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                                                    }`}>
-                                                    <p>Vehicle Number: {selectedTransaction.vehicleNumber}</p>
-                                                    <p>Amount: ₹{selectedTransaction.revenueAmount.toFixed(2)}</p>
-                                                    <p>Type: {selectedTransaction.transactionType}</p>
-                                                </div>
-                                            </div>
-                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setIsDeleteDialogOpen(false)}
+                                        className="flex-shrink-0 p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-6 py-5 space-y-4">
+
+                                    {/* Warning banner */}
+                                    <div className={`flex items-start gap-3 p-3.5 rounded-xl border ${
+                                        isDarkMode
+                                            ? 'bg-red-950/30 border-red-800/50 text-red-300'
+                                            : 'bg-red-50 border-red-200 text-red-700'
+                                    }`}>
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                        <p className="text-sm font-medium leading-snug">
+                                            You are about to permanently delete this revenue record.
+                                            Once deleted, it <span className="font-bold underline">cannot be recovered</span>.
+                                        </p>
                                     </div>
 
-                                    <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                                        <button
-                                            type="button"
-                                            className={`inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-colors duration-300 ${isDarkMode
-                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700 focus-visible:ring-gray-400'
-                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 focus-visible:ring-gray-500'
-                                                }`}
-                                            onClick={() => setIsDeleteDialogOpen(false)}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                                            onClick={() => selectedTransaction && handleDeleteTransaction(selectedTransaction._id)}
-                                        >
-                                            Delete
-                                        </button>
+                                    {/* Transaction details card */}
+                                    {selectedTransaction && (
+                                        <div className={`rounded-xl border overflow-hidden ${
+                                            isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+                                        }`}>
+                                            <div className={`px-4 py-3 border-b flex items-center gap-2 ${
+                                                isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-white'
+                                            }`}>
+                                                <Car className={`w-4 h-4 ${ isDarkMode ? 'text-gray-400' : 'text-gray-500' }`} />
+                                                <span className={`text-sm font-semibold ${ isDarkMode ? 'text-gray-200' : 'text-gray-700' }`}>
+                                                    Transaction Details
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-0">
+                                                {[
+                                                    { icon: <Car className="w-3.5 h-3.5" />, label: 'Vehicle No', value: selectedTransaction.vehicleNumber },
+                                                    { icon: <MapPin className="w-3.5 h-3.5" />, label: 'Lot', value: selectedTransaction.lotNumber || 'Open' },
+                                                    { icon: <AlertCircle className="w-3.5 h-3.5" />, label: 'Description', value: selectedTransaction.vehicleDescription || '—' },
+                                                    { icon: <Calendar className="w-3.5 h-3.5" />, label: 'Date', value: new Date(selectedTransaction.transactionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+                                                    { icon: <User className="w-3.5 h-3.5" />, label: 'Received By', value: selectedTransaction.receivedBy },
+                                                    { icon: <CreditCard className="w-3.5 h-3.5" />, label: 'Mode', value: selectedTransaction.transactionMode },
+                                                    { icon: <Clock className="w-3.5 h-3.5" />, label: 'Rental Type', value: capitalizeFirst(selectedTransaction.rentalType || '') },
+                                                    { icon: <IndianRupee className="w-3.5 h-3.5" />, label: 'Amount', value: `₹${selectedTransaction.revenueAmount.toFixed(2)}`, highlight: true },
+                                                ].map((item, i) => (
+                                                    <div key={i} className={`px-4 py-3 flex items-start gap-2.5 ${
+                                                        i % 2 === 0 && !isDarkMode ? 'bg-white' : ''
+                                                    } ${ i < 6 ? (isDarkMode ? 'border-b border-gray-700' : 'border-b border-gray-100') : '' }`}>
+                                                        <span className={`mt-0.5 flex-shrink-0 ${ isDarkMode ? 'text-gray-400' : 'text-gray-400' }`}>
+                                                            {item.icon}
+                                                        </span>
+                                                        <div className="min-w-0">
+                                                            <p className={`text-xs font-medium mb-0.5 ${ isDarkMode ? 'text-gray-500' : 'text-gray-400' }`}>
+                                                                {item.label}
+                                                            </p>
+                                                            <p className={`text-sm font-semibold truncate ${
+                                                                item.highlight
+                                                                    ? 'text-red-500'
+                                                                    : isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                                                            }`}>
+                                                                {item.value}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer actions */}
+                                <div className={`px-6 py-4 border-t flex flex-col-reverse sm:flex-row justify-end gap-3 ${
+                                    isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-gray-50'
+                                }`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDeleteDialogOpen(false)}
+                                        className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+                                            isDarkMode
+                                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDeleteConfirmOpen(true)}
+                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg shadow-red-500/30 transition-all duration-200 active:scale-[0.98]"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Proceed to Delete
+                                    </button>
+                                </div>
+                            </Dialog.Panel>
+                        </Transition.Child>
+                    </div>
+                </Dialog>
+            </Transition>
+
+            {/* ─────────────────────────────────────────────────────────────────
+                STEP-2  DELETE CONFIRM MODAL  — Small final warning
+            ───────────────────────────────────────────────────────────────── */}
+            <Transition appear show={isDeleteConfirmOpen} as={Fragment}>
+                <Dialog
+                    as="div"
+                    className="relative z-[60]"
+                    onClose={() => { if (!isDeleting) setIsDeleteConfirmOpen(false); }}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-200"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-150"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-hidden flex items-center justify-center p-4">
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-200"
+                            enterFrom="opacity-0 scale-90"
+                            enterTo="opacity-100 scale-100"
+                            leave="ease-in duration-150"
+                            leaveFrom="opacity-100 scale-100"
+                            leaveTo="opacity-0 scale-90"
+                        >
+                            <Dialog.Panel className={`w-full max-w-sm transform overflow-hidden rounded-2xl shadow-2xl transition-all ring-2 ring-red-500/40 ${
+                                isDarkMode ? 'bg-gray-900' : 'bg-white'
+                            }`}>
+
+                                {/* Icon header */}
+                                <div className="flex flex-col items-center pt-8 pb-4 px-6 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-4 ring-4 ring-red-200 dark:ring-red-800/50">
+                                        <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
                                     </div>
-                                </Dialog.Panel>
-                            </Transition.Child>
-                        </div>
+                                    <Dialog.Title as="h3" className={`text-lg font-bold mb-1 ${ isDarkMode ? 'text-gray-100' : 'text-gray-900' }`}>
+                                        Final Confirmation
+                                    </Dialog.Title>
+                                    <p className={`text-sm ${ isDarkMode ? 'text-gray-400' : 'text-gray-500' }`}>
+                                        This will <span className="font-semibold text-red-500">permanently delete</span> the record for{' '}
+                                        <span className={`font-bold ${ isDarkMode ? 'text-gray-200' : 'text-gray-800' }`}>
+                                            {selectedTransaction?.vehicleNumber}
+                                        </span>.
+                                        <br />
+                                        <span className="font-semibold">There is no undo.</span>
+                                    </p>
+                                </div>
+
+                                {/* Amount reminder */}
+                                {selectedTransaction && (
+                                    <div className={`mx-6 mb-5 px-4 py-3 rounded-xl flex items-center justify-between ${
+                                        isDarkMode ? 'bg-red-950/30 border border-red-800/40' : 'bg-red-50 border border-red-200'
+                                    }`}>
+                                        <span className={`text-xs font-medium ${ isDarkMode ? 'text-red-400' : 'text-red-600' }`}>
+                                            Amount being deleted:
+                                        </span>
+                                        <span className={`text-base font-bold ${ isDarkMode ? 'text-red-300' : 'text-red-700' }`}>
+                                            ₹{selectedTransaction.revenueAmount.toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Buttons */}
+                                <div className={`px-6 pb-6 flex flex-col-reverse sm:flex-row gap-3`}>
+                                    <button
+                                        type="button"
+                                        disabled={isDeleting}
+                                        onClick={() => setIsDeleteConfirmOpen(false)}
+                                        className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 disabled:opacity-50 ${
+                                            isDarkMode
+                                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        Go Back
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={isDeleting}
+                                        onClick={() => selectedTransaction && handleDeleteTransaction(selectedTransaction._id)}
+                                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 shadow-lg shadow-red-500/40 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98]"
+                                    >
+                                        {isDeleting ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                                                <span>Deleting…</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                                <span>Yes, Delete</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </Dialog.Panel>
+                        </Transition.Child>
                     </div>
                 </Dialog>
             </Transition>
@@ -2331,33 +2521,61 @@ export function RevenueDashboard() {
                                         </div>
                                     )}
 
-                                    <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                                        <button
-                                            type="button"
-                                            className={`w-full sm:w-auto inline-flex justify-center rounded-lg border px-4 py-2.5 text-sm font-medium focus:outline-none transition-colors duration-300 ${isDarkMode
-                                                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                }`}
-                                            onClick={() => setIsEditModalOpen(false)}
-                                            disabled={isSaving}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="w-full sm:w-auto inline-flex justify-center rounded-lg border border-transparent bg-gradient-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50"
-                                            onClick={handleEditSubmit}
-                                            disabled={isSaving}
-                                        >
-                                            {isSaving ? (
-                                                <>
-                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                    Saving...
-                                                </>
-                                            ) : (
-                                                'Save Changes'
-                                            )}
-                                        </button>
+                                    <div className="mt-6 flex flex-col gap-3">
+                                        {/* Primary actions: Cancel + Save */}
+                                        <div className="flex flex-col sm:flex-row justify-end gap-3">
+                                            <button
+                                                type="button"
+                                                className={`w-full sm:w-auto inline-flex justify-center rounded-lg border px-4 py-2.5 text-sm font-medium focus:outline-none transition-colors duration-300 ${isDarkMode
+                                                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                                onClick={() => setIsEditModalOpen(false)}
+                                                disabled={isSaving}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="w-full sm:w-auto inline-flex justify-center rounded-lg border border-transparent bg-gradient-to-r from-green-500 to-green-600 px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 focus:outline-none disabled:opacity-50"
+                                                onClick={handleEditSubmit}
+                                                disabled={isSaving}
+                                            >
+                                                {isSaving ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Saving...
+                                                    </>
+                                                ) : (
+                                                    'Save Changes'
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* Admin-only delete — sits below Save Changes, separated by a subtle divider */}
+                                        {isAdmin && editingTransaction && (
+                                            <>
+                                                <div className={`border-t ${ isDarkMode ? 'border-gray-700' : 'border-gray-200' }`} />
+                                                <button
+                                                    type="button"
+                                                    disabled={isSaving}
+                                                    onClick={() => {
+                                                        // Carry the currently-edited transaction into the delete flow
+                                                        setSelectedTransaction(editingTransaction);
+                                                        setIsEditModalOpen(false);
+                                                        setIsDeleteDialogOpen(true);
+                                                    }}
+                                                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-200 disabled:opacity-50 ${
+                                                        isDarkMode
+                                                            ? 'border-red-800/60 text-red-400 hover:bg-red-950/40 hover:border-red-700'
+                                                            : 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
+                                                    }`}
+                                                >
+                                                    <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                                    Delete This Record
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </Dialog.Panel>
                             </Transition.Child>
@@ -2422,12 +2640,19 @@ export function RevenueDashboard() {
                                                     {searchResults.length > 0 && (
                                                         <div className={`max-h-48 overflow-y-auto rounded-lg border divide-y transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'
                                                             }`}>
-                                                            {searchResults.map((vehicle) => (
+                                                            {searchResults.map((vehicle) => {
+                                                                const isDaily = vehicle.rentalType === 'daily';
+                                                                
+                                                                return (
                                                                 <button
                                                                     key={vehicle._id}
-                                                                    onClick={() => handleVehicleSelect(vehicle)}
-                                                                    className={`w-full p-3 text-left transition-colors flex flex-col gap-1 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                                                                        }`}
+                                                                    onClick={() => !isDaily && handleVehicleSelect(vehicle)}
+                                                                    disabled={isDaily}
+                                                                    className={`w-full p-3 text-left transition-colors flex flex-col gap-1 ${
+                                                                        isDaily 
+                                                                            ? (isDarkMode ? 'opacity-50 cursor-not-allowed bg-gray-800' : 'opacity-50 cursor-not-allowed bg-gray-50')
+                                                                            : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50')
+                                                                    }`}
                                                                 >
                                                                     <div className="flex items-center justify-between">
                                                                         <span className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'
@@ -2435,6 +2660,15 @@ export function RevenueDashboard() {
                                                                             {vehicle.vehicleNumber}
                                                                         </span>
                                                                         <div className="flex items-center gap-2">
+                                                                            {isDaily && (
+                                                                                <span className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded ${
+                                                                                    isDarkMode 
+                                                                                        ? 'bg-orange-900/40 text-orange-400' 
+                                                                                        : 'bg-orange-100 text-orange-700'
+                                                                                }`}>
+                                                                                    Daily Rental
+                                                                                </span>
+                                                                            )}
                                                                             <span className={`px-2 py-0.5 text-xs font-medium rounded-full transition-colors duration-300 ${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-100 text-gray-600'
                                                                                 }`}>
                                                                                 {vehicle.lotNumber || 'Open'}
@@ -2460,7 +2694,7 @@ export function RevenueDashboard() {
                                                                         <span>{vehicle.ownerName}</span>
                                                                     </div>
                                                                 </button>
-                                                            ))}
+                                                            )})}
                                                         </div>
                                                     )}
                                                 </div>
