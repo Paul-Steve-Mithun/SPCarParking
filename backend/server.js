@@ -1187,6 +1187,38 @@ app.post('/notifications/send-payment-reminder', async (req, res) => {
     }
 });
 
+// New endpoint to send WhatsApp payment reminder
+app.post('/notifications/send-whatsapp-reminder', async (req, res) => {
+    try {
+        const { vehicleNumber, ownerName, contactNumber, amount } = req.body;
+
+        // Format the phone number to include country code if not present
+        let formattedNumber = contactNumber.replace(/\D/g, '');
+        if (!formattedNumber.startsWith('91') && formattedNumber.length === 10) {
+            formattedNumber = '91' + formattedNumber;
+        }
+
+        const result = await NotificationService.sendWhatsAppPaymentReminder(
+            vehicleNumber,
+            ownerName,
+            formattedNumber,
+            amount
+        );
+
+        if (result) {
+            res.json({ success: true, message: 'WhatsApp reminder sent successfully' });
+        } else {
+            res.status(500).json({ success: false, message: 'Failed to send WhatsApp reminder' });
+        }
+    } catch (error) {
+        console.error('WhatsApp Notification Error:', error);
+        res.status(500).json({
+            error: error.message,
+            details: 'Failed to send WhatsApp notification. Please check Meta API credentials.'
+        });
+    }
+});
+
 // Add this endpoint after the other revenue endpoints
 app.post('/revenue', async (req, res) => {
     try {

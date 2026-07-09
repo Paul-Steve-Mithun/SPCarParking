@@ -1361,16 +1361,39 @@ export function ManageVehicles() {
     };
 
     // WhatsApp Reminder Function
-    const sendNotificationToOwner = (vehicle) => {
+    const sendNotificationToOwner = async (vehicle) => {
         let phone = vehicle.contactNumber.replace(/\D/g, '');
         if (!phone.startsWith('91') && phone.length === 10) {
             phone = '91' + phone;
         }
-        const message = `Dear ${vehicle.ownerName}, your monthly parking rent of Rs.${vehicle.rentPrice} for vehicle ${vehicle.vehicleNumber} is due on 5th of this month. Please make the payment before the due date. - SP Car Parking`;
-        const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-        setShowNotificationModal(false);
-        toast.success('WhatsApp opened. Send the message to complete the reminder.');
+
+        setIsSendingNotification(true);
+        try {
+            const response = await fetch('http://localhost:5000/notifications/send-whatsapp-reminder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contactNumber: phone,
+                    ownerName: vehicle.ownerName,
+                    amount: vehicle.rentPrice,
+                    vehicleNumber: vehicle.vehicleNumber
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                toast.success('WhatsApp reminder sent successfully!');
+                setShowNotificationModal(false);
+            } else {
+                toast.error(data.details || 'Failed to send WhatsApp reminder.');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('An error occurred while sending the reminder.');
+        } finally {
+            setIsSendingNotification(false);
+        }
     };
 
     // Number to words helper (Indian system)
