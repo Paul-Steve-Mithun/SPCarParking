@@ -1369,7 +1369,7 @@ export function ManageVehicles() {
 
         setIsSendingNotification(true);
         try {
-            const response = await fetch('http://localhost:5000/notifications/send-whatsapp-reminder', {
+            const response = await fetch('https://spcarparkingbknd.onrender.com/notifications/send-whatsapp-reminder', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
