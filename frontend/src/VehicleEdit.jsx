@@ -207,9 +207,9 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         setShowEndContractModal(true);
     };
 
-    const handleConfirmEndContract = async () => {
-        await confirmDelete();
+    const handleConfirmEndContract = () => {
         setShowEndContractModal(false);
+        setShowDeleteConfirm(true);
     };
 
     const generateAllLots = () => {
@@ -276,8 +276,12 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
     };
 
     return (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden ${isDarkMode ? 'bg-black/80' : 'bg-black/50'}`}>
-            <div className={`relative w-full max-w-7xl max-h-[95vh] rounded-xl shadow-lg flex flex-col overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <Dialog open={true} onClose={onClose} className="relative z-50">
+            {/* Backdrop */}
+            <div className={`fixed inset-0 ${isDarkMode ? 'bg-black/80' : 'bg-black/50'}`} aria-hidden="true" />
+            
+            <div className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden">
+                <Dialog.Panel className={`relative w-full max-w-7xl max-h-[95vh] rounded-xl shadow-lg flex flex-col overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
@@ -750,54 +754,96 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                         </button>
                     </div>
                 </div>
-            </div>
+                </Dialog.Panel>
 
-            {showDeleteConfirm && (
-                <div
-                    className="fixed inset-0 z-[60] overflow-y-auto"
-                    aria-labelledby="modal-title"
-                    role="dialog"
-                    aria-modal="true"
+            {/* Final Red Warning Modal */}
+            <Transition appear show={showDeleteConfirm} as={Fragment}>
+                <Dialog
+                    as="div"
+                    className="relative z-[60]"
+                    onClose={() => setShowDeleteConfirm(false)}
                 >
-                    <div className="flex items-center justify-center min-h-screen p-4">
-                        {/* Backdrop with blur */}
-                        <div
-                            className={`fixed inset-0 backdrop-blur-sm bg-black/30 ${modalAnimation.enter} ${showDeleteConfirm ? 'bg-opacity-50' : 'bg-opacity-0'
-                                } ${isDarkMode ? 'bg-black/80' : 'bg-black/30'}`}
-                            aria-hidden="true"
-                        ></div>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className={`fixed inset-0 backdrop-blur-md ${isDarkMode ? 'bg-black/90' : 'bg-gray-900/80'}`} />
+                    </Transition.Child>
 
-                        {/* Modal */}
-                        <div
-                            className={`relative bg-white rounded-lg max-w-sm w-full mx-4 ${modalAnimation.enter} ${showDeleteConfirm ? modalAnimation.enterTo : modalAnimation.leaveTo
-                                } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
-                        >
-                            <div className="p-6">
-                                <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                    End Contract
-                                </h3>
-                                <p className={`mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    Are you sure you want to end the contract for this vehicle? This action cannot be undone.
-                                </p>
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(false)}
-                                        className={`flex-1 px-4 py-2 rounded-lg transition-colors ${isDarkMode ? 'bg-gray-900 text-gray-300 hover:bg-gray-800' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={confirmDelete}
-                                        className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                                    >
-                                        End Contract
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95 translate-y-4"
+                                enterTo="opacity-100 scale-100 translate-y-0"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100 translate-y-0"
+                                leaveTo="opacity-0 scale-95 translate-y-4"
+                            >
+                                <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 shadow-2xl transition-all border border-red-500/20 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100 mb-6 shadow-inner">
+                                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 animate-pulse">
+                                                <AlertCircle className="h-8 w-8 text-white" />
+                                            </div>
+                                        </div>
+                                        <Dialog.Title as="h3" className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+                                            Warning: Irreversible Action
+                                        </Dialog.Title>
+                                        <div className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                            <p className="mb-2">
+                                                You are about to permanently end the contract for <strong className={isDarkMode ? 'text-white' : 'text-black'}>{vehicle.vehicleNumber} - {vehicle.vehicleDescription}</strong>.
+                                            </p>
+                                            <div className={`mt-4 p-4 rounded-lg text-sm border-l-4 border-red-500 text-left ${isDarkMode ? 'bg-red-900/20 text-red-200' : 'bg-red-50 text-red-800'}`}>
+                                                <ul className="list-disc pl-4 space-y-1">
+                                                    <li>All vehicle data will be deleted</li>
+                                                    <li>Advance will be refunded (if applicable)</li>
+                                                    <li>This action cannot be undone</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-8 flex flex-col-reverse sm:flex-row justify-center gap-3 w-full">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeleteConfirm(false)}
+                                            className={`inline-flex justify-center w-full sm:w-1/2 rounded-xl border px-4 py-3 text-sm font-bold focus:outline-none transition-all ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                                            disabled={isLoading}
+                                        >
+                                            Go Back
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={confirmDelete}
+                                            className="inline-flex items-center justify-center w-full sm:w-1/2 rounded-xl border border-transparent px-4 py-3 text-sm font-bold focus:outline-none transition-all disabled:opacity-50 bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                    Deleting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Trash2Icon className="w-5 h-5 mr-2" />
+                                                    Delete Permanently
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
                         </div>
                     </div>
-                </div>
-            )}
+                </Dialog>
+            </Transition>
 
             {/* Save Changes Confirmation Modal */}
             <Transition appear show={showSaveModal} as={Fragment}>
@@ -890,7 +936,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
             <Transition appear show={showEndContractModal} as={Fragment}>
                 <Dialog
                     as="div"
-                    className="relative z-50"
+                    className="relative z-[60]"
                     onClose={() => setShowEndContractModal(false)}
                 >
                     <Transition.Child
@@ -918,31 +964,70 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                             >
                                 <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-6 shadow-xl transition-all ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                     <div className="text-center">
-                                        <Save className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+                                        <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'} mb-4`}>
+                                            <AlertCircle className={`h-8 w-8 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                                        </div>
                                         <Dialog.Title as="h3" className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                                            End Contract
+                                            Contract Summary
                                         </Dialog.Title>
-                                        <div className={`mt-4 p-4 rounded-lg space-y-3 ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
-                                            <div className="flex items-center gap-2">
-                                                <Car className="w-5 h-5 text-blue-600" />
-                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                                    Vehicle: {vehicle.vehicleNumber} - {vehicle.vehicleDescription}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <User className="w-5 h-5 text-blue-600" />
-                                                <p className={`text-sm text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                                                    Owner: {vehicle.ownerName}
-                                                </p>
+                                        <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Please review the vehicle details before proceeding.
+                                        </p>
+                                        
+                                        <div className={`mt-4 p-4 rounded-xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'} text-left`}>
+                                            <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                                                {/* Vehicle Image */}
+                                                <div className="flex-shrink-0">
+                                                    {vehicle.vehicleImage?.url ? (
+                                                        <img 
+                                                            src={vehicle.vehicleImage.url} 
+                                                            alt="Vehicle" 
+                                                            className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg shadow-sm border border-gray-200"
+                                                        />
+                                                    ) : (
+                                                        <div className={`w-24 h-24 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                                            <Car className={`w-8 h-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Details */}
+                                                <div className="flex-grow space-y-2 w-full">
+                                                    <div className="flex items-start gap-2">
+                                                        <Car className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Vehicle</span>
+                                                            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                                                {vehicle.vehicleNumber} <span className="opacity-70 font-normal">({vehicle.vehicleDescription})</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-2">
+                                                        <User className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Owner</span>
+                                                            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{vehicle.ownerName}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                        </svg>
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Lot Number</span>
+                                                            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{vehicle.lotNumber || 'Open Parking'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 flex justify-end gap-3">
+                                    <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setShowEndContractModal(false)}
-                                            className={`inline-flex justify-center rounded-md border px-4 py-2 text-sm font-medium focus:outline-none ${isDarkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-900' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                                            className={`inline-flex justify-center w-full sm:w-auto rounded-lg border px-4 py-2.5 text-sm font-medium focus:outline-none transition-colors ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                                             disabled={isLoading}
                                         >
                                             Cancel
@@ -950,18 +1035,17 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                         <button
                                             type="button"
                                             onClick={handleConfirmEndContract}
-                                            className="inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium focus:outline-none disabled:opacity-50 bg-red-600 text-white hover:bg-red-700"
+                                            className="inline-flex items-center justify-center w-full sm:w-auto rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium focus:outline-none transition-colors disabled:opacity-50 bg-orange-600 text-white hover:bg-orange-700 shadow-sm"
                                             disabled={isLoading}
                                         >
                                             {isLoading ? (
                                                 <>
                                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                    Ending...
+                                                    Proceeding...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                                    Confirm End Contract
+                                                    Proceed to End Contract
                                                 </>
                                             )}
                                         </button>
@@ -972,7 +1056,8 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                     </div>
                 </Dialog>
             </Transition>
-        </div>
+            </div>
+        </Dialog>
     );
 };
 
