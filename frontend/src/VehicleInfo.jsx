@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon, ArrowLeft, Receipt, FileText, Download } from 'lucide-react';
+import { Search, Car, User, Phone, MapPin, IndianRupee, Calendar, CreditCard, DollarSign, X, PrinterIcon, ArrowLeft, Receipt, FileText, Download, PencilIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './contexts/ThemeContext';
+import VehicleEdit from './VehicleEdit';
 
 export function VehicleInfo() {
     const { isDarkMode } = useTheme();
@@ -25,6 +26,10 @@ export function VehicleInfo() {
     const [archivedVehicles, setArchivedVehicles] = useState([]);
     const [allRevenue, setAllRevenue] = useState([]);
     const [advances, setAdvances] = useState([]);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const auth = JSON.parse(localStorage.getItem('spcarparking_auth') || '{}');
+    const isAdmin = auth.role === 'admin';
 
     useEffect(() => {
         fetchVehicles();
@@ -1892,40 +1897,53 @@ export function VehicleInfo() {
                                         <Car className="w-6 h-6" />
                                         Vehicle Details
                                     </h2>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="px-2.5 py-1 bg-white/20 backdrop-blur-sm text-white text-sm font-bold rounded-lg shadow-sm border border-white/20">
-                                            {selectedVehicle.lotNumber || 'Open'}
-                                        </span>
-                                        <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${selectedVehicle.status === 'active'
-                                            ? 'bg-emerald-500/80 text-white border-emerald-400/50'
-                                            : selectedVehicle.status === 'archived'
-                                                ? 'bg-yellow-500/80 text-white border-yellow-400/50'
-                                                : 'bg-red-500/80 text-white border-red-400/50'
-                                            }`}>
-                                            {selectedVehicle.status === 'active' ? 'Active' : selectedVehicle.status === 'archived' ? 'Archived' : 'Expired'}
-                                        </span>
-                                        {/* Premium Badge for Monthly Rental Vehicles (not archived) */}
-                                        {selectedVehicle.rentalType === 'monthly' && !selectedVehicle.isArchived && isPremiumCustomer(selectedVehicle, transactions) && (
-                                            <span className="px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border bg-yellow-400 text-white border-yellow-300 flex items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.873 6.9-1.002L12 2.25l3.093 6.997 6.9 1.002-5 4.873 1.179 6.873z" /></svg>
-                                                Premium
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-2">
+                                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => setIsEditModalOpen(true)}
+                                                    className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/90 hover:bg-blue-600 rounded-lg text-white transition-colors border border-blue-400/50 backdrop-blur-sm shadow-lg"
+                                                    title="Edit Vehicle"
+                                                >
+                                                    <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                    <span className="text-sm font-semibold">Edit</span>
+                                                </button>
+                                            )}
+                                            <span className={`px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border ${selectedVehicle.status === 'active'
+                                                ? 'bg-emerald-500/80 text-white border-emerald-400/50'
+                                                : selectedVehicle.status === 'archived'
+                                                    ? 'bg-yellow-500/80 text-white border-yellow-400/50'
+                                                    : 'bg-red-500/80 text-white border-red-400/50'
+                                                }`}>
+                                                {selectedVehicle.status === 'active' ? 'Active' : selectedVehicle.status === 'archived' ? 'Archived' : 'Expired'}
                                             </span>
-                                        )}
-                                        <button
-                                            onClick={() => selectedVehicle.rentalType === 'monthly' ? handlePrintInvoice(selectedVehicle) : handlePrintDailyInvoice(selectedVehicle)}
-                                            className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors border border-white/20 backdrop-blur-sm"
-                                            title="Print Receipt"
-                                        >
-                                            <PrinterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDownloadFullReport(selectedVehicle)}
-                                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-600 rounded-lg text-white transition-colors border border-emerald-400/50 backdrop-blur-sm shadow-lg"
-                                            title="Download Full Report"
-                                        >
-                                            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                                            <span className="hidden sm:inline text-sm font-semibold">Full Report</span>
-                                        </button>
+                                            {/* Premium Badge for Monthly Rental Vehicles (not archived) */}
+                                            {selectedVehicle.rentalType === 'monthly' && !selectedVehicle.isArchived && isPremiumCustomer(selectedVehicle, transactions) && (
+                                                <span className="px-2.5 py-1 text-sm font-semibold rounded-lg shadow-sm border bg-yellow-400 text-white border-yellow-300 flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.873 6.9-1.002L12 2.25l3.093 6.997 6.9 1.002-5 4.873 1.179 6.873z" /></svg>
+                                                    Premium
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
+                                            <button
+                                                onClick={() => selectedVehicle.rentalType === 'monthly' ? handlePrintInvoice(selectedVehicle) : handlePrintDailyInvoice(selectedVehicle)}
+                                                className="flex items-center gap-1.5 px-3 py-2 sm:p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors border border-white/20 backdrop-blur-sm"
+                                                title="Print Receipt"
+                                            >
+                                                <PrinterIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                <span className="text-sm font-semibold sm:hidden">Invoice</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDownloadFullReport(selectedVehicle)}
+                                                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-600 rounded-lg text-white transition-colors border border-emerald-400/50 backdrop-blur-sm shadow-lg"
+                                                title="Download Full Report"
+                                            >
+                                                <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                <span className="text-sm font-semibold sm:hidden">History</span>
+                                                <span className="hidden sm:inline text-sm font-semibold">Full Report</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2701,6 +2719,25 @@ export function VehicleInfo() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Vehicle Edit Modal */}
+            {isEditModalOpen && selectedVehicle && (
+                <VehicleEdit
+                    vehicle={selectedVehicle}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onUpdate={() => {
+                        fetchVehicles();
+                        fetchAllRevenue();
+                        setSelectedVehicle(null);
+                    }}
+                    onDelete={(deletedId) => {
+                        setIsEditModalOpen(false);
+                        setSelectedVehicle(null);
+                        fetchVehicles();
+                        fetchAllRevenue();
+                    }}
+                />
             )}
         </div>
     );
