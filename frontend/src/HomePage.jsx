@@ -327,6 +327,17 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
         });
     }, []);
 
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showModal]);
+
     const sortByLotNumber = (vehicles) => {
         return [...vehicles].sort((a, b) => {
             const getLotParts = (lot) => {
@@ -1627,6 +1638,104 @@ export function HomePage({ isAuthenticated, onAuthentication }) {
                                         </div>
                                     </motion.div>
                                 ))}
+                        </div>
+                    </div>
+
+                    {/* Rent Amount Tiers Analytics */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-4">
+                        <h2 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                            Vehicle Distribution by Rent Amount
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Premium Tier (Green) */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                onClick={() => handleCardClick({
+                                    label: 'Premium Tier Vehicles',
+                                    filter: () => vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) >= 2500)
+                                })}
+                                className={`rounded-2xl border p-6 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-lg cursor-pointer ${isDarkMode ? 'bg-emerald-950/20 border-emerald-700/50 hover:bg-emerald-950/35' : 'bg-emerald-50/60 border-emerald-300 hover:bg-emerald-100/70'}`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-emerald-900/50' : 'bg-emerald-100'} shadow-sm`}>
+                                        <TrendingUp className={`w-6 h-6 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isDarkMode ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/60' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`}>
+                                        ₹2500 & Above
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-emerald-400/80' : 'text-emerald-700/80'}`}>Premium Tier</p>
+                                    <div className="flex items-end gap-3">
+                                        <h3 className={`text-4xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                            {vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) >= 2500).length}
+                                        </h3>
+                                        <span className={`text-sm font-medium pb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>vehicles</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Standard Tier (Grey) */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                onClick={() => handleCardClick({
+                                    label: 'Standard Tier Vehicles',
+                                    filter: () => vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) > 2000 && (v.rentPrice || 0) < 2500)
+                                })}
+                                className={`rounded-2xl border p-6 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-lg cursor-pointer ${isDarkMode ? 'bg-gray-800/40 border-gray-700 hover:bg-gray-800/60' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} shadow-sm`}>
+                                        <Activity className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isDarkMode ? 'bg-gray-700 text-gray-300 border border-gray-600' : 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
+                                        ₹2001 - ₹2499
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Standard Tier</p>
+                                    <div className="flex items-end gap-3">
+                                        <h3 className={`text-4xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                            {vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) > 2000 && (v.rentPrice || 0) < 2500).length}
+                                        </h3>
+                                        <span className={`text-sm font-medium pb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>vehicles</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Basic Tier (Red) */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                onClick={() => handleCardClick({
+                                    label: 'Basic Tier Vehicles',
+                                    filter: () => vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) <= 2000)
+                                })}
+                                className={`rounded-2xl border p-6 flex flex-col justify-between shadow-md transition-all duration-300 hover:shadow-lg cursor-pointer ${isDarkMode ? 'bg-red-950/25 border-red-700/50 hover:bg-red-950/40' : 'bg-red-50/70 border-red-300 hover:bg-red-100/80'}`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-red-900/50' : 'bg-red-100'} shadow-sm`}>
+                                        <TrendingDown className={`w-6 h-6 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
+                                    </div>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isDarkMode ? 'bg-red-900/50 text-red-300 border border-red-700/60' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                                        ₹2000 & Below
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-red-400/80' : 'text-red-700/80'}`}>Basic Tier</p>
+                                    <div className="flex items-end gap-3">
+                                        <h3 className={`text-4xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                            {vehicles.filter(v => v.rentalType !== 'daily' && (v.rentPrice || 0) <= 2000).length}
+                                        </h3>
+                                        <span className={`text-sm font-medium pb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>vehicles</span>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </div>
                     </div>
 
