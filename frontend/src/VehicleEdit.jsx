@@ -218,7 +218,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
         const cLots = Array.from({ length: 22 }, (_, i) => `C${i + 1}`);
         const dLots = Array.from({ length: 20 }, (_, i) => `D${i + 1}`);
         const eLots = Array.from({ length: 20 }, (_, i) => `E${i + 1}`);
-        const oLots = Array.from({ length: 20 }, (_, i) => `O${i + 1}`); // O1-O20
+        const oLots = Array.from({ length: 21 }, (_, i) => `O${i + 1}`); // O1-O21
         return [...aLots, ...bLots, ...cLots, ...dLots, ...eLots, ...oLots];
     };
 
@@ -462,7 +462,7 @@ const VehicleEdit = ({ vehicle, onClose, onUpdate, onDelete }) => {
                                                                     : 'bg-gray-100 text-gray-700'
                                                                 }`}
                                                         >
-                                                            O Wing (O1-O20)
+                                                            O Wing (O1-O21)
                                                         </button>
                                                     </div>
                                                 </div>
